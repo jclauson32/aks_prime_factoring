@@ -12,6 +12,12 @@ and does not buy you computationally.
 """
 
 from .arith import factorize, is_prime
+from .cyclo import (
+    lucas_v,
+    norm_one_search,
+    pollard_pminus1,
+    williams_pplus1,
+)
 from .factor import certificate, factor, pascal_split, pascal_spf
 from .fast import fast_split, fast_spf, multipoint_eval
 from .pascal import (
@@ -50,9 +56,13 @@ __all__ = [
     "fold_norm",
     "fold_norm_expected",
     "is_prime",
+    "lucas_v",
+    "norm_one_search",
     "multipoint_eval",
     "pascal_split",
     "pascal_spf",
+    "pollard_pminus1",
+    "williams_pplus1",
     "residue_shape",
     "row_entry",
     "row_exact",

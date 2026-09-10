@@ -350,6 +350,79 @@ of size `n` rather than of size `r << p`. What this framework lacks is not a
 better `r`, a better base `a`, or a better aggregation rule — it is the ability
 to transform at full resolution.
 
+## Theorem 13 — the norm-one order, and the gap in the domination argument
+
+Let `p` be prime and `d >= 2`. The norm map `N : F_{p^d}* -> F_p*`,
+`N(z) = z^(1 + p + ... + p^(d-1))`, is surjective, so its kernel has order
+
+```
+|ker N| = (p^d - 1)/(p - 1).
+```
+
+`p - 1` does **not** divide this in general. (For `d = 2` it is `p + 1`, which
+shares only a factor of `2` with `p - 1`.)
+
+*Consequence, and a correction.* An earlier draft of this project argued that
+generalising Pollard `p-1` into the AKS ring is strictly dominated, because
+`p - 1 | p^k - 1` forces `p^k - 1` to be `B`-smooth only when `p - 1` already is.
+That argument is valid for the **full unit group**, where the element `x + a`
+lives. It does not apply to `ker N`, whose order is the quotient above.
+
+*Reaching the kernel without knowing `p`.* If `f` is monic of degree `d` with
+constant term `(-1)^d`, its roots multiply to `1`, so a root `z` satisfies
+`N(z) = 1` **by construction**. For `d = 2`, `f = x^2 - a x + 1` and the trace of
+`z^k` is the Lucas sequence `V_k(a, 1)` — Williams' `p+1` method.
+
+For `d = 2` the root lands in `F_{p^2} \ F_p` exactly when `a^2 - 4` is a
+quadratic non-residue mod `p`; otherwise `z ∈ F_p` and the order divides `p - 1`
+again. So the construction must be retried over several `a`, each a coin flip.
+
+## Proposition 14 — rigid versus varying group orders
+
+Each factoring method reachable from this framework succeeds on a prime `p`
+exactly when some integer attached to `p` is smooth:
+
+| method | group | order |
+|---|---|---|
+| Pollard `p-1` | `F_p*` | `p - 1` |
+| norm-one, degree `d` (Theorem 13) | `ker N <= F_{p^d}*` | `(p^d - 1)/(p - 1)` |
+| ECM | `E(F_p)` | `p + 1 - t`, with `t` bounded by `2 sqrt(p)` |
+
+In the first two rows the order is a **fixed function of `p` and `d`**: once `p`
+is given, so is the number whose smoothness decides the outcome. Small `d` gives
+finitely many such numbers, so a prime for which all of them are rough is out of
+reach, and no amount of extra work at that `p` helps.
+
+The third row is different in kind. Each elliptic curve over `F_p` supplies a
+*new* order in an interval of width `4 sqrt(p)` around `p + 1`, so one may keep
+drawing fresh orders at fixed `p` until a smooth one appears. That single
+structural difference — a family of group orders rather than one — is what turns
+smoothness luck into the `L[1/2]` running time of ECM.
+
+*Measured.* Over 400 random monic `f` of degree `d` at each of
+`p = 211, 503, 1009, 2003`, the number of distinct values of `|(F_p[x]/f)*|` is
+exactly `partitions(d)` — `2, 3, 5` for `d = 2, 3, 4` — and does not grow with
+`p`. Over 400 random elliptic curves at the same primes, the number of distinct
+`#E(F_p)` is `55, 84, 109, 140`, tracking the Hasse width `4 sqrt(p)`
+([exp11](../experiments/results/exp11_rigid_vs_varying.md)).
+
+The cap is structural. For squarefree `f`, `F_p[x]/f` is a product of finite
+fields `F_{p^{d_1}} x ... x F_{p^{d_m}}`, so the unit group order is
+`prod_i (p^{d_i} - 1)`: a function of the degree *partition* alone. Two
+polynomials with the same pattern give the same order.
+
+**Open.** Is there a family of AKS-ring-like objects whose group order varies
+with a parameter at fixed `p`? Theorem 13 supplies one order per `(p, d)`;
+elliptic curves supply unboundedly many per `p`. Nothing in this repository
+bridges that gap, and closing it is a strictly stronger requirement than the
+"asymmetric statistic" that Theorem 13 already provides.
+
+The requirement is satisfiable, just not here: elliptic curves supply a fresh
+order per curve (ECM), and class groups of imaginary quadratic orders supply a
+fresh `h(-D)` per discriminant `D = -kn` (Schnorr-Lenstra). Both leave polynomial
+quotients of `Z/n` behind entirely, and that departure is precisely what buys the
+varying order.
+
 ## Relationship to AKS
 
 AKS verifies `(x+a)^n == x^n + a (mod n, x^r - 1)` for `r` of size `polylog(n)`

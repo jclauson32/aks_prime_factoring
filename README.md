@@ -103,9 +103,11 @@ remainder **is** the prime factor `q`, with `y = 1`.
 | **T7** | with `gcd(r,p)=1` the row's support is *equidistributed* mod `r` — an aliasing barrier | proved, verified |
 | **T8** | `Norm((x+a)^n) = (a^r+1)^n mod n` — symmetric aggregates carry zero information | proved, verified |
 | **T9** | the *second* n-adic digit of the row splits `n` at **constant** rate, not `1/p` | proved, verified |
+| **T13** | the norm-one subgroup has order `(p^d−1)/(p−1)`, which `p−1` does not divide | proved; refutes an earlier claim |
+| **P14** | ring group orders are capped at `partitions(d)` per `p`; elliptic orders grow with `√p` | proved, measured |
 
 Every row is machine-checked in [`aksfactor/theorems.py`](aksfactor/theorems.py)
-and exercised by `run_tests.py` (41 tests, all passing).
+and exercised by `run_tests.py` (57 tests, all passing).
 
 ## The honest verdict
 
@@ -139,6 +141,10 @@ what a fourth would have to look like.
 
 ## Pushing on it: round 2
 
+*(One conclusion in this section was later found to be too strong; the retraction
+is in [round 3](#round-3-the-correction) and inline in the experiment that made
+it.)*
+
 Four more routes to polynomial time, tested and killed — plus one that moved the
 exponent. Full scorecard in [exp07](experiments/results/exp07_dead_ends.md).
 
@@ -146,7 +152,7 @@ exponent. Full scorecard in [exp07](experiments/results/exp07_dead_ends.md).
 |---|---|
 | **Symmetric aggregates** (norms, resultants) — buy every lottery ticket at once | `Norm((x+a)^n) = (a^r+1)^n mod n`, a function of `n` alone. Same value mod *every* prime factor, so the gcd is always `n`. Symmetric aggregation destroys the asymmetry a factor consists of. |
 | **Twisted moduli `x^r - c`** — bias a coefficient toward vanishing | Hit rate still tracks `1/p`. Different tickets, same price. |
-| **AKS-ring Pollard `p-1`** — many `k`, many chances | `p-1` divides `p^k-1`, so `p^k-1` is smooth only if `p-1` already was. *Strictly dominated* by the method it generalises. |
+| **AKS-ring Pollard `p-1`** — many `k`, many chances | `p-1` divides `p^k-1`, so for the element `x+a` it is dominated by the method it generalises. **Partly retracted in round 3** — the argument covers only the full unit group. |
 | **Position from the fold** — leak `p mod r`, CRT over several `r`, done in polylog | **Theorem 7:** if `gcd(r,p)=1` then `i ↦ i·p^v mod r` is a bijection, so the classes are equally occupied *by theorem*. Positional info needs `r ≥ p`. Nyquist aliasing. |
 
 ### What did work: `Õ(n^(1/4))`
@@ -211,6 +217,77 @@ polylog time quantumly, by transforming at size `n` instead of size `r ≪ p`.
 What the framework lacks is not a cleverer `r`, base `a`, or aggregation rule —
 it is resolution.
 
+## Round 3: the correction
+
+Round 2 ended by naming the open problem — *find a statistic of the first digit
+that is asymmetric in the prime factors*. Round 3 found one, by noticing that
+round 2's own domination argument had a gap.
+
+| group | order | divisible by `p-1`? |
+|---|---|---|
+| full unit group of `F_{p^d}` | `p^d − 1` | yes — hence dominated |
+| **norm-one subgroup** `ker(N)` | `(p^d − 1)/(p − 1)` | **no** |
+
+The domination argument is about the *full* unit group, and `x + a` lives there.
+It says nothing about subgroups. And you can land in the norm-one subgroup
+**without knowing `p`** — pick a monic polynomial whose roots multiply to `1`.
+For `d = 2` that is `x² − ax + 1`, tracked by the Lucas sequence `V_k(a,1)`:
+Williams' `p+1` method, recovered rather than imported.
+
+Head to head at an identical budget, against a cofactor rough on both sides:
+
+| p | largest prime factor of `p−1` | of `p+1` | Pollard `p−1` | norm-one |
+|---|---|---|---|---|
+| 4,512,218,267 | 3,716,819 | 47 | fail | **found** |
+| 7,205,934,499 | 171,569,869 | 41 | fail | **found** |
+| 2,850,909,643 | 41,669 | 53 | fail | **found** |
+| 34,886,131,169 | 88,339 | 53 | fail | **found** |
+
+**6 of 6** in the full run ([exp10](experiments/results/exp10_norm_one.md)). The
+retraction is written into `exp07_dead_ends.py` inline, not quietly dropped.
+
+And the statistic is *still a binomial sum* —
+`V_k(a,1) = Σ_j (−1)^j (k/(k−j)) C(k−j, j) a^(k−2j)`, verified on thousands of
+cases. What changes is not leaving binomials behind; it is constraining the roots
+to multiply to `1`, which pins the order to `p+1` instead of `p−1`.
+
+### Why it is still not polynomial
+
+| method | group | order | varies at fixed `p`? |
+|---|---|---|---|
+| Pollard `p−1` | `F_p*` | `p − 1` | no |
+| norm-one, degree `d` | `ker N` in `F_{p^d}*` | `Φ_d(p)`-ish | no |
+| ECM | `E(F_p)` | `p + 1 − t` | **yes**, one per curve |
+
+Everything reachable here has a **rigid** group order: fix `p` and the number
+whose smoothness decides success is fixed too. One ticket per `p`; if `Φ_d(p)` is
+rough for every small `d`, you are stuck. ECM's advantage is not a better group
+but a *family* of them — a fresh order per curve at the same `p`.
+
+### Counted, not asserted
+
+Distinct group orders reachable at one fixed `p`, 400 random samples each
+(found / theoretical cap):
+
+| p | ring `d=2` | ring `d=3` | ring `d=4` | distinct `#E(F_p)` | Hasse width `4*sqrt(p)` |
+|---|---|---|---|---|---|
+| 211 | 2 / 2 | 3 / 3 | 5 / 5 | 55 | 56 |
+| 503 | 2 / 2 | 3 / 3 | 5 / 5 | 84 | 88 |
+| 1,009 | 2 / 2 | 3 / 3 | 5 / 5 | 109 | 124 |
+| 2,003 | 2 / 2 | 3 / 3 | 5 / 5 | 140 | 176 |
+
+The ring columns **saturate at `partitions(d)` and stop** — 2, 3, 5 — regardless
+of `p`. That is structural: `F_p[x]/f` for squarefree `f` is a product of finite
+fields, so its unit group order is `∏ (p^{d_i} − 1)`, a function of the degree
+*partition* alone. Same pattern, same order — nothing left to vary. The elliptic
+column grows with `√p`.
+
+So the open problem, as a requirement: **a construction over `Z/n` whose group
+order at fixed `p` varies with a parameter we control.** Quotients of `(Z/n)[x]`
+cannot supply one — their orders are pinned by the degree partition. Escaping
+needs a different algebraic group, which is what an elliptic curve is and what no
+rearrangement of Pascal's triangle will produce.
+
 ## Benchmarks
 
 Balanced semiprimes, finding `spf(n)`:
@@ -243,15 +320,21 @@ aksfactor/
   factor.py     pascal_spf / pascal_split / factor, with certificates
   ring.py       (x+a)^n mod (n, x^r - 1), the fold identity, the fold attack,
                 and the norm (symmetry obstruction)
+  cyclo.py      norm-one cyclotomic factoring: Lucas sequences, Williams p+1,
+                general degree-d via resultants
+  grouporder.py counts reachable group orders: ring unit orders vs #E(F_p)
   fast.py       O~(n^(1/4)) search: product tree, Newton division, remainder
                 tree, fast multipoint evaluation
   cli.py        python -m aksfactor {factor,row,entry,verify,fold}
 docs/           THEORY.md (proofs), FINDINGS.md (what it buys)
-experiments/    nine reproducible scripts; results/ holds their generated reports
-tests/          41 tests; run_tests.py needs no pytest
+experiments/    eleven reproducible scripts; results/ holds their generated reports
+tests/          57 tests; run_tests.py needs no pytest
 ```
 
-Regenerate every measurement (and the figure above) with `./run_experiments.sh`.
+Regenerate every measurement (and the figure above) with `./run_experiments.sh`
+(about 20 minutes; `exp09` dominates, because measuring the second-digit rate
+needs Lucas at random base-`p` digits, which costs `O(p)` per call — the
+barrier charges you even to observe it).
 
 ## License
 

@@ -149,18 +149,18 @@ Weighting the wrapped terms by powers of `c` gives fresh coefficients, so
 perhaps some are biased toward vanishing. Measured hit rates for `c != 1` track
 `1/p` exactly as `c = 1` does. Different tickets, same price.
 
-### Dead: the AKS-ring generalisation of Pollard `p-1`
+### Dead — but only halfway: the AKS-ring generalisation of Pollard `p-1`
 
 In `F_p[x]/(x^r - 1) = prod_i F_{p^{k_i}}`, the order of `x + a` divides
 `lcm_i (p^{k_i} - 1)`. Classic `p-1` is the `k = 1` case, so more `k` values
-looked like strictly more chances. It is strictly *fewer*:
+looked like strictly more chances. For that element it is strictly *fewer*:
 
 > `p - 1` divides `p^k - 1` for every `k`, so `p^k - 1` is `B`-smooth only if
 > `p - 1` already was.
 
-The generalisation is dominated by the method it generalises. Isolating the
-genuinely new cyclotomic part `Phi_k(p)` requires the norm-one subgroup —
-Lucas sequences, Williams `p+1` — which is not reachable inside this ring.
+**This was written up as "strictly dominated". That was too strong — see round 3
+below, which refutes it.** The argument is sound about the *full unit group*, and
+`x + a` sits in the full unit group. It says nothing about subgroups.
 
 ### Dead, and this was the one that would have been polynomial: reading position out of the fold
 
@@ -298,8 +298,128 @@ next, and why the obvious ones are shut.
 A fourth candidate, added after round 2: **break the symmetry deliberately.**
 Theorem 8 says symmetric aggregates are useless and Theorem 7 says positions are
 aliased, but neither forbids an *asymmetric* statistic computable from `n` alone
-— something playing the role smoothness of `p-1` plays for Pollard. Every such
-statistic tried here reduced to smoothness of `p^k - 1` and collapsed.
+— something playing the role smoothness of `p-1` plays for Pollard.
+
+Round 3 found one: the norm-one construction of Theorem 13. It is a genuine
+asymmetric statistic and it factors numbers Pollard `p-1` cannot. It is also not
+enough, and the counting in round 3 says exactly why: the statistic is *rigid*,
+one order per `(p, d)`. So this door is open but narrow, and the requirement
+behind it has been restated below in the form that matters — a group order that
+**varies** at fixed `p`.
+
+## Round 3: the correction, and a real asymmetric statistic
+
+Round 2 closed by naming the open problem: *find a statistic of the first digit
+that is asymmetric in the prime factors*. Round 3 found one — by noticing that
+round 2's own domination argument had a gap.
+
+### The gap
+
+| group | order | divisible by `p-1`? |
+|---|---|---|
+| full unit group of `F_{p^d}` | `p^d - 1` | yes — hence dominated |
+| **norm-one subgroup** `ker(N: F_{p^d}* -> F_p*)` | `(p^d - 1)/(p - 1)` | **no** |
+
+The domination argument covers the full unit group, and `x + a` lives there. It
+says nothing about the norm-one subgroup, whose order `p - 1` does not divide.
+
+And you can land inside it **without knowing `p`**: choose a monic polynomial
+whose roots multiply to `1`. For `d = 2` that is `x^2 - a x + 1`, whose orbit is
+tracked by the Lucas sequence `V_k(a,1)` — which is Williams' `p+1` method,
+recovered as a special case rather than imported.
+
+### Measured
+
+Primes with `p-1` rough and `p+1` smooth are not exotic; sampling smooth `p+1`
+candidates turns them up readily. Against a cofactor rough on both sides, at an
+identical budget of `bound = 500`:
+
+| p | largest prime factor of `p-1` | of `p+1` | Pollard `p-1` | norm-one |
+|---|---|---|---|---|
+| 4,512,218,267 | 3,716,819 | 47 | fail | **found** |
+| 7,205,934,499 | 171,569,869 | 41 | fail | **found** |
+| 2,850,909,643 | 41,669 | 53 | fail | **found** |
+| 1,350,354,433 | 125,591 | 41 | fail | **found** |
+| 34,886,131,169 | 88,339 | 53 | fail | **found** |
+| 2,783,306,129 | 17,623 | 53 | fail | **found** |
+
+**6 of 6.** Round 2's claim is refuted, and `experiments/exp07_dead_ends.py`
+carries the retraction inline rather than quietly dropping the entry.
+
+One methodological note, because it nearly produced a second wrong conclusion:
+base retries are mandatory. For `d = 2` the root only lands in `F_{p^2}` when
+`base^2 - 4` is a non-residue mod `p`; otherwise it falls into `F_p` and the
+method silently degenerates to `p-1`. That is a coin flip per base. The first
+run of this experiment tried seven bases that all happened to be residues and
+recorded a failure that was not real.
+
+### The statistic is still a binomial sum
+
+```
+V_k(a,1) = sum_j (-1)^j * (k/(k-j)) * C(k-j, j) * a^(k-2j)
+```
+
+Verified on thousands of cases. So what finally separates `p` from `q` *is* a
+binomial sum — just not one along row `n`. The change is not abandoning
+binomials; it is constraining the roots to multiply to `1`, which pins the order
+to `p+1` instead of `p-1`.
+
+### Why it still is not polynomial — the next obstruction, stated
+
+| method | group | order | varies at fixed `p`? |
+|---|---|---|---|
+| Pollard `p-1` | `F_p*` | `p - 1` | no |
+| norm-one, degree `d` | `ker N` in `F_{p^d}*` | `Phi_d(p)`-ish | no |
+| ECM | `E(F_p)` | `p + 1 - t` | **yes**, one per curve |
+
+Every method reachable in this framework has a **rigid** group order: fix `p` and
+the number whose smoothness decides success is fixed too. One ticket per `p`, and
+if `Phi_d(p)` is rough for all small `d`, you are stuck. ECM's advantage is not a
+better group but a *family* of groups — a fresh order per curve, at the same `p`.
+That is what buys `L[1/2]` instead of dependence on smoothness luck.
+
+### Counted, not asserted
+
+That difference is countable, so round 3 counted it. Distinct group orders
+reachable at one fixed `p`, over 400 random samples each (found / theoretical
+cap):
+
+| p | ring `d=2` | ring `d=3` | ring `d=4` | distinct `#E(F_p)` | Hasse width `4*sqrt(p)` |
+|---|---|---|---|---|---|
+| 211 | 2 / 2 | 3 / 3 | 5 / 5 | 55 | 56 |
+| 503 | 2 / 2 | 3 / 3 | 5 / 5 | 84 | 88 |
+| 1,009 | 2 / 2 | 3 / 3 | 5 / 5 | 109 | 124 |
+| 2,003 | 2 / 2 | 3 / 3 | 5 / 5 | 140 | 176 |
+
+The ring columns **saturate at `partitions(d)` and stop** — 2, 3, 5 — no matter
+how large `p` grows or how many `f` are tried. The reason is structural, not a
+sampling artifact: `F_p[x]/f` for squarefree `f` is a product of finite fields
+`F_{p^{d_1}} x ... x F_{p^{d_m}}`, so its unit group order is
+`prod_i (p^{d_i} - 1)` — a function of the degree *partition* alone. Two
+polynomials with the same degree pattern give literally the same order. There is
+nothing left to vary. Restricting to Theorem 13's norm-one subgroup changes
+*which* rigid number you get, never that it is rigid.
+
+The elliptic column grows with `sqrt(p)`, tracking the Hasse interval.
+
+So if `Phi_e(p)` is rough for every `e <= d`, every construction in this
+repository fails at that `p`, and no additional work at that `p` helps — the
+finitely many available orders are exhausted. Raising `d` costs more while
+supplying only `partitions(d)` new orders.
+
+**The gap, as a requirement.** A polynomial-time method in this family would need
+a construction over `Z/n` whose group order at fixed `p` varies with a parameter
+we control. Quotients of `(Z/n)[x]` cannot supply it — their orders are pinned to
+`prod (p^{d_i} - 1)` by the degree partition. Escaping needs a genuinely
+different algebraic group, which is what an elliptic curve is, and what no
+rearrangement of Pascal's triangle will produce.
+
+Two known constructions do satisfy the requirement, which is worth saying so the
+target does not read as a fantasy: **elliptic curves** (a fresh order `p + 1 - t`
+per curve, giving ECM) and **class groups of imaginary quadratic orders** (a
+fresh order `h(-D)` per discriminant `D = -kn`, giving Schnorr-Lenstra). Both
+leave the world of polynomial quotients of `Z/n` entirely. That is the price of
+a varying order, and nothing in the Pascal/AKS setting pays it.
 
 ## Where the search space stands now
 
@@ -313,10 +433,20 @@ dichotomy, and it covers the natural approaches:
 | **why** | Theorem 2 has already quotiented the information away; what survives is aliased (T7) or symmetric (T8) | Lucas' digit condition separates the primes |
 
 The first column is cheap and nearly empty. The second is rich and priced at
-factoring. There is no third column in this framework — and that is a more
-useful thing to know than another failed heuristic would have been.
+factoring.
 
-The open problem this leaves behind is correspondingly precise: **find a
-statistic of the first digit that is asymmetric in the prime factors.** Theorems
-7 and 8 rule out the two obvious families (positional, symmetric). Nothing rules
-out a third — but nothing tried here found one.
+Round 3 added a third column that is neither — it sidesteps the digit question
+entirely by leaving row `n` and going to a group whose order is a *different*
+function of `p`:
+
+| | norm-one subgroup, degree `d` |
+|---|---|
+| **is it computable?** | yes, `O(log M)` ring operations |
+| **does it leak factors?** | when `Phi_d(p)` is smooth — a real, common, asymmetric event |
+| **why it stops** | the order is rigid: one ticket per `(p, d)`, no way to redraw |
+
+The open problem round 2 left behind was: **find a statistic of the first digit
+that is asymmetric in the prime factors.** Round 3 answered it — the norm-one
+construction is exactly such a statistic — and replaced it with a harder one:
+**find a family of such objects whose group order varies at fixed `p`.** That is
+the property separating everything in this repository from ECM.

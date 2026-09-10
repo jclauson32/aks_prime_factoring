@@ -37,7 +37,7 @@ If the plain fold gives each coefficient a `1/p` chance, maybe weighting the wra
 
 Both track `1/p`. The twist changes which tickets you hold, not the price. Dead.
 
-## C. The AKS-ring generalisation of Pollard `p-1`
+## C. The AKS-ring generalisation of Pollard `p-1`  *(partly retracted)*
 
 In `F_p[x]/(x^r - 1) = prod_i F_{p^{k_i}}`, an element's order divides `lcm_i (p^{k_i} - 1)`. Raising `x + a` to `lcm(1..B)` and taking a gcd generalises Pollard `p-1`, which is the `k = 1` case. More `k` values, more chances -- so it seemed strictly better.
 
@@ -49,7 +49,9 @@ In `F_p[x]/(x^r - 1) = prod_i F_{p^{k_i}}`, an element's order divides `lcm_i (p
 | 65537 | 2 | 331 | 116085511 | no |
 | 99991 | 101 | 431 | 372751 | no |
 
-**Why it dies, in one line:** `p - 1` divides `p^k - 1` for every `k`, so `p^k - 1` is `B`-smooth only if `p - 1` already was. The generalisation is *strictly dominated* by the classical `p-1` method it generalises. Isolating the genuinely new cyclotomic part `Phi_k(p)` needs the norm-one subgroup, which requires machinery (Lucas sequences, Williams `p+1`) that lives outside this ring.
+**Why it dies:** `p - 1` divides `p^k - 1` for every `k`, so `p^k - 1` is `B`-smooth only if `p - 1` already was. Working with `x + a` in the full unit group is dominated by the classical `p-1` method it generalises.
+
+> **Correction (round 3).** The sentence that used to stand here said *strictly dominated*, full stop. That was too strong, and [exp10](exp10_norm_one.md) refutes it. The argument above is about the **full unit group**. The norm-one subgroup of `F_{p^d}*` has order `(p^d - 1)/(p - 1)`, which `p - 1` does **not** divide -- and you can land in it without knowing `p`, by choosing a monic polynomial whose roots multiply to `1`. For `d = 2` that is `x^2 - a x + 1`, i.e. Lucas sequences, i.e. Williams `p+1`. Primes with `p-1` rough and `p+1` smooth are plentiful, and the norm-one method factors them while `p-1` cannot. This entry is a dead end only for the unconstrained element `x + a`.
 
 ## D. Reading position out of the fold
 
@@ -75,7 +77,7 @@ If some residue class mod `r` were *occupied differently* by the support of the 
 
 All four die the same way. Modulo `p` the AKS object is `(x^(p^v) + a)^(n/p^v)`, whose only distinguishing feature is a period of `p^v`. Every cheap thing you can compute from it is either
 
-- **symmetric** in the prime factors (A, C) -- same value mod every `p`, so the gcd is `n`; or
+- **symmetric** in the prime factors (A, and C for the unconstrained element) -- same value mod every `p`, so the gcd is `n`; or
 - **aliased** below the period (B, D) -- the period-`p` structure spreads evenly over all `r < p` buckets, leaving only the accidental vanishing of a bucket sum, a `1/p` event.
 
 Extracting `p` is *period finding*. Classically that needs `Omega(p)` samples; it is the same problem Shor's algorithm solves in polylog time quantumly, by taking a Fourier transform of size `n` rather than size `r << p`. That is a sharp statement of what this framework is missing, and it is not something a cleverer choice of `r` or `a` can supply.

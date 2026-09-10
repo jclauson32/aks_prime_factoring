@@ -9,6 +9,7 @@ from math import gcd
 from .arith import is_prime
 from .factor import certificate, factor, pascal_split
 from .pascal import row_entry, row_prefix, row_support
+from .cyclo import norm_one_search, pollard_pminus1
 from .ring import fold_attack
 from .theorems import check_all
 
@@ -81,6 +82,23 @@ def _cmd_fold(args) -> int:
     return 0
 
 
+def _cmd_normone(args) -> int:
+    n = args.n
+    pm1 = pollard_pminus1(n, bound=args.bound)
+    found = norm_one_search(n, bound=args.bound, degree=args.degree,
+                            bases=range(3, args.bases))
+    print(f"n = {n}")
+    print(f"  Pollard p-1  (bound {args.bound}): "
+          f"{pm1 if pm1 else 'no factor'}")
+    if found:
+        print(f"  norm-one d={args.degree} (bound {args.bound}): "
+              f"{found[0]}  [base {found[1]}]")
+        print(f"  {n} = {found[0]} * {n // found[0]}")
+    else:
+        print(f"  norm-one d={args.degree} (bound {args.bound}): no factor")
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(prog="aksfactor", description=__doc__)
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -111,6 +129,14 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--rmax", type=int, default=200)
     p.add_argument("--bases", type=int, nargs="*", default=[1])
     p.set_defaults(func=_cmd_fold)
+
+    p = sub.add_parser("normone",
+                       help="norm-one cyclotomic factoring vs Pollard p-1")
+    p.add_argument("n", type=int)
+    p.add_argument("--bound", type=int, default=5000)
+    p.add_argument("--degree", type=int, default=2)
+    p.add_argument("--bases", type=int, default=60)
+    p.set_defaults(func=_cmd_normone)
 
     args = ap.parse_args(argv)
     return args.func(args)

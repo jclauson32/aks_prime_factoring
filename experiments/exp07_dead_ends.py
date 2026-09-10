@@ -126,7 +126,7 @@ report.p("Both track `1/p`. The twist changes which tickets you hold, not the "
 report.p()
 
 # ---------------------------------------------------------------- theory C
-report.p("## C. The AKS-ring generalisation of Pollard `p-1`")
+report.p("## C. The AKS-ring generalisation of Pollard `p-1`  *(partly retracted)*")
 report.p()
 report.p("In `F_p[x]/(x^r - 1) = prod_i F_{p^{k_i}}`, an element's order divides "
          "`lcm_i (p^{k_i} - 1)`. Raising `x + a` to `lcm(1..B)` and taking a gcd "
@@ -151,12 +151,20 @@ for p in (101, 1009, 10007, 65537, 99991):
     rows.append([p, bs[0], bs[1], bs[2], "no" if min(bs) >= bs[0] else "yes"])
 report.table(["p", "smoothness of p-1", "of p^2-1", "of p^3-1", "larger k helps?"],
              rows)
-report.p("**Why it dies, in one line:** `p - 1` divides `p^k - 1` for every `k`, so "
-         "`p^k - 1` is `B`-smooth only if `p - 1` already was. The generalisation is "
-         "*strictly dominated* by the classical `p-1` method it generalises. "
-         "Isolating the genuinely new cyclotomic part `Phi_k(p)` needs the norm-one "
-         "subgroup, which requires machinery (Lucas sequences, Williams `p+1`) that "
-         "lives outside this ring.")
+report.p("**Why it dies:** `p - 1` divides `p^k - 1` for every `k`, so `p^k - 1` is "
+         "`B`-smooth only if `p - 1` already was. Working with `x + a` in the full "
+         "unit group is dominated by the classical `p-1` method it generalises.")
+report.p()
+report.p("> **Correction (round 3).** The sentence that used to stand here said "
+         "*strictly dominated*, full stop. That was too strong, and "
+         "[exp10](exp10_norm_one.md) refutes it. The argument above is about the "
+         "**full unit group**. The norm-one subgroup of `F_{p^d}*` has order "
+         "`(p^d - 1)/(p - 1)`, which `p - 1` does **not** divide -- and you can "
+         "land in it without knowing `p`, by choosing a monic polynomial whose "
+         "roots multiply to `1`. For `d = 2` that is `x^2 - a x + 1`, i.e. Lucas "
+         "sequences, i.e. Williams `p+1`. Primes with `p-1` rough and `p+1` smooth "
+         "are plentiful, and the norm-one method factors them while `p-1` cannot. "
+         "This entry is a dead end only for the unconstrained element `x + a`.")
 report.p()
 
 # ---------------------------------------------------------------- theory D
@@ -189,8 +197,8 @@ report.p("All four die the same way. Modulo `p` the AKS object is "
          "`(x^(p^v) + a)^(n/p^v)`, whose only distinguishing feature is a period of "
          "`p^v`. Every cheap thing you can compute from it is either")
 report.p()
-report.p("- **symmetric** in the prime factors (A, C) -- same value mod every `p`, "
-         "so the gcd is `n`; or")
+report.p("- **symmetric** in the prime factors (A, and C for the unconstrained "
+         "element) -- same value mod every `p`, so the gcd is `n`; or")
 report.p("- **aliased** below the period (B, D) -- the period-`p` structure spreads "
          "evenly over all `r < p` buckets, leaving only the accidental vanishing of "
          "a bucket sum, a `1/p` event.")

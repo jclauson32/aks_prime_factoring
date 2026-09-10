@@ -31,7 +31,8 @@ from __future__ import annotations
 from fractions import Fraction
 from math import gcd, isqrt
 
-__all__ = ["lll", "coppersmith_small_root", "factor_with_hint", "hint_bits_needed"]
+__all__ = ["lll", "coppersmith_small_root", "factor_with_hint", "hint_bits_needed",
+           "cost_exponents"]
 
 
 def _dot(u, v):
@@ -235,19 +236,48 @@ def hint_bits_needed(n: int) -> int:
 
 
 def factor_with_hint(n: int, p_approx: int, bound: int | None = None,
-                     m: int = 3):
+                     m: int = 3, beta: float = 0.5):
     """Factor ``n`` given ``p_approx`` within ``bound`` of a true divisor.
 
-    Polynomial time in ``log n`` for ``bound`` up to roughly ``n**0.25``.  This
-    is the closest thing to a polynomial-time factoring algorithm that exists --
-    and it needs partial information no one knows how to get cheaply.
+    Polynomial time in ``log n``.  The reachable ``bound`` is ``n**(beta**2)``
+    where ``beta`` is defined by ``p >= n**beta``, so a balanced semiprime
+    (``beta = 1/2``) gives the familiar ``n**0.25`` and nothing gives more:
+    ``beta <= 1/2`` always, since ``p`` is the smaller factor.
+
+    This is the closest thing to a polynomial-time factoring algorithm that
+    exists -- and it needs partial information no one knows how to get cheaply.
     """
     if bound is None:
         bound = 1 << hint_bits_needed(n)
-    for root in coppersmith_small_root(n, [p_approx % n, 1], bound, beta=0.5, m=m):
+    for root in coppersmith_small_root(n, [p_approx % n, 1], bound, beta=beta, m=m):
         cand = p_approx + root
         if cand > 1:
             g = gcd(cand, n)
             if 1 < g < n:
                 return (g, n // g) if g <= n // g else (n // g, g)
     return None
+
+
+def cost_exponents(beta: float) -> dict:
+    """Exponents of the two ways to turn Coppersmith into a factoring algorithm.
+
+    Write ``p ~ N**beta`` for the smaller factor, so ``beta <= 1/2`` always.
+
+    * Coppersmith's window is ``N**(beta**2)`` (measured in
+      ``experiments/exp20_equivalence.py``).  Covering the range of possible
+      ``p``, of length ``~N**beta``, therefore needs ``N**(beta - beta**2)``
+      guesses -- exponent ``beta(1 - beta)``.
+    * Strassen finds ``p`` outright in ``O~(sqrt(p)) = O~(N**(beta/2))``.
+
+    Comparing, ``beta(1-beta) <= beta/2`` iff ``beta >= 1/2``.  Since
+    ``beta <= 1/2`` with equality only for a balanced semiprime, **guessing plus
+    Coppersmith is never strictly better than Strassen**, and is strictly worse
+    for every unbalanced semiprime.  The two coincide at exactly ``N**(1/4)``.
+    """
+    return {
+        "beta": beta,
+        "coppersmith_window": beta * beta,
+        "guess_and_coppersmith": beta * (1 - beta),
+        "strassen": beta / 2,
+        "strassen_at_least_as_good": beta * (1 - beta) >= beta / 2 - 1e-12,
+    }

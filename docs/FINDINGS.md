@@ -1010,6 +1010,80 @@ above — a known barrier in lattice cryptanalysis), or **find a source of
 high-order bits of `p` cheaper than `N^(1/4)`**, which is precisely what eleven
 rounds here failed to do.
 
+## Round 12: the search reduces to an *equivalent* problem, not an easier one
+
+Round 11 left a target: get `N^(1/4)` bits of `p` cheaply. The hope was that a
+quarter of the bits might cost less than all of them. It doesn't — and now I can
+say that precisely.
+
+### The window is `N^(β²)`, and `β ≤ 1/2` always
+
+Coppersmith recovers roots below `N^(β²/d)`, with `d = 1` for factoring. Measured:
+
+| bits of N | β | bits recovered | β²·log₂N | ratio |
+|---|---|---|---|---|
+| 27 | 0.502 | 7 | 6.8 | 1.03 |
+| 29 | 0.393 | 4 | 4.5 | 0.89 |
+| 32 | 0.310 | 4 | 3.1 | 1.30 |
+| 38 | 0.210 | 2 | 1.7 | 1.19 |
+
+`p` is the *smaller* factor, so `β ≤ 1/2`: **the widest possible window is
+`N^(1/4)`, at exactly the balanced semiprime.** No regime lets the lattice see
+further.
+
+### Guessing never beats Strassen
+
+Covering `N^β` with windows of `N^(β²)` needs `N^(β−β²)` guesses; Strassen finds
+`p` in `Õ(N^(β/2))`:
+
+| β | window `β²` | guess+Coppersmith `β(1−β)` | Strassen `β/2` | winner |
+|---|---|---|---|---|
+| 0.50 | 0.2500 | 0.2500 | 0.2500 | **tie** |
+| 0.40 | 0.1600 | 0.2400 | 0.2000 | Strassen |
+| 0.25 | 0.0625 | 0.1875 | 0.1250 | Strassen |
+| 0.10 | 0.0100 | 0.0900 | 0.0500 | Strassen |
+
+`β(1−β) ≤ β/2` iff `β ≥ 1/2`, and `β ≤ 1/2` always. **Guess+Coppersmith is never
+strictly better than Strassen**, and strictly worse for every unbalanced
+semiprime. They meet at `N^(1/4)` exactly where `β(1−β)` peaks — the hardest
+input for the lattice route is the hardest input for everything else.
+
+### The equivalence
+
+> **Theorem.** For balanced semiprimes `N = pq` with `p ≤ q ≤ 2p`, these are
+> equivalent:
+>
+> **(a)** a deterministic `poly(log N)` algorithm factoring `N`;
+> **(b)** a deterministic `poly(log N)` algorithm outputting `p̃` with
+> `|p − p̃| ≤ N^(1/4)`.
+>
+> *Proof.* (a)⇒(b): factor and output `p`. (b)⇒(a): feed `p̃` to Coppersmith,
+> whose window at `β = 1/2` is exactly `N^(1/4)`. ∎
+
+Twelve rounds hunted for *partial* information on the theory that a quarter of
+the bits might be cheaper than all of them. **They are the same problem.** Any
+algorithm producing a quarter of the bits in polynomial time *is* a
+polynomial-time factoring algorithm, and every barrier measured here applies to
+it unchanged.
+
+### What this settles, and what it doesn't
+
+It settles the **strategy**: cheap partial information is not a way around the
+barrier, it's the barrier restated. Two doors remain, both long known and both
+shut:
+
+- **widen the window** — improve Coppersmith's `β²/d`. The bound is tight for
+  this lattice family, so it needs a genuinely different construction.
+- **shrink the search** — find structure in the *location* of `p` that no
+  algebraic, geometric, group-theoretic or fractal property examined across
+  twelve rounds provided.
+
+It does **not** settle the question. Factoring isn't known to be hard — it's in
+NP ∩ co-NP, so it's very unlikely to be NP-complete, and nothing proved rules out
+a polynomial-time algorithm. What this repository can offer is a map: eleven
+distinct routes, each closed by a measurement rather than an intuition, and a
+precise statement of what a twelfth must do that none of them did.
+
 ## Where the search space stands now
 
 After two rounds the picture is no longer a list of failed attempts; it is a

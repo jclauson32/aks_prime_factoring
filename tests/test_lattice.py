@@ -126,3 +126,62 @@ def test_hint_bits_needed_is_a_quarter():
     for bits in (32, 64, 128, 256):
         n = 1 << bits
         assert abs(hint_bits_needed(n) - bits / 4) <= 1
+
+
+def test_cost_exponents_strassen_never_loses():
+    """beta(1-beta) >= beta/2 for all beta <= 1/2, with equality only at 1/2."""
+    from aksfactor.lattice import cost_exponents
+
+    for i in range(1, 51):
+        beta = i / 100
+        c = cost_exponents(beta)
+        assert c["strassen_at_least_as_good"], beta
+        if abs(beta - 0.5) > 1e-9:
+            assert c["guess_and_coppersmith"] > c["strassen"], beta
+    tie = cost_exponents(0.5)
+    assert abs(tie["guess_and_coppersmith"] - tie["strassen"]) < 1e-12
+    assert abs(tie["guess_and_coppersmith"] - 0.25) < 1e-12
+
+
+def test_window_never_exceeds_a_quarter():
+    """beta <= 1/2 forces the Coppersmith window below N^(1/4)."""
+    from aksfactor.lattice import cost_exponents
+
+    for i in range(1, 51):
+        assert cost_exponents(i / 100)["coppersmith_window"] <= 0.25 + 1e-12
+
+
+def test_window_scales_with_beta_squared():
+    """Unbalanced semiprimes give a strictly narrower window, in relative terms.
+
+    Care is needed: a "window" wider than ``p`` itself contains ``p``, so the
+    search succeeds while the hint carries no information.  Only windows
+    genuinely smaller than ``p`` test anything.
+    """
+    from math import log2
+
+    rng = random.Random(4)
+
+    def randprime(bits):
+        while True:
+            x = rng.getrandbits(bits) | (1 << (bits - 1)) | 1
+            if is_prime(x):
+                return x
+
+    def reach(p, q):
+        n = p * q
+        beta = log2(p) / log2(n)
+        best = 0
+        # only windows strictly inside p are informative
+        for unknown in range(1, p.bit_length() - 1):
+            if factor_with_hint(n, p & ~((1 << unknown) - 1),
+                                bound=1 << unknown, m=4, beta=beta):
+                best = unknown
+        return beta, best, n.bit_length()
+
+    beta_bal, bits_bal, nb_bal = reach(randprime(14), randprime(14))
+    beta_un, bits_un, nb_un = reach(randprime(10), randprime(24))
+
+    assert beta_bal > 0.45 and beta_un < 0.36, (beta_bal, beta_un)
+    # the balanced case reaches a larger fraction of log N than the unbalanced one
+    assert bits_bal / nb_bal > bits_un / nb_un, (bits_bal, nb_bal, bits_un, nb_un)

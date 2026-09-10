@@ -114,9 +114,10 @@ remainder **is** the prime factor `q`, with `y = 1`.
 | **R8** | Harvey's `N^(1/5)` algorithm (arXiv:2010.05450) implemented from the paper | correct, 281/281 |
 | **R9** | anatomy of Harvey's Remark 3.4: the pair term binds by exactly 2×; the runs BSGS needs are absent | measured |
 | **R10** | Lehman's interval covering is non-redundant — min subcover is `0.70 × pairs`, never `O(√r)` | measured |
+| **R11** | Coppersmith implemented: **poly-time** factoring given `N^(1/4)` of `p`; guessing it is `Θ(N^(1/4))` by counting | implemented, proved |
 
 Every row is machine-checked in [`aksfactor/theorems.py`](aksfactor/theorems.py)
-and exercised by `run_tests.py` (105 tests, all passing).
+and exercised by `run_tests.py` (113 tests, all passing).
 
 ## The honest verdict
 
@@ -766,6 +767,75 @@ compress the search — `Θ(r)` candidates down to `O(log)` tree steps — but e
 step is priced at exactly the barrier the compression was meant to dodge. **The
 fan and the threshold oracle are the same problem in different coordinates.**
 
+## Round 11: there *is* a polynomial-time algorithm — and its price is exactly N^(1/4)
+
+You asked for polynomial time. It exists, and it has been outside this project's
+scope the whole way: **Coppersmith's method**. Given `N = pq` and `p` known to
+within about `N^(1/4)`, it recovers `p` in time **polynomial in log N** — no
+search, no smoothness, no group order. It builds a lattice whose short vectors
+are polynomials sharing `f`'s small root *over the integers*, LLL-reduces, and
+reads the root off.
+
+Implemented from scratch in `aksfactor/lattice.py` (exact-rational LLL +
+Howgrave-Graham). It works:
+
+| bits of N | unknown low bits of p | factored | seconds |
+|---|---|---|---|
+| 26 | 4 | yes | 0.02 |
+| 34 | 6 | yes | 0.05 |
+| 38 | 6 | yes | 0.06 |
+
+Two bugs worth recording: my first root-finder enumerated divisors of the
+constant term — which in a Coppersmith lattice is `~N^m`, so it hung; and my
+first LLL recomputed Gram–Schmidt from scratch each step. Both were fatal, both
+fixed.
+
+**How much information does it need?** The bound approaches `N^(1/4)` as the
+lattice grows, exactly as theory predicts:
+
+| m | lattice dim | max unknown bits recovered | (1/4)·log₂N | fraction of limit |
+|---|---|---|---|---|
+| 2 | 4 | 7 | 10 | 0.70 |
+| 3 | 6 | 7 | 10 | 0.70 |
+| 5 | 10 | 8 | 10 | **0.80** |
+
+The limit is `N^(1/4)` — **a quarter of the bits of `N`, half the bits of `p`.**
+
+### Why it can't be bootstrapped
+
+Guess the approximation and run Coppersmith on each guess. The cost is fixed by
+pure counting:
+
+> covering a range of length `L` with windows of width `w` needs at least `L/w`
+> of them.
+
+`√N / N^(1/4) = N^(1/4)`, always. Guess-and-Coppersmith is **`Θ(N^(1/4))`** — the
+exponent Strassen reached in 1977 — and cannot reach `N^(1/5)`, let alone
+`N^(1/6)`. This is not a measured tendency like rounds 9 and 10; it is a counting
+bound with no escape. And no structure on the guesses changes it, because it
+depends on only two numbers: range length and window width. Lehman's fan
+reorganises the guesses; it does not reduce them.
+
+### What that clarifies
+
+Factoring **is** polynomial time given a quarter of the bits of `N`. So the
+entire difficulty is *the cost of those bits* — and every route in this project
+pays at least `N^(1/4)`:
+
+| route | cost |
+|---|---|
+| trial division / Pascal row scan | `Θ(p)` |
+| Strassen / the gasket threshold | `Õ(N^(1/4))` |
+| Harvey's BSGS sweep | `Õ(N^(1/5))` |
+| guess + Coppersmith | `Θ(N^(1/4))`, by counting |
+| **Coppersmith alone** | **`poly(log N)`** — given `N^(1/4)` of it |
+
+Two ways out, both famous open problems: **improve Coppersmith's exponent
+`β²/d`** (widening the window past `N^(1/4)` would immediately beat everything
+above — a known barrier in lattice cryptanalysis), or **find a source of
+high-order bits of `p` cheaper than `N^(1/4)`**, which is precisely what eleven
+rounds here failed to do.
+
 ## Benchmarks
 
 Balanced semiprimes, finding `spf(n)`:
@@ -804,13 +874,14 @@ aksfactor/
   classgroup.py binary quadratic forms, Gauss composition, Schnorr-Lenstra
   fractal.py    the gasket: Lucas geometry, digit-DP box counts, row/column duals
   harvey.py     Harvey's N^(1/5) deterministic factoring: Lehman + Fermat + BSGS
+  lattice.py    exact LLL and Coppersmith: polynomial-time factoring given a hint
   grouporder.py counts reachable group orders: ring unit orders vs #E(F_p)
   fast.py       O~(n^(1/4)) search: product tree, Newton division, remainder
                 tree, multipoint evaluation, BGS factorial, threshold search
   cli.py        python -m aksfactor {factor,row,entry,verify,fold}
 docs/           THEORY.md (proofs), FINDINGS.md (what it buys)
-experiments/    eighteen reproducible scripts; results/ holds their generated reports
-tests/          105 tests; run_tests.py needs no pytest
+experiments/    nineteen reproducible scripts; results/ holds their generated reports
+tests/          113 tests; run_tests.py needs no pytest
 ```
 
 Regenerate every measurement (and the figure above) with `./run_experiments.sh`

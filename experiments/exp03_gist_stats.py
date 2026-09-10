@@ -17,6 +17,7 @@ report = Report(
 )
 
 nonzero = x_prime = y_one = gcd_nontrivial = 0
+x_proper = x_divides_r = 0
 first_x_prime = first_total = 0
 for n in range(4, UPTO):
     if is_prime(n):
@@ -29,6 +30,10 @@ for n in range(4, UPTO):
             continue
         x = n // gcd(n, k)
         nonzero += 1
+        if 1 < x < n and n % x == 0:
+            x_proper += 1
+        if r % x == 0:
+            x_divides_r += 1
         if is_prime(x):
             x_prime += 1
         if r == x:
@@ -44,9 +49,12 @@ for n in range(4, UPTO):
 report.table(
     ["property of a non-zero residue", "count", "share"],
     [
-        ["`x = n/gcd(n,k)` is a proper divisor of `n`", f"{nonzero:,}", "100.000%"],
-        ["`x` divides the residue", f"{nonzero:,}", "100.000%"],
-        ["`gcd(residue, n)` is a proper divisor", f"{gcd_nontrivial:,}", "100.000%"],
+        ["`x = n/gcd(n,k)` is a proper divisor of `n`", f"{x_proper:,}",
+         f"{x_proper / nonzero:.3%}"],
+        ["`x` divides the residue", f"{x_divides_r:,}",
+         f"{x_divides_r / nonzero:.3%}"],
+        ["`gcd(residue, n)` is a proper divisor", f"{gcd_nontrivial:,}",
+         f"{gcd_nontrivial / nonzero:.3%}"],
         ["`x` is prime", f"{x_prime:,}", f"{x_prime / nonzero:.3%}"],
         ["`y = 1` (residue is exactly `x`)", f"{y_one:,}", f"{y_one / nonzero:.3%}"],
     ],

@@ -29,6 +29,7 @@ from math import log, prod
 
 __all__ = [
     "digits",
+    "column_divides",
     "row_nonzero_count",
     "row_has_zero",
     "support_count",
@@ -145,3 +146,19 @@ def render(rows: int, n: int, legend: tuple[int, int] | None = None) -> list[str
             line += "0" if (zp and zq) else ("p" if zp else ("q" if zq else "#"))
         out.append(line)
     return out
+
+
+def column_divides(i: int, c: int, p: int) -> bool:
+    """Does ``p`` divide ``C(i, c)``?
+
+    Lucas: ``p`` divides ``C(i, c)`` exactly when some base-``p`` digit of ``c``
+    exceeds the corresponding digit of ``i``.  Reading *down* column ``c`` this
+    is a condition on ``i`` modulo a power of ``p``, so the column's zero pattern
+    is periodic -- the sideways view of the gasket.
+    """
+    dc, di = digits(c, p), digits(i, p)
+    for t, x in enumerate(dc):
+        y = di[t] if t < len(di) else 0
+        if x > y:
+            return True
+    return False

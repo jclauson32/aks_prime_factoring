@@ -16,8 +16,11 @@ from math import gcd, log
 
 from _common import Report
 
+import random
+
 from aksfactor.arith import is_prime, sieve
 from aksfactor.fractal import (
+    column_divides,
     first_zero_row,
     first_zero_row_predicted,
     fractal_dimension,
@@ -127,17 +130,36 @@ report.p()
 report.p("Widening the column raises the hit rate. It also raises the cost of one "
          "evaluation, by exactly as much:")
 report.p()
+probe_rng = random.Random(11)
+
+
+def _probe_prime(lo, hi):
+    while True:
+        x = probe_rng.randrange(lo, hi) | 1
+        if is_prime(x):
+            return x
+
+
+rows = []
+for lo, hi in [(200, 600), (2000, 6000), (20000, 60000)]:
+    p_probe = _probe_prime(lo, hi)
+    q_probe = _probe_prime(p_probe + 2, 3 * p_probe)
+    n_probe = p_probe * q_probe
+    for c in (1, 4, 16, 64, 256):
+        if c >= p_probe:
+            continue
+        hits = trials = 0
+        for _ in range(4000):
+            i = probe_rng.randrange(c, n_probe)
+            in_p = column_divides(i, c, p_probe)
+            in_q = column_divides(i, c, q_probe)
+            trials += 1
+            hits += in_p != in_q
+        rate = hits / trials
+        rows.append([f"{p_probe:,}", c, f"{rate:.4f}", c,
+                     f"{rate / c:.6f}", f"{rate / c * p_probe:.2f}"])
 report.table(
-    ["p", "column c", "hit rate", "cost per probe", "rate / cost", "x p"],
-    [
-        [431, 1, "0.0025", 1, "0.00250", "1.08"],
-        [431, 16, "0.0550", 16, "0.00344", "1.48"],
-        [431, 256, "0.5450", 256, "0.00213", "0.92"],
-        [2239, 4, "0.0037", 4, "0.00094", "2.10"],
-        [2239, 256, "0.1943", 256, "0.00076", "1.70"],
-        [39239, 64, "0.0025", 64, "0.000039", "1.53"],
-        [39239, 256, "0.0120", 256, "0.000047", "1.84"],
-    ],
+    ["p", "column c", "hit rate", "cost per probe", "rate / cost", "x p"], rows,
 )
 report.p("The last column is flat near `1`. Hit rate divided by cost is `~1/p` no "
          "matter how the column is chosen, so total work stays `Theta(p)`. **The "

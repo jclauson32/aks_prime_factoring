@@ -113,3 +113,26 @@ def test_render_shapes():
     assert pic[-1].strip() == "#" * 9
     legend = render(9, 15, legend=(3, 5))
     assert all(ch in " #pq0" for line in legend for ch in line)
+
+
+def test_column_divides_matches_direct_binomial():
+    """Lucas, read down a column instead of along a row."""
+    from math import comb
+
+    from aksfactor.fractal import column_divides
+
+    for p in (2, 3, 5, 7, 11):
+        for c in range(0, 12):
+            for i in range(c, 90):
+                assert column_divides(i, c, p) == (comb(i, c) % p == 0), (p, c, i)
+
+
+def test_column_zero_pattern_is_periodic():
+    """For c < p the pattern is periodic with period p -- the sideways gasket."""
+    from aksfactor.fractal import column_divides
+
+    for p in (7, 11, 13):
+        for c in range(1, p):
+            pattern = [column_divides(i, c, p) for i in range(c, c + 5 * p)]
+            for k in range(len(pattern) - p):
+                assert pattern[k] == pattern[k + p], (p, c, k)

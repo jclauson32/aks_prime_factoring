@@ -668,8 +668,10 @@ the cost of one evaluation by exactly as much:
 | p | column c | hit rate | cost/probe | rate ÷ cost × p |
 |---|---|---|---|---|
 | 431 | 1 | 0.0025 | 1 | 1.08 |
+| 431 | 64 | 0.2015 | 64 | 1.36 |
 | 431 | 256 | 0.5450 | 256 | 0.92 |
 | 2,239 | 256 | 0.1943 | 256 | 1.70 |
+| 39,239 | 64 | 0.0025 | 64 | 1.53 |
 | 39,239 | 256 | 0.0120 | 256 | 1.84 |
 
 Flat at ~1 across three orders of magnitude. **The barrier is isotropic** — every
@@ -962,13 +964,14 @@ first LLL recomputed Gram–Schmidt from scratch each step. Both were fatal, bot
 fixed.
 
 **How much information does it need?** The bound approaches `N^(1/4)` as the
-lattice grows, exactly as theory predicts:
+lattice grows, exactly as theory predicts (computed live by the experiment, not
+transcribed):
 
 | m | lattice dim | max unknown bits recovered | (1/4)·log₂N | fraction of limit |
 |---|---|---|---|---|
-| 2 | 4 | 7 | 10 | 0.70 |
-| 3 | 6 | 7 | 10 | 0.70 |
-| 5 | 10 | 8 | 10 | **0.80** |
+| 2 | 4 | 8 | 10 | 0.80 |
+| 3 | 6 | 9 | 10 | 0.90 |
+| 5 | 10 | 9 | 10 | **0.90** |
 
 The limit is `N^(1/4)` — **a quarter of the bits of `N`, half the bits of `p`.**
 

@@ -66,17 +66,29 @@ report.p("## How much information does it need?")
 report.p()
 report.p("Coppersmith's bound is `X < N**(beta^2/d)` asymptotically in the lattice "
          "dimension; at finite dimension it falls short by about `1/m`. Measured "
-         "on a 40-bit modulus, sweeping the number of unknown bits until recovery "
+         "live, sweeping the number of unknown bits until recovery "
          "fails:")
 report.p()
+sweep_p = randprime(20)
+sweep_q = randprime(20)
+while sweep_q == sweep_p:
+    sweep_q = randprime(20)
+sweep_n = sweep_p * sweep_q
+sweep_need = hint_bits_needed(sweep_n)
+rows = []
+for m in (2, 3, 5):
+    t0 = time.time()
+    best = 0
+    for unknown in range(1, sweep_need + 2):
+        hint = sweep_p & ~((1 << unknown) - 1)
+        if factor_with_hint(sweep_n, hint, bound=1 << unknown, m=m):
+            best = unknown
+    rows.append([m, 2 * m, best, sweep_need, f"{best / sweep_need:.2f}",
+                 f"{time.time() - t0:.1f}"])
 report.table(
     ["m", "lattice dimension", "max unknown bits recovered", "(1/4)·log2 N",
      "fraction of the limit", "seconds"],
-    [
-        [2, 4, 7, 10, "0.70", "0.0"],
-        [3, 6, 7, 10, "0.70", "0.3"],
-        [5, 10, 8, 10, "0.80", "13.1"],
-    ],
+    rows,
 )
 report.p("The achievable bound climbs toward `N^(1/4)` as the lattice grows, "
          "exactly as the theory says, and the cost of LLL climbs with it. The "

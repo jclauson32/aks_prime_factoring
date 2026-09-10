@@ -115,3 +115,45 @@ def test_collision_search_finds_single_prime_collisions():
             break
     got = collision_search(n, powers, [v])
     assert got == (101, 103)
+
+
+def test_divisor_summatory_exact():
+    from aksfactor.harvey import divisor_summatory
+
+    for r in (1, 2, 10, 50, 200, 1000, 4321):
+        brute = sum(1 for a in range(1, r + 1) for b in range(1, r // a + 1))
+        assert divisor_summatory(r) == brute, r
+
+
+def test_candidate_ratio_is_exactly_two_at_the_optimum():
+    """At r = m = N^(1/5) the pair term is exactly twice the j term, for all N."""
+    from aksfactor.harvey import candidate_counts
+
+    for bits in (60, 100, 140, 180, 220):
+        n = 1 << bits
+        r = m = round(2.0 ** (bits * 0.2))
+        c = candidate_counts(n, r, m)
+        assert abs(c["pair_candidates"] / c["j_candidates"] - 2.0) < 1e-6, bits
+        assert abs(c["pair_share"] - 2 / 3) < 1e-6
+
+
+def test_exponent_runs_are_short():
+    """No local arithmetic progressions in Lehman's range -- nothing to BSGS."""
+    from aksfactor.harvey import exponent_runs, run_length_bound
+
+    for bits in (30, 36, 40, 44):
+        n = 1 << bits
+        r = min(max(4, round(n ** (1 / 3))), 12000)
+        e = exponent_runs(n, r)
+        assert e["longest"] <= 4, (bits, e)
+        # and the bound is the reason
+        assert run_length_bound(r, n) < 10, (bits, run_length_bound(r, n))
+
+
+def test_run_length_bound_shape():
+    from aksfactor.harvey import run_length_bound
+
+    n = 1 << 60
+    # grows like b^1.5, so it only reaches sqrt(r) far beyond r = N^(1/3)
+    assert run_length_bound(1000, n) < run_length_bound(10000, n)
+    assert run_length_bound(round(n ** (1 / 3)), n) < 3

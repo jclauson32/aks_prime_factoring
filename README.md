@@ -112,9 +112,10 @@ remainder **is** the prime factor `q`, with `y = 1`.
 | **T19** | first row with a zero mod `n` = the **largest** prime factor (dual of T4) | proved, 127/127 |
 | **T20** | `gcd(i! mod n, n) > 1` iff `i ≥ spf(n)` — monotone; derives Strassen's `Õ(n^(1/4))` | proved, 29,155 pairs |
 | **R8** | Harvey's `N^(1/5)` algorithm (arXiv:2010.05450) implemented from the paper | correct, 281/281 |
+| **R9** | anatomy of Harvey's Remark 3.4: the pair term binds by exactly 2×; the runs BSGS needs are absent | measured |
 
 Every row is machine-checked in [`aksfactor/theorems.py`](aksfactor/theorems.py)
-and exercised by `run_tests.py` (97 tests, all passing).
+and exercised by `run_tests.py` (101 tests, all passing).
 
 ## The honest verdict
 
@@ -635,6 +636,66 @@ candidates* can be, and Lehman's theorem is what turns factoring into a list. Th
 `N^(1/5)` speedup is baby-step/giant-step over that list, and no rearrangement of
 Pascal's triangle produces the list in the first place.
 
+## Round 9: an anatomy of Harvey's open question
+
+Harvey's paper ends Remark 3.4 with an explicit open problem:
+
+> *"whether it is possible to obtain a fully square-root speedup for Lehman's
+> original choice `r ≍ N^(1/3)`. This would presumably lead to a factoring
+> algorithm with complexity `N^(1/6+o(1))`."*
+
+This round does not resolve it. It **locates** it, with two measurements.
+
+### 1. Which term binds — and it binds by exactly 2
+
+The candidate count is `s ~ √N·lg r/(2√r·m) + r·lg r`: a `j` sweep per pair, plus
+one candidate per pair with `ab ≤ r`. Measured at the optimum `r = m = N^(1/5)`:
+
+| bits of N | j-candidates | pair-candidates | ratio | pair share |
+|---|---|---|---|---|
+| 60 | 1.703e+04 | 3.407e+04 | **2.0000** | 66.7% |
+| 140 | 2.605e+09 | 5.210e+09 | **2.0000** | 66.7% |
+| 260 | 8.116e+16 | 1.623e+17 | **2.0000** | 66.7% |
+
+**Exactly 2, at every size** — not an artifact of one `N`. At `r = m = N^(1/5)`
+the terms are `N^(1/5)ln r/2` and `N^(1/5)ln r`. So two thirds of the work is the
+pair enumeration, and *that* is what pins the exponent: `s ≥ r` forces `cost ≥ r`,
+while `m ~ N^(1/4)/r^(1/4)` gives `r = N^(1/5)`. Reaching `N^(1/6)` means sweeping
+the `Θ(r)` pairs themselves in `O(√r)`.
+
+### 2. The structure a sweep would need is measurably absent
+
+BSGS needs the candidates to be a geometric progression — the exponents
+`e(a,b) = aN + b − ⌈2√(abN)⌉` to be arithmetic. `√(ab)` isn't additive, but it
+could be *locally* additive. On the `a = 1` slice, the first difference holds
+constant only while `f'(b) = √(N/b)` moves less than 1, and
+`f''(b) = −√N/(2b^1.5)`, giving
+
+```
+run length  L(b)  ≤  2·b^1.5 / √N
+```
+
+| bits of N | b up to r | longest run | mean run | bound | run length BSGS needs |
+|---|---|---|---|---|---|
+| 30 | 1,024 | 3 | 1.20 | 2.00 | 32 |
+| 40 | 10,321 | 3 | 1.20 | 2.00 | 102 |
+| 50 | 20,000 | 1 | 1.00 | 0.17 | 141 |
+| 60 | 20,000 | 1 | 1.00 | 0.01 | 141 |
+
+Measurement tracks the bound; both are `O(1)`. A run of length `L` needs
+`b ~ (L√N)^(2/3)`, so `L = √r = N^(1/6)` needs `b ~ N^(4/9)` — but `b ≤ r = N^(1/3)`,
+and `1/3 < 4/9`. **The runs are never long enough, by a fixed margin in the
+exponent.** That's not a shortage of cleverness; the structure isn't there.
+
+### 3. Where that points
+
+A square-root speedup over the pairs, if it exists, cannot come from group
+structure in the candidates. It would have to come from the *arithmetic of the
+pairs*: `{(a,b) : ab ≤ r}` with `a/b` a convergent to `p/q` is a Farey /
+Stern–Brocot fan, not a geometric progression. Whether a fan admits a square-root
+sweep is a question about continued fractions — and nothing in Pascal's triangle
+speaks to it.
+
 ## Benchmarks
 
 Balanced semiprimes, finding `spf(n)`:
@@ -678,8 +739,8 @@ aksfactor/
                 tree, multipoint evaluation, BGS factorial, threshold search
   cli.py        python -m aksfactor {factor,row,entry,verify,fold}
 docs/           THEORY.md (proofs), FINDINGS.md (what it buys)
-experiments/    sixteen reproducible scripts; results/ holds their generated reports
-tests/          97 tests; run_tests.py needs no pytest
+experiments/    seventeen reproducible scripts; results/ holds their generated reports
+tests/          101 tests; run_tests.py needs no pytest
 ```
 
 Regenerate every measurement (and the figure above) with `./run_experiments.sh`

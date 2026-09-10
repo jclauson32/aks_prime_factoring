@@ -52,6 +52,10 @@ __all__ = [
     "collision_search",
     "harvey_search",
     "harvey_factor",
+    "divisor_summatory",
+    "candidate_counts",
+    "exponent_runs",
+    "run_length_bound",
 ]
 
 
@@ -216,3 +220,86 @@ def harvey_factor(n: int, r: int | None = None, m: int | None = None,
         if got:
             return got
     return None
+
+
+# --------------------------------------------------------------------------
+# Anatomy of Remark 3.4 -- where the N**(1/6) question binds
+# --------------------------------------------------------------------------
+
+def divisor_summatory(r: int) -> int:
+    """``#{(a, b) : a*b <= r}``, by the hyperbola method in ``O(sqrt(r))``.
+
+    Asymptotically ``r (ln r + 2*gamma - 1)``; this is the exact count, and it
+    is the source of the ``+r`` term in Harvey's candidate bound.
+    """
+    if r < 1:
+        return 0
+    total, k = 0, isqrt(r)
+    for a in range(1, k + 1):
+        total += r // a
+    return 2 * total - k * k
+
+
+def candidate_counts(n: int, r: int, m: int) -> dict:
+    """Split Harvey's candidate count into its two terms.
+
+    ``s ~ (sqrt(N) ln r)/(2 sqrt(r) m)  +  r ln r``: the first term counts the
+    ``j`` sweep for each ``(a, b)``, the second counts one candidate per pair.
+    At the optimum ``r = m = N**(1/5)`` the ratio of the second to the first is
+    exactly ``2``, independent of ``N`` -- so two thirds of the work is the pair
+    enumeration, which is what pins the exponent at ``1/5``.
+    """
+    from math import log, sqrt
+
+    nf = float(n)
+    ln_r = log(r) if r > 1 else 1.0
+    j_terms = (sqrt(nf) * ln_r) / (2 * sqrt(r) * m) if r and m else 0.0
+    pair_terms = r * ln_r
+    return {
+        "r": r,
+        "m": m,
+        "j_candidates": j_terms,
+        "pair_candidates": pair_terms,
+        "pair_share": pair_terms / (j_terms + pair_terms) if j_terms + pair_terms else 0.0,
+        "exact_pairs": divisor_summatory(r) if r <= 10**7 else None,
+    }
+
+
+def run_length_bound(b: int, n: int) -> float:
+    """Longest run of constant first difference in ``e(1, b)`` near ``b``.
+
+    ``e(1,b) = N + b - ceil(2 sqrt(bN))``.  Its first difference stays constant
+    only while ``f'(b) = sqrt(N/b)`` moves by less than one, and
+    ``f''(b) = -sqrt(N)/(2 b**1.5)``, giving a run length of at most about
+    ``2 b**1.5 / sqrt(N)``.
+
+    With Lehman's ``r = N**(1/3)`` and ``b <= r`` this is at most about ``2``:
+    the sequence is nowhere locally an arithmetic progression, so there is no
+    geometric structure for a baby-step/giant-step sweep to exploit.
+    """
+    from math import sqrt
+
+    return 2 * b**1.5 / sqrt(float(n))
+
+
+def exponent_runs(n: int, r: int) -> dict:
+    """Measure runs of constant first difference of ``e(1, b)`` for ``b <= r``."""
+    exps = [n + b - _isqrt_ceil(4 * b * n) for b in range(1, r + 1)]
+    diffs = [exps[i + 1] - exps[i] for i in range(len(exps) - 1)]
+    if not diffs:
+        return {"r": r, "longest": 0, "mean": 0.0, "distinct": 0}
+    runs, cur = [], 1
+    for i in range(1, len(diffs)):
+        if diffs[i] == diffs[i - 1]:
+            cur += 1
+        else:
+            runs.append(cur)
+            cur = 1
+    runs.append(cur)
+    return {
+        "r": r,
+        "longest": max(runs),
+        "mean": sum(runs) / len(runs),
+        "distinct": len(set(diffs)),
+        "predicted_bound": run_length_bound(r, n),
+    }

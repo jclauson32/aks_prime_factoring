@@ -32,7 +32,8 @@ from fractions import Fraction
 from math import gcd, isqrt
 
 __all__ = ["lll", "coppersmith_small_root", "factor_with_hint", "hint_bits_needed",
-           "cost_exponents"]
+           "cost_exponents", "factor_with_congruence", "congruence_modulus_needed",
+           "residue_candidates", "crt_assembly_cost"]
 
 
 def _dot(u, v):
@@ -280,4 +281,106 @@ def cost_exponents(beta: float) -> dict:
         "guess_and_coppersmith": beta * (1 - beta),
         "strassen": beta / 2,
         "strassen_at_least_as_good": beta * (1 - beta) >= beta / 2 - 1e-12,
+    }
+
+
+def congruence_modulus_needed(n: int) -> int:
+    """Smallest modulus ``M`` for which knowing ``p mod M`` suffices: ``~n**0.25``."""
+    root = isqrt(isqrt(n))
+    return root + 1
+
+
+def factor_with_congruence(n: int, r: int, m_mod: int, m: int = 3,
+                           beta: float = 0.5):
+    """Factor ``n`` given ``p ≡ r (mod m_mod)`` for a known modulus.
+
+    The *same* `N**(1/4)` budget in a different shape.  Instead of the high bits
+    of ``p``, this consumes a congruence: writing ``p = r + m_mod * x`` the
+    unknown ``x`` is bounded by ``sqrt(n)/m_mod``, so Coppersmith succeeds once
+    ``m_mod >= n**0.25``.
+
+    Making the polynomial monic is the only wrinkle: ``r + m_mod*x`` is not, so
+    it is multiplied by ``m_mod**(-1) mod n`` first, which does not change the
+    roots modulo ``p``.
+
+    Returns ``(p, q)`` or ``None``.
+    """
+    if m_mod <= 1:
+        return None
+    g = gcd(m_mod, n)
+    if 1 < g < n:
+        return (g, n // g) if g <= n // g else (n // g, g)
+    monic_const = (r % n) * pow(m_mod, -1, n) % n
+    bound = isqrt(n) // m_mod + 1
+    for root in coppersmith_small_root(n, [monic_const, 1], bound, beta=beta, m=m):
+        cand = r + m_mod * root
+        if cand > 1:
+            g = gcd(cand, n)
+            if 1 < g < n:
+                return (g, n // g) if g <= n // g else (n // g, g)
+    return None
+
+
+def residue_candidates(n: int, ell: int) -> dict:
+    """What ``N`` reveals about ``p mod ell`` for a small prime ``ell``.
+
+    Over ``F_ell`` the residues of ``p`` and ``q`` are the roots of
+
+        z**2 - s*z + N,       s = (p + q) mod ell,
+
+    so ``p mod ell`` is determined exactly by ``s`` -- equivalently, since
+    ``p + q = N + 1 - phi(N)``, by ``phi(N) mod ell``.  ``N mod ell`` is free;
+    ``s`` is the entire unknown.
+
+    Knowing only ``N`` leaves the possible sums ``{a + N/a : a in F_ell*}``.  The
+    map ``a -> a + N/a`` is two-to-one (``a`` and ``N/a`` collide), so this set
+    has about ``(ell-1)/2`` elements: **``N`` gives away exactly the ``p <-> q``
+    symmetry and nothing else.**
+
+    Returns the possible sums, the implied candidate count, and whether the
+    residue happens to be free (a unique sum).
+    """
+    if ell < 2 or n % ell == 0:
+        return {"ell": ell, "sums": [], "candidates": 0, "free": False}
+    sums = sorted({(a + n * pow(a, -1, ell)) % ell for a in range(1, ell)})
+    return {
+        "ell": ell,
+        "sums": sums,
+        "candidates": len(sums),
+        "symmetry_bound": (ell - 1) // 2,
+        "free": len(sums) == 1,
+    }
+
+
+def crt_assembly_cost(n_bits: int, prime_bound: int = 4000) -> dict:
+    """Cost of assembling ``p mod M`` with ``M >= N**0.25`` from small primes.
+
+    Choosing ``p mod ell`` independently for each prime ``ell`` up to ``y``, with
+    ``(ell-1)/2`` candidates apiece, the search is
+
+        prod_{ell <= y} (ell - 1)/2  =  N**0.25 / 2**pi(y),
+
+    so the ``p <-> q`` symmetry is worth a factor ``2**pi(y)``.  Since
+    ``pi(y) = O(log N / log log N)`` that is ``N**o(1)`` -- a subexponential
+    saving, never a polynomial one.
+    """
+    from math import log
+
+    from .arith import sieve
+
+    target = n_bits / 4
+    primes, acc = [], 0.0
+    for ell in sieve(prime_bound):
+        if acc >= target:
+            break
+        primes.append(ell)
+        acc += log(ell, 2)
+    work = sum(log((ell - 1) / 2, 2) for ell in primes if ell > 2)
+    return {
+        "n_bits": n_bits,
+        "primes": len(primes),
+        "largest_prime": primes[-1] if primes else 0,
+        "log2_search": work,
+        "log2_target": target,
+        "saving_bits": target - work,
     }

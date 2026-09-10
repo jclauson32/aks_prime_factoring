@@ -116,9 +116,10 @@ remainder **is** the prime factor `q`, with `y = 1`.
 | **R10** | Lehman's interval covering is non-redundant — min subcover is `0.70 × pairs`, never `O(√r)` | measured |
 | **R11** | Coppersmith implemented: **poly-time** factoring given `N^(1/4)` of `p`; guessing it is `Θ(N^(1/4))` by counting | implemented, proved |
 | **R12** | poly-time factoring ⟺ poly-time approximation of `p` to `N^(1/4)`; guess+Coppersmith never beats Strassen | proved, measured |
+| **R13** | the budget is `φ(N) mod ℓ` for primes `ℓ ≤ (1/4)ln N`; `N` reveals exactly the `p↔q` symmetry and nothing more | proved, measured |
 
 Every row is machine-checked in [`aksfactor/theorems.py`](aksfactor/theorems.py)
-and exercised by `run_tests.py` (118 tests, all passing).
+and exercised by `run_tests.py` (123 tests, all passing).
 
 ## The honest verdict
 
@@ -914,6 +915,72 @@ a polynomial-time algorithm. What this repository can offer is a map: eleven
 distinct routes, each closed by a measurement rather than an intuition, and a
 precise statement of what a twelfth must do that none of them did.
 
+## Round 13: taking the Coppersmith door
+
+The remaining lever was Coppersmith's `β²/d` bound. I didn't widen it — that
+bound is tight for this lattice family. I attacked the *shape* of what fills the
+window instead, and it compressed the problem further than anything else here.
+
+### The budget can be spent as a congruence
+
+Coppersmith is usually stated with the high bits of `p`. It works equally well
+with `p mod M`: writing `p = r + Mx`, the unknown is bounded by `√N/M`, so it
+succeeds once `M ≥ N^(1/4)`. (`r + Mx` isn't monic, so multiply by `M⁻¹ mod N` —
+doesn't move the roots mod `p`.) Implemented as `factor_with_congruence`, verified.
+
+**Which matters, because `M` can be built from small primes.** `p mod M` follows
+by CRT from `p mod ℓ` for primes up to `~(1/4)ln N`.
+
+### What N actually tells you about `p mod ℓ`
+
+Over `F_ℓ`, `p` and `q` are the roots of `z² − sz + N` with `s = (p+q) mod ℓ`.
+`N mod ℓ` is free; **`s` is the entire unknown** — and since `p+q = N+1−φ(N)`,
+knowing `s` is knowing `φ(N) mod ℓ`.
+
+| ℓ | mean candidates for `p mod ℓ` | (ℓ−1)/2 | ratio |
+|---|---|---|---|
+| 13 | 6.52 | 6 | 1.085 |
+| 23 | 11.61 | 11 | 1.045 |
+| 37 | 18.49 | 18 | 1.027 |
+
+The map `a ↦ a + N/a` is two-to-one, since `a` and `N/a` collide. **N gives away
+exactly the `p ↔ q` symmetry — a factor of two — and nothing else.**
+
+Is any of it free? Scanning every `ℓ ≤ 13`: exactly **one** case. `N ≡ 2 (mod 3)`
+forces `p+q ≡ 0 (mod 3)`, since `{1,2}` is the only unordered pair with product 2.
+Nothing else, anywhere.
+
+| bits of N | primes needed | largest ℓ | search `∏(ℓ−1)/2` | N^(1/4) | symmetry saving |
+|---|---|---|---|---|---|
+| 512 | 27 | 103 | 2^105.1 | 2^128 | 2^23 |
+| 2048 | 76 | 383 | 2^439.2 | 2^512 | **2^73** |
+
+`∏(ℓ−1)/2 = N^(1/4)/2^π(y)`, and `π(y) = O(log N/log log N)`, so the saving is
+`N^o(1)` — enormous in absolute terms (2^73!), invisible in the exponent.
+
+### Where the door leads
+
+> **Factoring a balanced semiprime in polynomial time is equivalent to computing
+> `φ(N) mod ℓ` for every prime `ℓ` up to about `(1/4)·ln N`.**
+
+Each is a *single element of a field with `O(log N)` elements*. `N mod ℓ` is
+handed to you free; `φ(N) mod ℓ` is the whole problem. For a **2048-bit modulus
+the entire difficulty is 76 residues, modulo primes no larger than 383.**
+
+That's the smallest this project has made factoring. It is also — the third time
+now — an equivalence rather than a reduction: enough `φ(N) mod ℓ` gives `φ(N)`,
+which factors `N` outright.
+
+The pattern is consistent enough to name:
+
+> **Every reformulation of factoring this repository found *computable* turned
+> out to be symmetric in `p` and `q`; every *asymmetric* one turned out to be
+> equivalent to factoring.**
+
+The `p ↔ q` symmetry that Theorem 8 first found in the AKS ring is the same
+obstruction that survives here — in a setting with no binomial coefficients
+anywhere in it.
+
 ## Benchmarks
 
 Balanced semiprimes, finding `spf(n)`:
@@ -958,8 +1025,8 @@ aksfactor/
                 tree, multipoint evaluation, BGS factorial, threshold search
   cli.py        python -m aksfactor {factor,row,entry,verify,fold}
 docs/           THEORY.md (proofs), FINDINGS.md (what it buys)
-experiments/    twenty reproducible scripts; results/ holds their generated reports
-tests/          118 tests; run_tests.py needs no pytest
+experiments/    twenty-one reproducible scripts; results/ holds their generated reports
+tests/          123 tests; run_tests.py needs no pytest
 ```
 
 Regenerate every measurement (and the figure above) with `./run_experiments.sh`

@@ -185,3 +185,98 @@ def test_window_scales_with_beta_squared():
     assert beta_bal > 0.45 and beta_un < 0.36, (beta_bal, beta_un)
     # the balanced case reaches a larger fraction of log N than the unbalanced one
     assert bits_bal / nb_bal > bits_un / nb_un, (bits_bal, nb_bal, bits_un, nb_un)
+
+
+def test_factor_with_congruence():
+    """The N^(1/4) budget spent as p mod M instead of high bits."""
+    from math import gcd
+
+    from aksfactor.lattice import congruence_modulus_needed, factor_with_congruence
+
+    rng = random.Random(9)
+
+    def randprime(bits):
+        while True:
+            x = rng.getrandbits(bits) | (1 << (bits - 1)) | 1
+            if is_prime(x):
+                return x
+
+    ok = 0
+    for _ in range(4):
+        p, q = randprime(13), randprime(13)
+        if p == q:
+            continue
+        n = p * q
+        m_mod = 4 * congruence_modulus_needed(n)
+        while gcd(m_mod, n) != 1:
+            m_mod += 1
+        got = factor_with_congruence(n, p % m_mod, m_mod, m=4)
+        if got:
+            assert got[0] * got[1] == n
+            ok += 1
+    assert ok >= 3, ok
+
+
+def test_congruence_too_small_fails():
+    """Well below N^(1/4) there is not enough information, and it shows."""
+    from math import gcd
+
+    from aksfactor.lattice import congruence_modulus_needed, factor_with_congruence
+
+    p, q = 8191, 8209
+    assert is_prime(p) and is_prime(q)
+    n = p * q
+    m_mod = max(2, congruence_modulus_needed(n) // 8)
+    while gcd(m_mod, n) != 1:
+        m_mod += 1
+    assert factor_with_congruence(n, p % m_mod, m_mod, m=4) is None
+
+
+def test_residue_candidates_is_the_symmetry():
+    """N pins p mod ell only up to the p<->q swap: about (ell-1)/2 options."""
+    from aksfactor.lattice import residue_candidates
+
+    rng = random.Random(2)
+    for ell in (11, 13, 17, 19, 23, 29, 31, 37):
+        total = count = 0
+        for _ in range(40):
+            n = rng.randrange(2, 10**6)
+            if n % ell == 0:
+                continue
+            info = residue_candidates(n, ell)
+            # never fewer than the symmetry allows, never more than ell-1
+            assert (ell - 1) // 2 <= info["candidates"] <= ell - 1
+            total += info["candidates"]
+            count += 1
+        mean = total / count
+        assert abs(mean / ((ell - 1) / 2) - 1) < 0.15, (ell, mean)
+
+
+def test_only_free_case_is_two_mod_three():
+    from aksfactor.lattice import residue_candidates
+
+    assert residue_candidates(2, 3)["free"]
+    assert residue_candidates(2, 3)["sums"] == [0]
+    for ell in (5, 7, 11, 13, 17):
+        assert not any(residue_candidates(r, ell)["free"] for r in range(1, ell))
+
+
+def test_crt_assembly_saving_is_subexponential():
+    """The p<->q symmetry saves O(pi(y)) bits -- o(log N), so N^o(1).
+
+    The saving is exactly `pi(y) + sum log2(ell/(ell-1))`, not `pi(y)` on the
+    nose: the ell = 2 term and the gap between `log2(ell)` and `log2(ell-1)`
+    both contribute.  What matters is that it is `O(pi(y))` and that its share
+    of the target shrinks as N grows.
+    """
+    from aksfactor.lattice import crt_assembly_cost
+
+    ratios = {}
+    for bits in (128, 256, 512, 1024, 2048):
+        c = crt_assembly_cost(bits)
+        assert c["log2_search"] < c["log2_target"]
+        assert c["saving_bits"] <= 2 * c["primes"], (bits, c)
+        ratios[bits] = c["saving_bits"] / c["log2_target"]
+    # the symmetry's share of the budget shrinks with N
+    assert ratios[2048] < ratios[128], ratios
+    assert ratios[2048] < 0.2, ratios

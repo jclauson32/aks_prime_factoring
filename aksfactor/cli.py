@@ -11,6 +11,7 @@ from .factor import certificate, factor, pascal_split
 from .pascal import row_entry, row_prefix, row_support
 from .classgroup import schnorr_lenstra_split
 from .cyclo import norm_one_search, pollard_pminus1
+from .fractal import first_zero_row, fractal_dimension, render, support_count
 from .qpascal import q_first_hit, q_period, shift_split
 from .ring import fold_attack
 from .theorems import check_all
@@ -129,6 +130,22 @@ def _cmd_classgroup(args) -> int:
     return 0
 
 
+def _cmd_plot(args) -> int:
+    n = args.n
+    legend = tuple(args.legend) if args.legend else None
+    for line in render(args.rows, n, legend=legend):
+        print(line)
+    if legend:
+        print(f"\n  p={legend[0]} kills 'p',  q={legend[1]} kills 'q',  "
+              f"'0' = zero mod {n} (both),  '#' = survivor")
+    if is_prime(n):
+        print(f"\n  mod {n}: Sierpinski gasket of ratio {n}, "
+              f"box dimension {fractal_dimension(n):.4f}")
+        print(f"  survivors in the first {args.rows} rows: "
+              f"{support_count(args.rows, n):,}")
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(prog="aksfactor", description=__doc__)
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -181,6 +198,13 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--bound", type=int, default=200)
     p.add_argument("--forms", type=int, default=3)
     p.set_defaults(func=_cmd_classgroup)
+
+    p = sub.add_parser("plot", help="render Pascal's triangle mod n as a fractal")
+    p.add_argument("n", type=int)
+    p.add_argument("--rows", type=int, default=27)
+    p.add_argument("--legend", type=int, nargs=2, default=None,
+                   metavar=("P", "Q"))
+    p.set_defaults(func=_cmd_plot)
 
     args = ap.parse_args(argv)
     return args.func(args)

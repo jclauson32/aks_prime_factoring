@@ -602,6 +602,96 @@ non-zero entry of row `n` mod `n` sits at `spf(n)` and equals `n/spf(n)`; the
 factors live in the second n-adic digit at constant density; and reading that
 digit is provably as hard as factoring.
 
+## Round 6: the picture
+
+Pascal's triangle mod `n`, plotted, is a **Sierpiński gasket** — and that is not
+an analogy. It *is* Lucas's theorem drawn: the entry at `(i,j)` survives mod `p`
+exactly when every base-`p` digit of `j` is dominated by that of `i`, which is
+the gasket's construction rule.
+
+For composite `n = pq` the picture is **two gaskets superimposed**, at scales `p`
+and `q`. An entry vanishes mod `n` only when it vanishes mod both — so the zeros
+of the composite are exactly where the two hole systems *coincide*:
+
+```
+                       #
+                      ##
+                     ###
+                    #pp#
+                   ##p##
+                  #qqqq#
+                 #p0q0p#
+                ##pqqp##
+               ####q####
+              #pppppppp#
+             #q000p000q#
+            ##q00pp00q##
+           #ppq0ppp0qpp#
+          ##p#qppppq#p##
+         ######ppp######
+        #00q0pq00qp0q00#
+       ##0qqp#q0q#pqq0##
+      ###qq###qq###qq###
+     #ppp0ppppqpppp0ppp#
+    ##ppppppp##ppppppp##
+   #qq00p000q#q000p00qq#
+  #p0q0pp00qppq00pp0q0p#
+ ##pqqppp0q#p#q0pppqqp##
+####q#pppq####qppp#q####
+```
+
+`p` = killed by 3 alone, `q` = killed by 5 alone, `0` = zero mod 15 (both),
+`#` = survivor.
+
+### What the geometry gives
+
+**Exact box counting (T18).** The survivors in rows `0..N−1` are counted by a
+digit dynamic program in `O(log N)` — without drawing the triangle. Specialising
+to `N = p^k` gives the self-similarity relation `(p(p+1)/2)^k` exactly, so the
+box dimension is `log(p(p+1)/2)/log p`, rising toward 2 with `p`. Verified
+against brute force on every case tested.
+
+**A dual to Theorem 4 (T19).** Theorem 4 reads *along* row `n` and returns the
+**smallest** prime factor. Reading *down* the rows returns the **largest**: the
+first row containing a zero mod `n` is the first row carrying a hole in *both*
+gaskets. No row below `q` can contain one, and the first zero row equals `q`
+exactly when row `q` has a hole mod `p`. The criterion predicts it on **127/127**
+semiprimes below 2000; the row is `q` itself in 91% of them.
+
+### Does it break the barrier? No — and now you can see why
+
+The cheapest sideways probe reads *down a column*. Mod `p`, Lucas makes
+`p | C(i,c)` a condition on `i mod p^k`, so `gcd(C(i,c) mod n, n)` splits `n`
+whenever exactly one prime divides. Widening the column raises the hit rate — and
+the cost of one evaluation by exactly as much:
+
+| p | column c | hit rate | cost/probe | rate ÷ cost × p |
+|---|---|---|---|---|
+| 431 | 1 | 0.0025 | 1 | 1.08 |
+| 431 | 256 | 0.5450 | 256 | 0.92 |
+| 2,239 | 256 | 0.1943 | 256 | 1.70 |
+| 39,239 | 256 | 0.0120 | 256 | 1.84 |
+
+Flat at ~1 across three orders of magnitude. **The barrier is isotropic** — every
+direction through the triangle costs `Θ(p)`.
+
+And the picture explains every earlier barrier at a glance:
+
+- **T2** (row empty below `spf(n)`): the top of the gasket is *solid*; holes
+  begin only at scale `p`.
+- **T7** (aliasing): you cannot see a scale-`p` fractal by sampling below scale
+  `p` — folding at `r < p` averages over whole self-similar cells.
+- **P12** (period finding): the gasket *is* a periodic structure of period `p`.
+- **P17** (smoothness ceiling): every group order in the ladder is an arithmetic
+  shadow of that same scale.
+
+The 2-D picture holds strictly *more* information than row `n` — it contains the
+largest prime factor as well as the smallest — but extracting it costs **area**
+where the row cost length. The information is real and priced accordingly.
+
+The fractal didn't break the wall. It made the wall visible, which is a better
+place to stand than where round 5 left off.
+
 ## Where the search space stands now
 
 After two rounds the picture is no longer a list of failed attempts; it is a

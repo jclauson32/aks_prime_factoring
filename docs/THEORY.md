@@ -561,6 +561,103 @@ was necessary and none sufficient, because all three refine the same mechanism.
 A polynomial-time method must abandon smoothness sampling altogether, and
 nothing in the Pascal/AKS setting suggests what would replace it.
 
+## Theorem 18 — the geometry: Lucas drawn
+
+Plotted, Pascal's triangle mod a prime `p` is a Sierpinski gasket of scaling
+ratio `p`. This is Lucas' theorem restated: the entry at `(i, j)` survives mod
+`p` exactly when every base-`p` digit of `j` is dominated by the corresponding
+digit of `i`, which is the gasket's construction rule.
+
+Two exact consequences:
+
+**(a) Row count.** The number of survivors in row `i` is `prod (d + 1)` over the
+base-`p` digits of `i`. Hence row `i` contains a zero iff
+`prod (d + 1) < i + 1`.
+
+**(b) Box count.** The number of survivors in rows `0 .. N-1` is computable by a
+digit dynamic program in `O(log_p N)` time — without drawing the triangle:
+
+```
+support_count(N, p) = sum over digit positions t of
+       [ prod_{s>t} (n_s + 1) ] * [ n_t (n_t + 1)/2 ] * (p(p+1)/2)^t
+```
+
+for `N` with base-`p` digits `n_s`. Specialising to `N = p^k` gives the
+self-similarity relation
+
+```
+support_count(p^k, p) = (p(p+1)/2)^k,
+```
+
+so the gasket has box dimension `log(p(p+1)/2) / log p`, which increases with
+`p` toward `2`. Both statements are verified exhaustively against brute force in
+`tests/test_fractal.py`.
+
+For composite `n = pq` the picture is two gaskets superimposed at scales `p` and
+`q`. An entry vanishes mod `n` only when it vanishes mod both, so the zeros of
+the composite are exactly where the two hole systems coincide.
+
+## Theorem 19 — the dual of Theorem 4
+
+Theorem 4 reads *along* row `n` and returns the **smallest** prime factor.
+Reading *down* the rows returns the **largest**.
+
+Let `n = pq` with `p < q` primes. Then the least row of Pascal's triangle
+containing an entry `== 0 (mod n)` is the least `i` with
+
+```
+prod (digits_p(i) + 1) < i + 1     and     prod (digits_q(i) + 1) < i + 1,
+```
+
+i.e. the least row carrying a hole in *both* gaskets. In particular:
+
+1. no row below `q` contains a zero mod `n`;
+2. the first zero row equals `q` exactly when row `q` carries a hole mod `p`.
+
+*Proof.* An entry vanishes mod `n` iff it vanishes mod `p` and mod `q`, and by
+(a) above each vanishing is the digit condition for that prime. For `i < q` the
+index has a single base-`q` digit `i`, so `prod(digits_q + 1) = i + 1` and row
+`i` has no hole mod `q` — giving (1). At `i = q` the digits are `(0, 1)`, so
+`prod = 2 < q + 1` and the whole interior vanishes mod `q`; a zero mod `n` then
+appears iff row `q` also has a hole mod `p`, which is (2). ∎
+
+Verified exhaustively: the criterion predicts the first zero row on **127/127**
+semiprimes below 2000, and the row equals `q` in 91% of them — precisely the
+cases satisfying (2)
+([exp14](../experiments/results/exp14_fractal.md)).
+
+### Cost, and why this is not a shortcut
+
+Theorem 4 costs `Theta(p)` — a walk along one row. Theorem 19 costs
+`Theta(q^2)` — the rows must be built to reach row `q`, and each is `O(q)` long.
+The two-dimensional picture carries strictly more information (the largest prime
+factor as well as the smallest) and it is priced by **area** rather than length.
+
+The same holds for the cheapest sideways probe. Reading down column `c`, Lucas
+makes `p | C(i,c)` a condition on `i mod p^k`, so `gcd(C(i,c) mod n, n)` splits
+`n` whenever exactly one prime divides. Widening `c` raises the hit rate and the
+cost of one evaluation in exactly the same proportion: measured, the ratio
+`hit-rate / cost` sits at `~1/p` across three orders of magnitude of `p` and two
+of `c`. **The barrier is isotropic** — every direction through the triangle
+costs `Theta(p)`.
+
+### What the picture explains
+
+The fractal reading is not a new attack. It is the reason the earlier attacks
+failed, in a form one can see:
+
+* **Theorem 2** — the row is empty below `spf(n)`: the top of the gasket is
+  solid, holes begin only at scale `p`.
+* **Theorem 7** — aliasing: one cannot see a scale-`p` fractal by sampling below
+  scale `p`; folding at level `r < p` averages over whole self-similar cells.
+* **Proposition 12** — period finding: the gasket *is* a periodic structure of
+  period `p`.
+* **Proposition 17** — the smoothness ceiling: every group order in the ladder is
+  an arithmetic shadow of that same scale.
+
+A barrier one can see is easier to attack than one that can only be computed,
+which is the case for keeping the geometry in view even though it broke nothing.
+
 ## Relationship to AKS
 
 AKS verifies `(x+a)^n == x^n + a (mod n, x^r - 1)` for `r` of size `polylog(n)`

@@ -19,6 +19,12 @@ from .cyclo import (
     pollard_pminus1,
     williams_pplus1,
 )
+from .fractal import (
+    first_zero_row,
+    fractal_dimension,
+    render,
+    support_count,
+)
 from .factor import certificate, factor, pascal_split, pascal_spf
 from .fast import fast_split, fast_spf, multipoint_eval
 from .pascal import (
@@ -52,6 +58,8 @@ __all__ = [
     "fast_split",
     "fast_spf",
     "first_nonzero",
+    "first_zero_row",
+    "fractal_dimension",
     "fold_attack",
     "fold_coefficients",
     "fold_identity",
@@ -73,7 +81,9 @@ __all__ = [
     "row_exact",
     "row_prefix",
     "row_series",
+    "render",
     "row_support",
+    "support_count",
     "schnorr_lenstra_split",
     "shift_split",
     "__version__",

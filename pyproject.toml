@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "aksfactor"
+version = "0.1.0"
+description = "Factoring from the AKS binomial identity via Pascal's triangle mod n"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "Joe Clauson" }]
+keywords = ["factoring", "AKS", "primality", "Pascal", "binomial", "number-theory"]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Science/Research",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+  "Topic :: Scientific/Engineering :: Mathematics",
+]
+dependencies = []
+
+[project.urls]
+Homepage = "https://github.com/jclauson32/aks_prime_factoring"
+
+[project.scripts]
+aksfactor = "aksfactor.cli:main"
+
+[tool.setuptools]
+packages = ["aksfactor"]

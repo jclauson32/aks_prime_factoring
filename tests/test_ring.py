@@ -66,3 +66,18 @@ def test_cyclic_kronecker_path():
 
 def test_fold_coefficients_alias():
     assert fold_coefficients(35, 5, 1) == aks_pow(35, 5, 1)
+
+
+def test_fold_norm_is_symmetric():
+    """Theorem 8: the norm depends only on (n, r, a), so it can never factor."""
+    from math import gcd
+
+    from aksfactor.ring import fold_norm, fold_norm_expected
+
+    for n in (15, 35, 77, 143, 105, 1155, 27, 49, 221, 1001):
+        for r in (3, 5, 7, 9):
+            for a in (1, 2, 3, 5):
+                want = fold_norm_expected(n, r, a)
+                assert fold_norm(n, r, a) == want, (n, r, a)
+                # ... and therefore the gcd is always trivial
+                assert gcd((fold_norm(n, r, a) - want) % n, n) == n

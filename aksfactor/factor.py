@@ -14,8 +14,13 @@ this repository:
     factor with ``n``, so the scan is *provably* the same search as trial
     division.  This mode does the cheap search (a 2-3-5 wheel) and then pays
     for one residue evaluation to emit the Pascal certificate.
+``fast``
+    The same search, batched: one gcd per block of ``c`` positions via fast
+    multipoint evaluation, ``O~(n**0.25)`` ring operations instead of
+    ``Theta(spf(n))``.  See :mod:`aksfactor.fast`.
 
-Both are ``Theta(spf(n))``.  ``certified`` just has a far better constant.
+``scan`` and ``certified`` are ``Theta(spf(n))`` and differ only in constant.
+``fast`` is the one mode that moves the exponent.
 """
 
 from __future__ import annotations
@@ -58,6 +63,16 @@ def pascal_spf(n: int, bound: int | None = None, mode: str = "certified"):
             return None
         if p == n or p > limit:
             return n
+        cert = certificate(n, p)
+        if not cert["valid"]:  # pragma: no cover - would falsify Theorem 3
+            raise AssertionError(f"Pascal certificate failed: {cert}")
+        return p
+    if mode == "fast":
+        from .fast import fast_spf
+
+        p = fast_spf(n, bound=limit)
+        if p is None or p == n:
+            return p
         cert = certificate(n, p)
         if not cert["valid"]:  # pragma: no cover - would falsify Theorem 3
             raise AssertionError(f"Pascal certificate failed: {cert}")

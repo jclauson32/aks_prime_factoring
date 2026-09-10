@@ -31,8 +31,33 @@ __all__ = [
 ]
 
 
+def _digit_binom(a: int, b: int, p: int) -> int:
+    """``C(a, b) mod p`` for ``0 <= b <= a < p``.
+
+    :func:`math.comb` is the fast path for small ``p``, but for large ``p`` a
+    single digit binomial is an astronomically large integer -- ``C(3e8, 1.5e8)``
+    has some 300 million bits.  So above a threshold, build the product modulo
+    ``p`` directly, using the shorter of the two symmetric ranges.
+    """
+    if b > a - b:
+        b = a - b
+    if b == 0:
+        return 1 % p
+    if p <= 4096:
+        return comb(a, b) % p
+    num = den = 1
+    for i in range(b):
+        num = num * ((a - i) % p) % p
+        den = den * ((i + 1) % p) % p
+    return num * pow(den, -1, p) % p
+
+
 def binom_mod_prime(N: int, M: int, p: int) -> int:
-    """``C(N, M) mod p`` for prime ``p``, by Lucas' theorem."""
+    """``C(N, M) mod p`` for prime ``p``, by Lucas' theorem.
+
+    ``N`` and ``M`` are unrestricted.  Cost is ``O(log_p N)`` digit binomials,
+    each ``O(min(digit, p - digit))`` modular operations.
+    """
     if M < 0 or M > N:
         return 0
     res = 1
@@ -40,7 +65,9 @@ def binom_mod_prime(N: int, M: int, p: int) -> int:
         n_d, m_d = N % p, M % p
         if m_d > n_d:
             return 0
-        res = res * comb(n_d, m_d) % p
+        res = res * _digit_binom(n_d, m_d, p) % p
+        if res == 0:
+            return 0
         N //= p
         M //= p
     return res

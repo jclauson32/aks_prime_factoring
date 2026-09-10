@@ -58,3 +58,27 @@ def test_check_all_bundles():
     for n in (12, 35, 97, 561, 1024, 2047):
         for name, (ok, detail) in check_all(n, kmax=200).items():
             assert ok, (n, name, detail)
+
+
+def test_t7_aliasing():
+    from math import gcd
+
+    from aksfactor.theorems import check_t7_aliasing
+
+    for n in (35, 77, 143, 221, 1001, 105):
+        for r in range(2, 20):
+            if gcd(r, n) != 1:
+                continue
+            ok, detail = check_t7_aliasing(n, r)
+            assert ok, detail
+
+
+def test_t9_second_digit():
+    from aksfactor.theorems import check_t9_second_digit
+
+    for n in (15, 35, 77, 143, 221, 1001, 2257, 105, 1155):
+        ok, detail = check_t9_second_digit(n)
+        assert ok, detail
+        # the split rate is a constant, not a 1/p lottery
+        if detail.get("rate") is not None and detail["trials"] > 50:
+            assert detail["rate"] > 0.05, detail

@@ -172,7 +172,132 @@ S_j  ≡  sum over { i : i*p^v ≡ j (mod r) }  of  C(s, i) * a^(s-i)     (mod p
 `a^(p^v) = a` by Fermat. So `(x+a)^n = (x^(p^v) + a)^s`. Expanding by the
 binomial theorem and folding exponents modulo `r` gives the stated sum. ∎
 
-## Proposition 7 — why this family stalls at `Theta(spf(n))`
+## Theorem 7 — the aliasing barrier
+
+Let `p` be a prime factor of `n` with `p^v || n`, and let `r >= 1` with
+`gcd(r, p) = 1`. Then the multiples of `p^v` are equidistributed among the `r`
+residue classes modulo `r`.
+
+*Proof.* The multiples of `p^v` below `N` are `i * p^v` for `i = 0, 1, 2, ...`.
+Since `gcd(p^v, r) = 1`, the map `i -> i * p^v (mod r)` is a bijection of `Z/r`,
+so consecutive blocks of `r` multiples hit each class exactly once. Occupancies
+therefore differ by at most one partial period. ∎
+
+**Consequence.** Folding the row at level `r` sorts positions into classes by
+`k mod r`. If `r < p` then `gcd(r, p) = 1`, so every class contains the same
+number of support positions: the classes are *indistinguishable by occupancy*.
+No positional information about `p` survives the fold. The only signal left is
+the numerical value of the class sums — the `1/p` event of Theorem 6.
+
+To get positional information one needs `gcd(r, p) > 1`, hence `r >= p`. This is
+an aliasing bound of exactly the Nyquist kind: a period-`p` structure cannot be
+resolved by sampling it into fewer than `p` bins.
+
+## Theorem 8 — the symmetry obstruction
+
+For odd `r` and any `a`, in `(Z/n)[x] / (x^r - 1)`,
+
+```
+Norm( (x + a)^n )  =  prod over r-th roots of unity w of  (w + a)^n
+                   =  (a^r + 1)^n     (mod n).
+```
+
+*Proof.* `prod_{w^r = 1} (X - w) = X^r - 1`, so
+`prod_w (a + w) = (-1)^r prod_w (-a - w) = (-1)^r ((-a)^r - 1) = a^r + 1` for
+odd `r`. The norm is multiplicative, so the norm of the `n`-th power is the
+`n`-th power of the norm. ∎
+
+**Consequence.** The right-hand side depends only on `n`, `r`, `a`. It takes the
+same value modulo *every* prime factor of `n`, so
+
+```
+gcd( Norm((x+a)^n) - (a^r + 1)^n ,  n )  =  n     identically.
+```
+
+The norm aggregates all `r` fold coefficients into one number and, in doing so,
+destroys precisely the asymmetry a factor consists of.
+
+**The general principle.** Any quantity invariant under the Galois action
+permuting the `r`-th roots of unity is Frobenius-invariant modulo every `p | n`,
+hence expressible in terms of `n` alone. Symmetric aggregation can never
+factor. A factoring statistic must distinguish `p` from `q`, and by Theorem 6
+the only such statistic available at level `r` is the accidental vanishing of a
+class sum.
+
+## Theorem 9 — the second n-adic digit
+
+Let `0 < k < n` with `gcd(k,n) = 1`. Theorem 2 gives `n | C(n,k)`, so write
+
+```
+C(n,k) = n * m.
+```
+
+Then `m ≡ C(n-1,k-1) * k^(-1) (mod n)`, and for every prime `p | n`:
+
+```
+m ≡ 0 (mod p)
+   <=>  C(n-1, k-1) ≡ 0 (mod p)
+   <=>  some base-p digit of k-1 strictly exceeds the corresponding digit of n-1.
+```
+
+*Proof.* Lemma 0 gives `k * C(n,k) = n * C(n-1,k-1)`. Substituting `C(n,k) = n m`
+and cancelling `n` gives `k * m = C(n-1,k-1)`. Since `gcd(k,n) = 1` we have
+`p` does not divide `k`, so `m ≡ 0 (mod p)` iff `C(n-1,k-1) ≡ 0 (mod p)`. Lucas'
+theorem expresses `C(n-1,k-1) mod p` as a product of digit binomials
+`C(a_i, b_i)`, which vanishes iff `b_i > a_i` for some `i`. ∎
+
+**Consequence.** `gcd(m mod n, n)` is a proper factor of `n` exactly when the
+digit condition holds for some prime factors of `n` and not others.
+
+## Proposition 10 — the second digit is factoring-hard, at constant density
+
+Let `n = pq`. For `k` uniform among the residues coprime to `n`, let `A_p` be the
+event of Theorem 9 for `p`. Then `gcd(m mod n, n)` splits `n` exactly on the
+symmetric difference `A_p Δ A_q`, and
+
+```
+Pr[A_p] = 1 - prod_i (a_i + 1)/p,      a_i = base-p digits of n-1.
+```
+
+Each factor `(a_i + 1)/p` is uniform-ish in `(0,1]`, and `n` has only about
+`log_p n` digits base `p` — three, for a balanced semiprime. So `Pr[A_p]` is
+bounded away from `0` and `1` **independently of the size of `p`**, and so is
+`Pr[A_p Δ A_q]`.
+
+Measured over `p` from `37` to `8.1e5`, the splitting rate stays in roughly
+`0.26 – 0.97` while `1/p` falls from `2.7e-2` to `1.2e-6`
+([exp09](../experiments/results/exp09_second_digit.md)).
+
+**Consequence.** An algorithm computing `C(n,k) mod n^2` for uniform random `k`
+in time `poly(log n)` factors `n = pq` in `O(1)` expected iterations. Computing
+binomial coefficients modulo `n^2` is therefore factoring-hard.
+
+### Corollary 10.1 — random access cannot be deepened
+
+Theorem 5 gives genuine random access to `C(n,k) mod n`, for `n` of any size, in
+time polynomial in `log n` — because the closed form only ever needs
+`C(n-1,k-1)` modulo the *small* number `k`, where Lucas and Granville apply.
+Proposition 10 says extending that access by a single n-adic digit, to modulus
+`n^2`, would break factoring.
+
+So the requirement in Granville-style algorithms that the modulus be *factored*
+before binomials can be reduced modulo it is intrinsic, not an artifact of how
+those algorithms happen to be written.
+
+### The barrier, in its sharpest form
+
+The factors are not hidden in the Pascal row. They sit in the second n-adic
+digit at **constant density** — one random probe in a few would reveal one. The
+entire obstruction is that reading that digit is itself the problem being
+solved.
+
+The rest of this document — the `1/p` fold lottery, the aliasing of Theorem 7,
+the symmetry of Theorem 8 — describes the price of working at the
+first digit, where the information has been quotiented away. Proposition 10 says
+the second digit is where the information lives, and that it is priced exactly
+at factoring.
+
+## Proposition 11 — why the first-digit family stalls at `Theta(spf(n))`
 
 Two corollaries of Theorem 6 bound what any "read the AKS object" strategy can
 do.
@@ -183,7 +308,9 @@ degree `0 < k < p^v` vanishes mod `p`, and Theorem 2 upgrades that to vanishing
 mod `n` at every `k` coprime to `n`. A prefix of length `L < spf(n)` is
 identically zero: it certifies "no factor below `L`" and nothing more.
 
-**(b) Folding buys compression but not information.** Reducing mod `x^r - 1`
+**(b) Folding buys compression but not information.** Theorem 7 says the fold's
+classes are equidistributed, so nothing is learned from *which* class fires, and
+Theorem 8 says symmetric aggregates of the classes are constant. Reducing mod `x^r - 1`
 packs the whole row into `r` numbers for `O(log n)` ring multiplications. But by
 Theorem 6 the coefficient `S_j` leaks a factor exactly when a binomial
 progression sum vanishes mod `p`. Nothing forces it to; empirically it behaves
@@ -206,15 +333,36 @@ where the wall is. One would need either
   candidate and it fails: `d/dx` does not commute with reduction mod `x^r - 1`,
   and under truncation it needs degree `> p` before it sees anything, by (a).
 
+## Proposition 12 — the first digit is a period-finding problem
+
+Modulo `p`, the AKS object is `(x^(p^v) + a)^(n/p^v)`: a series whose support is
+the arithmetic progression `p^v * Z`. Recovering `p` from it is exactly the
+problem of recovering the period of that progression.
+
+- By Theorem 7, sampling into `r < p` buckets aliases the period away.
+- By Theorem 8, symmetric aggregates of the buckets are period-blind.
+- By Theorem 6, an individual bucket reveals the period only through a `1/p`
+  coincidence.
+
+Classical period finding over `Z/n` needs `Omega(p)` samples. This is the same
+problem Shor's algorithm solves in polylog time, by taking a Fourier transform
+of size `n` rather than of size `r << p`. What this framework lacks is not a
+better `r`, a better base `a`, or a better aggregation rule — it is the ability
+to transform at full resolution.
+
 ## Relationship to AKS
 
 AKS verifies `(x+a)^n == x^n + a (mod n, x^r - 1)` for `r` of size `polylog(n)`
 and many `a`, and needs only a **yes/no**: does the identity hold? Theorem 6
 says the identity's failure mod `p` is governed by binomial progression sums of
 the cofactor. Primality only asks whether those sums are all consistent with a
-prime; factoring asks *which* `p` produced them, and by Proposition 7 that
+prime; factoring asks *which* `p` produced them, and by Proposition 11 that
 answer is spread over `Theta(p)` coefficients rather than concentrated in
 `polylog(n)` of them.
 
 That gap — detecting failure is cheap, localising it is not — is the precise
 sense in which AKS does not extend to factoring here.
+
+And Proposition 10 says where that localisation cost actually lives: not in the
+Pascal row, which carries the factors at constant density one n-adic digit down,
+but in the price of reading that digit — which is factoring itself.

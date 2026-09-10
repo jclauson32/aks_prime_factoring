@@ -123,3 +123,59 @@ def check_all(n: int, kmax: int | None = None) -> dict[str, tuple[bool, dict]]:
         "T5_closed_form": check_t5_closed_form(n, kmax),
         "gist": check_gist(n, kmax),
     }
+
+
+def check_t7_aliasing(n: int, r: int) -> tuple[bool, dict]:
+    """T7: with ``gcd(r, n) == 1`` the row's support is equidistributed mod ``r``.
+
+    The support of the interior of ``R(n)`` is ``{ k : gcd(k,n) > 1 }`` -- a union
+    of the multiples of the prime factors.  If ``gcd(r, p) = 1`` then
+    ``i |-> i*p mod r`` is a bijection of ``Z/r``, so the multiples of ``p`` land
+    evenly in every class.  Folding at level ``r < p`` therefore destroys all
+    *positional* information about ``p``: the classes are indistinguishable by
+    occupancy, and the only remaining signal is the accidental vanishing of a
+    class sum.  Positional information needs ``gcd(r, p) > 1``, i.e. ``r >= p``.
+    """
+    if gcd(r, n) != 1:
+        return True, {"n": n, "r": r, "skipped": "gcd(r,n) > 1"}
+    counts = [0] * r
+    for k in range(1, n):
+        if gcd(k, n) > 1:
+            counts[k % r] += 1
+    spread = max(counts) - min(counts)
+    # each class holds the same count up to the partial final period
+    return spread <= r, {"n": n, "r": r, "counts": counts, "spread": spread}
+
+
+def check_t9_second_digit(n: int, kmax: int | None = None) -> tuple[bool, dict]:
+    """T9: for ``gcd(k,n) == 1`` and ``C(n,k) = n*m``, ``m`` vanishes mod ``p``
+    exactly when Lucas' digit condition holds.
+
+    Compares the Lucas criterion against an exact evaluation of
+    ``C(n,k) mod n**2``, and reports how often ``gcd(m, n)`` splits ``n``.
+    """
+    from .binom import binom_mod_prime
+
+    kmax = n - 1 if kmax is None else min(kmax, n - 1)
+    primes = sorted(factorize_small(n))
+    if len(primes) < 2:
+        return True, {"n": n, "skipped": "not composite with >= 2 distinct primes"}
+    n2 = n * n
+    splits = trials = 0
+    for k in range(2, kmax + 1):
+        if gcd(k, n) != 1:
+            continue
+        c = comb(n, k) % n2
+        if c % n:
+            return False, {"n": n, "k": k, "reason": "Theorem 2 violated"}
+        m = c // n
+        zero = [binom_mod_prime(n - 1, k - 1, p) == 0 for p in primes]
+        for p, z in zip(primes, zero):
+            if (m % p == 0) != z:
+                return False, {"n": n, "k": k, "p": p, "lucas": z,
+                               "actual": m % p == 0}
+        trials += 1
+        if 1 < gcd(m, n) < n:
+            splits += 1
+    return True, {"n": n, "trials": trials, "splits": splits,
+                  "rate": (splits / trials) if trials else None}

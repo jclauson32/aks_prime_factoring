@@ -100,9 +100,12 @@ remainder **is** the prime factor `q`, with `y = 1`.
 | **T4** | first non-zero interior entry is at `spf(n)`, with value `n/spf(n)` | proved |
 | **T5** | closed form for any entry; gives `O(1)` random access for huge `n` | proved, implemented |
 | **T6** | folded coefficients mod `p` are binomial progression sums of the cofactor | proved, verified |
+| **T7** | with `gcd(r,p)=1` the row's support is *equidistributed* mod `r` — an aliasing barrier | proved, verified |
+| **T8** | `Norm((x+a)^n) = (a^r+1)^n mod n` — symmetric aggregates carry zero information | proved, verified |
+| **T9** | the *second* n-adic digit of the row splits `n` at **constant** rate, not `1/p` | proved, verified |
 
 Every row is machine-checked in [`aksfactor/theorems.py`](aksfactor/theorems.py)
-and exercised by `run_tests.py` (30 tests, all passing).
+and exercised by `run_tests.py` (41 tests, all passing).
 
 ## The honest verdict
 
@@ -134,6 +137,80 @@ precisely the gap between primality testing and factoring.
 [`docs/FINDINGS.md`](docs/FINDINGS.md) lists the three doors that are shut and
 what a fourth would have to look like.
 
+## Pushing on it: round 2
+
+Four more routes to polynomial time, tested and killed — plus one that moved the
+exponent. Full scorecard in [exp07](experiments/results/exp07_dead_ends.md).
+
+| theory | why it died |
+|---|---|
+| **Symmetric aggregates** (norms, resultants) — buy every lottery ticket at once | `Norm((x+a)^n) = (a^r+1)^n mod n`, a function of `n` alone. Same value mod *every* prime factor, so the gcd is always `n`. Symmetric aggregation destroys the asymmetry a factor consists of. |
+| **Twisted moduli `x^r - c`** — bias a coefficient toward vanishing | Hit rate still tracks `1/p`. Different tickets, same price. |
+| **AKS-ring Pollard `p-1`** — many `k`, many chances | `p-1` divides `p^k-1`, so `p^k-1` is smooth only if `p-1` already was. *Strictly dominated* by the method it generalises. |
+| **Position from the fold** — leak `p mod r`, CRT over several `r`, done in polylog | **Theorem 7:** if `gcd(r,p)=1` then `i ↦ i·p^v mod r` is a bijection, so the classes are equally occupied *by theorem*. Positional info needs `r ≥ p`. Nyquist aliasing. |
+
+### What did work: `Õ(n^(1/4))`
+
+Theorem 2 makes the search "first `k` with `gcd(k,n) > 1`". One position per gcd
+is trial division — but a *block* of `c` positions costs one gcd, since
+`gcd(f(i·c), n) > 1` for `f(X) = (X+1)···(X+c)` exactly when the block
+`(i·c, i·c+c]` contains a position sharing a factor with `n`. Evaluating one
+degree-`c` polynomial at `c` points is `Õ(c)` ring operations via a product tree
+and a remainder tree, so `c²` positions cost `Õ(c)`. Take `c = n^(1/4)`.
+
+Implemented in [`aksfactor/fast.py`](aksfactor/fast.py), verified against trial
+division exhaustively, and it beats a tuned 2-3-5 wheel from `p ≈ 7×10⁸` onward
+([exp08](experiments/results/exp08_quartic.md)).
+
+Two caveats, stated plainly: the wall-clock exponent is `~0.85` rather than
+`0.5` because CPython uses Karatsuba rather than FFT for big integers — the
+`Õ(n^(1/4))` claim is about *ring operations*, which are counted directly — and
+`Õ(n^(1/4))` is Strassen's classical bound, not the deterministic record, which
+is `Õ(n^(1/5))` (Hittmeir; Harvey).
+
+### The one that changed the picture: `C(n,k) mod n²`
+
+Every route above works at the **first** n-adic digit, where Theorem 2 has
+already quotiented the information away. So go one digit deeper: write
+`C(n,k) = n·m`. Then `m = C(n-1,k-1)/k`, and by Lucas, `m ≡ 0 (mod p)` exactly
+when some base-`p` digit of `k-1` exceeds that of `n-1`. For random `k` that is a
+**constant-probability** event — `n` has only ~3 digits base `p`.
+
+| `p` | split rate of `gcd(m, n)` | `1/p` | ratio |
+|---|---|---|---|
+| 37 | 0.815 | 2.7e-2 | 30× |
+| 1,571 | 0.895 | 6.4e-4 | 1,406× |
+| 44,501 | 0.854 | 2.3e-5 | 37,982× |
+| 810,853 | 0.973 | 1.2e-6 | 789,230× |
+
+Flat in `p` — it depends on the base-`p` digit profile of `n-1`, not on the
+size of `p`. Which makes it a **hardness result**, not an algorithm:
+
+> **Proposition 10.** If `C(n,k) mod n²` can be computed in `poly(log n)` for
+> random `k`, then `n = pq` factors in `O(1)` expected tries. Binomial
+> coefficients mod `n²` are factoring-hard.
+
+That is where the barrier becomes sharp. Theorem 5 gives real random access to
+`C(n,k) mod n` for any size `n`, because the closed form only needs
+`C(n-1,k-1)` modulo the **small** number `k`. Going one digit further would
+break factoring. So the factors are *not hidden* in the Pascal row — they sit in
+the second digit at constant density. The whole obstruction is that reading that
+digit is the problem itself.
+
+### The mechanism every dead end shares
+
+Modulo a prime factor `p`, the AKS object **is** `(x^(p^v) + a)^(n/p^v)` — a
+series whose only distinguishing feature is a **period** of `p^v`. Everything
+cheap you can compute from it is either *symmetric* in the prime factors (same
+value mod every `p`, gcd is `n`) or *aliased* below the period (spread evenly
+over all `r < p` buckets).
+
+So at the first digit, extracting `p` is **period finding**, which classically
+costs `Ω(p)` samples. It is exactly the problem Shor's algorithm solves in
+polylog time quantumly, by transforming at size `n` instead of size `r ≪ p`.
+What the framework lacks is not a cleverer `r`, base `a`, or aggregation rule —
+it is resolution.
+
 ## Benchmarks
 
 Balanced semiprimes, finding `spf(n)`:
@@ -162,13 +239,16 @@ aksfactor/
                 independent falling-factorial reference; all three cross-checked
   pascal.py     row_entry (random access), row_series (Kronecker-packed AKS
                 truncation), row_exact; the x*y decomposition
-  theorems.py   machine-checkable form of T1-T5 and the original conjecture
+  theorems.py   machine-checkable form of T1-T5, T7, T9 and the conjecture
   factor.py     pascal_spf / pascal_split / factor, with certificates
-  ring.py       (x+a)^n mod (n, x^r - 1), the fold identity and the fold attack
+  ring.py       (x+a)^n mod (n, x^r - 1), the fold identity, the fold attack,
+                and the norm (symmetry obstruction)
+  fast.py       O~(n^(1/4)) search: product tree, Newton division, remainder
+                tree, fast multipoint evaluation
   cli.py        python -m aksfactor {factor,row,entry,verify,fold}
 docs/           THEORY.md (proofs), FINDINGS.md (what it buys)
-experiments/    six reproducible scripts; results/ holds their generated reports
-tests/          30 tests; run_tests.py needs no pytest
+experiments/    nine reproducible scripts; results/ holds their generated reports
+tests/          41 tests; run_tests.py needs no pytest
 ```
 
 Regenerate every measurement (and the figure above) with `./run_experiments.sh`.

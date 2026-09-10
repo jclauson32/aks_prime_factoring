@@ -88,7 +88,7 @@ def main(argv: list[str] | None = None) -> int:
     p = sub.add_parser("factor", help="factor n via the first non-zero Pascal residue")
     p.add_argument("n", type=int)
     p.add_argument("--bound", type=int, default=None)
-    p.add_argument("--mode", choices=("certified", "scan"), default="certified")
+    p.add_argument("--mode", choices=("certified", "scan", "fast"), default="certified")
     p.set_defaults(func=_cmd_factor)
 
     p = sub.add_parser("row", help="print a prefix of row n mod n")

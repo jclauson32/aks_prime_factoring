@@ -869,6 +869,75 @@ Stern–Brocot fan, not a geometric progression. Whether a fan admits a square-r
 sweep is a question about continued fractions — and nothing in Pascal's triangle
 speaks to it.
 
+## Round 10: the Farey fan — Lehman's covering is not redundant
+
+Round 9 reduced Harvey's Remark 3.4 to one question: the `Θ(r log r)` pairs are
+two thirds of the cost, so `N^(1/6)` needs them handled in `O(√r)`. There are
+exactly two ways — **use fewer pairs**, or **process them faster**. Round 9 closed
+the second. This round closes the first.
+
+Each pair certifies `p` only inside an interval. Lehman's condition
+`0 ≤ aN/p + bp − 2√(abN) < W`, multiplied by `p`, becomes
+`b·p² − (2√(abN)+W)·p + aN < 0` — so certified `p` lie between the roots, centred
+at `p* = √(aN/b)` where AM–GM is tight, with half-width `√N/(2b√r)` that depends
+**only on b**.
+
+So it's a covering problem.
+
+### Lehman's theorem, verified
+
+The intervals must cover `[√(N/r), √N)`. They do, at every size — and the total
+width is only about **1.8×** the range. The system is barely thicker than it has
+to be.
+
+### And it's essentially non-redundant
+
+Greedy interval covering is optimal, so this is the exact minimum:
+
+| r | pairs | minimum subcover | subcover/pairs | subcover/√r |
+|---|---|---|---|---|
+| 100 | 246 | 178 | 0.724 | 17.8 |
+| 800 | 2,755 | 1,941 | 0.705 | 68.6 |
+| 3,200 | 13,199 | 9,114 | 0.691 | 161.1 |
+| 6,400 | 28,589 | 19,566 | **0.684** | **244.6** |
+
+**Flat at ~0.70 across a 64× range of `r`.** At most 30% of pairs are droppable;
+the minimum subcover is `Θ(r log r)` — same order as the full set. And
+`subcover/√r` climbs 18 → 245, so it is emphatically *not* `O(√r)`.
+
+The geometry says why: half-width `√N/(2b√r)` depends only on `b`, while centres
+`√(aN/b)` are spaced `≈ √N/(2√(ab))`. Width beats spacing only when `4a ≥ br`,
+which at `ab = r` needs `a ≥ r/2` — a vanishing corner of the fan. Everywhere
+else the intervals sit edge to edge, and dropping one opens a gap.
+
+### Both routes to N^(1/6) are now closed
+
+| route | what it needs | status |
+|---|---|---|
+| **fewer pairs** | a subfamily of size `O(√r)` covering the range | closed here — min subcover is `0.70 × pairs` |
+| **faster sweep** | local arithmetic progressions in `e(a,b)` | closed in round 9 — runs are `O(1)`, need `√r` |
+
+Neither is a shortage of ingenuity. Both are *measurable absences of structure*.
+
+### Where the fan actually leads
+
+The natural remaining idea is the **Stern–Brocot tree**: convergents to a fixed
+`ξ = p/q` form a path of length `O(log)`, not a set of size `Θ(r)`. Descending it
+needs one comparison per step — *is `a/b < p/q`?* And that comparison is
+
+```
+a/b < p/q  ⟺  aq < bp  ⟺  aN < b·p²  ⟺  p > √(aN/b)
+```
+
+— exactly a threshold query *"is p bigger than this?"*, which is **Strassen's
+problem**, costing `Õ(√threshold) = Õ(N^(1/4))` in Lehman's range. The tree walk
+costs more than the answer it's looking for.
+
+That's a clean place for the thread to end. The Farey structure genuinely *does*
+compress the search — `Θ(r)` candidates down to `O(log)` tree steps — but each
+step is priced at exactly the barrier the compression was meant to dodge. **The
+fan and the threshold oracle are the same problem in different coordinates.**
+
 ## Where the search space stands now
 
 After two rounds the picture is no longer a list of failed attempts; it is a

@@ -157,3 +157,65 @@ def test_run_length_bound_shape():
     # grows like b^1.5, so it only reaches sqrt(r) far beyond r = N^(1/3)
     assert run_length_bound(1000, n) < run_length_bound(10000, n)
     assert run_length_bound(round(n ** (1 / 3)), n) < 3
+
+
+def test_lehman_intervals_cover_the_range():
+    """A computational verification of Lehman's Lemma 3.3."""
+    from aksfactor.harvey import lehman_intervals, minimum_subcover
+
+    for bits, r in [(28, 60), (32, 100), (36, 150), (44, 300)]:
+        n = float(1 << bits)
+        iv, lo, hi = lehman_intervals(n, r)
+        assert minimum_subcover(iv, lo, hi) is not None, (bits, r)
+
+
+def test_true_p_lies_in_a_certified_interval():
+    from aksfactor.harvey import lehman_intervals
+
+    rng = random.Random(5)
+
+    def randprime(lo, hi):
+        while True:
+            x = rng.randrange(lo, hi) | 1
+            if is_prime(x):
+                return x
+
+    for _ in range(10):
+        p = randprime(300, 900)
+        q = randprime(p + 2, 3 * p)
+        n = p * q
+        r = max(2, int(q / p) + 2)
+        iv, lo, hi = lehman_intervals(float(n), r)
+        assert any(l <= p <= h for l, h, _, _ in iv), (p, q, r)
+
+
+def test_covering_is_not_redundant():
+    """The minimum subcover stays a constant fraction -- never O(sqrt r)."""
+    from math import sqrt
+
+    from aksfactor.harvey import lehman_intervals, minimum_subcover
+
+    ratios = []
+    for r in (100, 200, 400, 800):
+        bits = 2 * max(20, r.bit_length() * 3)
+        n = float(1 << bits)
+        iv, lo, hi = lehman_intervals(n, r)
+        cover = minimum_subcover(iv, lo, hi)
+        ratios.append(cover / len(iv))
+        # emphatically not a square-root-sized subcover
+        assert cover > 5 * sqrt(r), (r, cover)
+    assert all(0.6 < x < 0.8 for x in ratios), ratios
+
+
+def test_lehman_interval_is_centred_at_the_amgm_point():
+    from math import sqrt
+
+    from aksfactor.harvey import lehman_interval
+
+    n = float(1 << 40)
+    for a, b in [(1, 2), (2, 5), (3, 7)]:
+        lo, hi = lehman_interval(n, 50, a, b)
+        centre = sqrt(a * n / b)
+        assert lo < centre < hi
+        # half-width depends only on b, to first order
+        assert abs((hi - lo) / 2 - sqrt(n) / (2 * b * sqrt(50))) < 0.2 * sqrt(n) / (b * sqrt(50))

@@ -56,6 +56,9 @@ __all__ = [
     "candidate_counts",
     "exponent_runs",
     "run_length_bound",
+    "lehman_interval",
+    "lehman_intervals",
+    "minimum_subcover",
 ]
 
 
@@ -303,3 +306,78 @@ def exponent_runs(n: int, r: int) -> dict:
         "distinct": len(set(diffs)),
         "predicted_bound": run_length_bound(r, n),
     }
+
+
+def lehman_interval(n: float, r: int, a: int, b: int):
+    """The exact set of ``p`` that the pair ``(a, b)`` certifies, as an interval.
+
+    Lehman's condition is ``0 <= a*N/p + b*p - 2 sqrt(abN) < W`` with
+    ``W = sqrt(N)/(4 r sqrt(ab))``.  Multiplying through by ``p > 0`` turns it
+    into the quadratic ``b p^2 - (2 sqrt(abN) + W) p + aN < 0``, so the certified
+    ``p`` lie strictly between its roots.
+
+    The interval is centred at ``p* = sqrt(aN/b)`` -- where the AM-GM bound
+    ``aq + bp >= 2 sqrt(abN)`` is tight -- and its half-width is approximately
+    ``sqrt(N)/(2 b sqrt(r))``, which depends only on ``b``.
+
+    Returns ``(lo, hi)`` or ``None`` if the pair certifies nothing.
+    """
+    from math import sqrt
+
+    ab = a * b
+    w = sqrt(n) / (4 * r * sqrt(ab))
+    top = 2 * sqrt(ab * n) + w
+    disc = top * top - 4 * b * (a * n)
+    if disc <= 0:
+        return None
+    root = sqrt(disc)
+    return ((top - root) / (2 * b), (top + root) / (2 * b))
+
+
+def lehman_intervals(n: float, r: int):
+    """Every pair's certified interval, clipped to ``[sqrt(N/r), sqrt(N))``.
+
+    Returns ``(intervals, lo, hi)`` where each interval is ``(lo, hi, a, b)``.
+    By Lemma 3.3 the union must cover ``[lo, hi)`` -- which
+    ``tests/test_harvey.py`` checks directly, a computational verification of
+    Lehman's theorem.
+    """
+    from math import sqrt
+
+    lo, hi = sqrt(n / r), sqrt(n)
+    out = []
+    for a in range(1, r + 1):
+        for b in range(1, r // a + 1):
+            iv = lehman_interval(n, r, a, b)
+            if iv is None:
+                continue
+            left, right = max(iv[0], lo), min(iv[1], hi)
+            if right > left:
+                out.append((left, right, a, b))
+    return out, lo, hi
+
+
+def minimum_subcover(intervals, lo: float, hi: float, eps: float = 1e-9):
+    """Fewest intervals needed to cover ``[lo, hi]`` (greedy, which is optimal).
+
+    Returns ``None`` if the intervals do not cover the range at all.
+
+    The point of measuring this: an ``N**(1/6)`` algorithm would need the
+    ``Theta(r log r)`` Lehman pairs replaced by ``O(sqrt(r))`` of them.  Measured,
+    the minimum subcover is a **constant fraction** (about 0.70) of the pairs, and
+    that fraction is flat across a 64-fold range of ``r`` -- so the covering is
+    essentially non-redundant and no such reduction exists.
+    """
+    ordered = sorted(intervals)
+    total, i, cur, used = len(ordered), 0, lo, 0
+    while cur < hi - eps:
+        best = None
+        while i < total and ordered[i][0] <= cur + eps:
+            if best is None or ordered[i][1] > best:
+                best = ordered[i][1]
+            i += 1
+        if best is None or best <= cur + eps:
+            return None
+        cur = best
+        used += 1
+    return used

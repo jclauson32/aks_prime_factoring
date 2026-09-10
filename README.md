@@ -107,9 +107,10 @@ remainder **is** the prime factor `q`, with `y = 1`.
 | **P14** | ring group orders are capped at `partitions(d)` per `p`; elliptic orders grow with `√p` | proved, measured |
 | **T15** | below `spf(n)`, `C(N,k) mod n` depends only on `N mod n` — *no* row leaks there | proved, verified |
 | **T16** | q-analogue of Kummer: the q-row's period is `ord_p(q)`, which **varies** with `q` | proved, verified |
+| **R5** | class numbers `h(−kn)` are dense in `k` — the density requirement is satisfiable | implemented, measured |
 
 Every row is machine-checked in [`aksfactor/theorems.py`](aksfactor/theorems.py)
-and exercised by `run_tests.py` (64 tests, all passing).
+and exercised by `run_tests.py` (73 tests, all passing).
 
 ## The honest verdict
 
@@ -341,6 +342,88 @@ over an *interval*: dense, so every fresh curve is a genuinely fresh number.
 fixed `p` ranges over a *dense* set — an interval, not a divisor lattice — while
 staying computable without knowing `p`.
 
+## Round 5: the density requirement is met — and it caps at L[1/2]
+
+Round 4's target was precise: a construction over `Z/n` whose governing quantity
+at fixed `p` ranges over a **dense** set, while staying computable without
+knowing `p`. Class groups of imaginary quadratic orders meet it.
+
+For discriminant `D = −kn`, the class number `h(D)` sits near `√|D|` and moves
+essentially arbitrarily with `k`. Ambiguous forms — those of order dividing 2 —
+*are* factorizations of `D`, so a smooth `h(D)` hands back a factor of `n`. That
+is Schnorr–Lenstra, implemented here in `aksfactor/classgroup.py` so the contrast
+is measurable rather than asserted.
+
+**Verified.** Identity, inverse, `f^h = 1` and associativity over 120
+discriminants and 512 forms: zero failures. It splits 24/24 test semiprimes
+including 1009·1013.
+
+One bug is worth recording because casual testing misses it entirely: an
+extended-gcd returning a **negative** gcd makes the change-of-basis matrix have
+determinant `−1`. That is an *improper* equivalence — it lands in a different
+class, so composition silently computes in the wrong group. Every structural
+check failed until the sign was normalised.
+
+**Dense, measured.**
+
+| n | multipliers tried | distinct `h(−kn)` | distinct share | range of h |
+|---|---|---|---|---|
+| 143 | 40 | 17 | 42% | 4..124 |
+| 1,147 | 40 | 22 | 55% | 6..392 |
+| 5,183 | 40 | 26 | 65% | 24..504 |
+
+against the rigid families at fixed `p = 1009`: ring unit orders give **2, 3, 5**
+distinct values for degree 2, 3, 4 (the `partitions(d)` cap), while elliptic
+curves give 100 and class numbers give a fresh number for most `k`.
+
+### The ceiling
+
+Meeting the density requirement does not give polynomial time. It gives
+`L[1/2]` — the same class as ECM. The reason is structural and is the real
+conclusion of this project. Every method in the ladder is a **smoothness
+lottery**: build a group whose order is some integer attached to `p`, then hope
+that integer is `B`-smooth.
+
+| the set the parameter ranges over | example | what you get |
+|---|---|---|
+| a single value | classical Pascal row: period `p` | `Θ(p)` — trial division |
+| divisor lattice of `p−1` | q-Pascal row; Pollard `p−1` | fast only when `p−1` is smooth |
+| one value per `(p, d)` | norm-one subgroup: `Φ_d(p)` | Williams `p+1` and relatives |
+| `partitions(d)` values | ring unit groups | a constant, independent of `p` |
+| **dense interval near `p`** | ECM: `p + 1 − t` | `L[1/2]` |
+| **dense, near `√(kn)`** | class groups: `h(−kn)` | `L[1/2]` |
+
+Density separates the last two rows from the rest. It is still not enough,
+because the probability that a number of size `p` is `B`-smooth is itself
+governed by the Dickman function, and optimising `B` against sampling cost gives
+`L[1/2]` however good the sampling is. **Denser sampling cannot beat the
+smoothness density itself.**
+
+That is also why the number field sieve is faster: `L[1/3]` comes not from
+sampling better but from making the numbers *smaller* — testing smoothness of
+algebraic norms rather than of numbers of size `p`. It changes *what* is tested,
+not how it is sampled.
+
+### Where this leaves it
+
+Five rounds walked a ladder of requirements, each answered, each answer exposing
+the next constraint:
+
+1. *An asymmetric statistic* — supplied by the norm-one subgroup (round 3).
+2. *A parameter that varies* — supplied by the q-deformation (round 4).
+3. *Variation over a dense set* — supplied by class groups (round 5).
+
+Each was necessary; none was sufficient. All three refine the **same** mechanism
+— sampling for smoothness — whose ceiling is `L[1/2]` regardless of refinement.
+The next requirement is not a better group but a different mechanism, and that
+is where this line of attack, which began with a conjecture about remainders in
+Pascal's triangle, honestly runs out.
+
+What the Pascal framing did produce is exact and worth keeping: the first
+non-zero entry of row `n` mod `n` sits at `spf(n)` and equals `n/spf(n)`; the
+factors live in the second n-adic digit at constant density; and reading that
+digit is provably as hard as factoring.
+
 ## Benchmarks
 
 Balanced semiprimes, finding `spf(n)`:
@@ -376,13 +459,14 @@ aksfactor/
   cyclo.py      norm-one cyclotomic factoring: Lucas sequences, Williams p+1,
                 general degree-d via resultants
   qpascal.py    q-deformed Pascal row: q-Kummer criterion, tunable period
+  classgroup.py binary quadratic forms, Gauss composition, Schnorr-Lenstra
   grouporder.py counts reachable group orders: ring unit orders vs #E(F_p)
   fast.py       O~(n^(1/4)) search: product tree, Newton division, remainder
                 tree, fast multipoint evaluation
   cli.py        python -m aksfactor {factor,row,entry,verify,fold}
 docs/           THEORY.md (proofs), FINDINGS.md (what it buys)
-experiments/    twelve reproducible scripts; results/ holds their generated reports
-tests/          64 tests; run_tests.py needs no pytest
+experiments/    thirteen reproducible scripts; results/ holds their generated reports
+tests/          73 tests; run_tests.py needs no pytest
 ```
 
 Regenerate every measurement (and the figure above) with `./run_experiments.sh`

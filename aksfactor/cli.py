@@ -9,6 +9,7 @@ from math import gcd
 from .arith import is_prime
 from .factor import certificate, factor, pascal_split
 from .pascal import row_entry, row_prefix, row_support
+from .classgroup import schnorr_lenstra_split
 from .cyclo import norm_one_search, pollard_pminus1
 from .qpascal import q_first_hit, q_period, shift_split
 from .ring import fold_attack
@@ -115,6 +116,19 @@ def _cmd_qrow(args) -> int:
     return 0
 
 
+def _cmd_classgroup(args) -> int:
+    n = args.n
+    got = schnorr_lenstra_split(n, multipliers=range(1, args.kmax + 1),
+                                bound=args.bound, forms_per_disc=args.forms)
+    print(f"n = {n}")
+    if got:
+        print(f"  class group Cl(-{got[1]}*n) yielded an ambiguous form")
+        print(f"  {n} = {got[0]} * {n // got[0]}   (multiplier k = {got[1]})")
+    else:
+        print(f"  no ambiguous form found for k <= {args.kmax}, bound {args.bound}")
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(prog="aksfactor", description=__doc__)
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -159,6 +173,14 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--base", type=int, default=2)
     p.add_argument("--kmax", type=int, default=10000)
     p.set_defaults(func=_cmd_qrow)
+
+    p = sub.add_parser("classgroup",
+                       help="Schnorr-Lenstra: factor via ambiguous forms in Cl(-kn)")
+    p.add_argument("n", type=int)
+    p.add_argument("--kmax", type=int, default=30)
+    p.add_argument("--bound", type=int, default=200)
+    p.add_argument("--forms", type=int, default=3)
+    p.set_defaults(func=_cmd_classgroup)
 
     args = ap.parse_args(argv)
     return args.func(args)

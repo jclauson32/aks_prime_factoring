@@ -12,6 +12,7 @@ and does not buy you computationally.
 """
 
 from .arith import factorize, is_prime
+from .classgroup import schnorr_lenstra_split
 from .cyclo import (
     lucas_v,
     norm_one_search,
@@ -73,6 +74,7 @@ __all__ = [
     "row_prefix",
     "row_series",
     "row_support",
+    "schnorr_lenstra_split",
     "shift_split",
     "__version__",
 ]

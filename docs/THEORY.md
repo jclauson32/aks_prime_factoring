@@ -523,6 +523,44 @@ mere existence of a parameter, is what separates `L[1/2]` from `Theta(p)`.
 quantity at fixed `p` ranges over a *dense* set — an interval, not a divisor
 lattice — while remaining computable without knowing `p`.
 
+## Proposition 17 — the smoothness ceiling
+
+Every construction reached in this project succeeds on a prime `p` exactly when
+some integer attached to `p` is `B`-smooth. Write `G(p, theta)` for the group
+supplied by the construction at parameter `theta`, and `ord G(p, theta)` for the
+integer whose smoothness is tested.
+
+| construction | `ord G(p, theta)` | reach at fixed `p` |
+|---|---|---|
+| classical Pascal row (T4, T7) | `p` | a single value |
+| q-Pascal row (T16) | `ord_p(q)` | divisors of `p - 1` |
+| norm-one subgroup (T13) | `(p^d - 1)/(p - 1)` | one value per `(p, d)` |
+| ring unit group (P14) | `prod_i (p^{d_i} - 1)` | `partitions(d)` values |
+| elliptic curve | `p + 1 - t`, with `t` bounded by `2 sqrt(p)` | an interval of width `4 sqrt(p)` |
+| class group of `-kn` | `h(-kn) ~ sqrt(kn)` | dense in `k` |
+
+The first four rows are sparse and cap out at `Theta(p)` or at a smoothness
+condition on one fixed number. The last two are dense, and dense sampling is
+what makes `L[1/2]` achievable.
+
+**But `L[1/2]` is also the ceiling of the whole table.** The probability that a
+uniform integer of size `x` is `x^(1/u)`-smooth is `u^(-u + o(u))` (Dickman), so
+the expected number of samples before a smooth order appears, balanced against
+the cost of testing each, is minimised at `L[1/2]` regardless of how the samples
+are drawn. Improving the *density* of the sampled set can move a construction up
+to that ceiling; it cannot move it past.
+
+This is the precise sense in which the number field sieve is a different kind of
+algorithm rather than a better-sampled one: `L[1/3]` comes from testing
+smoothness of *smaller* numbers (algebraic norms), not from sampling a denser
+family of the same-sized ones.
+
+**Consequence for this project.** Rounds 3, 4 and 5 supplied, in turn, an
+asymmetric statistic, a varying parameter, and variation over a dense set. Each
+was necessary and none sufficient, because all three refine the same mechanism.
+A polynomial-time method must abandon smoothness sampling altogether, and
+nothing in the Pascal/AKS setting suggests what would replace it.
+
 ## Relationship to AKS
 
 AKS verifies `(x+a)^n == x^n + a (mod n, x^r - 1)` for `r` of size `polylog(n)`

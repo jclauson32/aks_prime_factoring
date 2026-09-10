@@ -93,3 +93,45 @@ def test_covers_more_positions_than_gcds():
     fast.fast_spf(n, bound=300000, stats=stats)
     assert stats["c"] > 100
     assert stats["positions_covered"] >= 300000
+
+
+def test_factorial_mod_matches_math_factorial():
+    from math import factorial
+
+    from aksfactor.fast import factorial_mod
+
+    for n in range(2, 300):
+        for m in range(0, 45):
+            assert factorial_mod(m, n) == factorial(m) % n, (m, n)
+
+
+def test_factorial_mod_large():
+    from math import factorial
+
+    from aksfactor.fast import factorial_mod
+
+    n = 1009 * 1013
+    for m in (500, 1000, 1010, 2000):
+        assert factorial_mod(m, n) == factorial(m) % n, m
+
+
+def test_threshold_spf_matches_trial_division():
+    from aksfactor.arith import spf_trial
+    from aksfactor.fast import threshold_spf
+
+    for n in list(range(4, 500)) + [1009 * 1013, 10007 * 10009, 65537**2,
+                                    999983 * 999979, 2**31 - 1, 1000003]:
+        assert threshold_spf(n) == spf_trial(n), n
+
+
+def test_factorial_threshold_is_monotone():
+    """T20: the predicate binary search relies on."""
+    from math import gcd
+
+    from aksfactor.arith import spf_trial
+    from aksfactor.fast import factorial_mod
+
+    for n in (91, 143, 221, 1147, 2021, 1009 * 1013):
+        s = spf_trial(n)
+        for i in range(1, min(n, 80)):
+            assert (gcd(factorial_mod(i, n), n) > 1) == (i >= s), (n, i)

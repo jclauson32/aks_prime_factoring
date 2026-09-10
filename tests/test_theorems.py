@@ -82,3 +82,11 @@ def test_t9_second_digit():
         # the split rate is a constant, not a 1/p lottery
         if detail.get("rate") is not None and detail["trials"] > 50:
             assert detail["rate"] > 0.05, detail
+
+
+def test_t20_factorial_threshold():
+    from aksfactor.theorems import check_t20_factorial_threshold
+
+    for n in (12, 60, 91, 143, 210, 875, 1155, 2310, 9009, 1024, 1009 * 1013):
+        ok, detail = check_t20_factorial_threshold(n)
+        assert ok, detail

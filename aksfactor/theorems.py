@@ -24,6 +24,7 @@ __all__ = [
     "check_t9_second_digit",
     "check_t15_no_row_leaks",
     "check_t16_q_kummer",
+    "check_t20_factorial_threshold",
 ]
 
 
@@ -233,3 +234,36 @@ def check_t16_q_kummer(n: int, bases=(2, 3, 5, 6, 7), kmax: int = 40) -> tuple[b
                 if (row[k] % p == 0) != q_lucas_divides(n, k, d, p):
                     return False, {"n": n, "p": p, "q": base, "k": k, "d": d}
     return True, {"n": n, "checked": checked}
+
+
+def check_t20_factorial_threshold(n: int, cap: int = 120) -> tuple[bool, dict]:
+    """T20: ``gcd(i! mod n, n) == prod_p p**min(v_p(n), v_p(i!))``.
+
+    In particular the gcd exceeds 1 exactly when ``i >= spf(n)`` -- a *monotone*
+    threshold, which is what makes binary search on it legal.
+
+    Read on the fractal picture: row ``p`` is where the mod-``p`` gasket first
+    makes holes, so "which gaskets have started making holes by row ``i``" is
+    "which primes divide ``i!``", and the least such row is ``spf(n)``.
+    """
+    def _legendre(i: int, p: int) -> int:
+        v, q = 0, p
+        while q <= i:
+            v += i // q
+            q *= p
+        return v
+
+    facs = factorize_small(n)
+    spf = min(facs)
+    value = 1
+    for i in range(1, min(n, cap)):
+        value = value * i % n
+        want = 1
+        for p, e in facs.items():
+            want *= p ** min(e, _legendre(i, p))
+        got = gcd(value, n)
+        if got != want:
+            return False, {"n": n, "i": i, "got": got, "want": want}
+        if (got > 1) != (i >= spf):
+            return False, {"n": n, "i": i, "monotone": False, "spf": spf}
+    return True, {"n": n, "spf": spf, "checked": min(n, cap) - 1}

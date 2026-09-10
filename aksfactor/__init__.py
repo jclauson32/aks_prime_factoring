@@ -26,7 +26,13 @@ from .fractal import (
     support_count,
 )
 from .factor import certificate, factor, pascal_split, pascal_spf
-from .fast import fast_split, fast_spf, multipoint_eval
+from .fast import (
+    factorial_mod,
+    fast_split,
+    fast_spf,
+    multipoint_eval,
+    threshold_spf,
+)
 from .pascal import (
     first_nonzero,
     residue_shape,
@@ -55,6 +61,7 @@ __all__ = [
     "check_all",
     "factor",
     "factorize",
+    "factorial_mod",
     "fast_split",
     "fast_spf",
     "first_nonzero",
@@ -84,6 +91,7 @@ __all__ = [
     "render",
     "row_support",
     "support_count",
+    "threshold_spf",
     "schnorr_lenstra_split",
     "shift_split",
     "__version__",

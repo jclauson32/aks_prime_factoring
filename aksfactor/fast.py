@@ -28,7 +28,7 @@ from .arith import spf_trial
 from .pascal import _pack, _unpack
 
 __all__ = ["fast_spf", "fast_split", "poly_mul", "multipoint_eval", "product_of",
-           "COUNTERS", "reset_counters"]
+           "factorial_mod", "threshold_spf", "COUNTERS", "reset_counters"]
 
 # Below this search bound the wheel beats the polynomial machinery outright.
 _CROSSOVER = 1 << 14
@@ -216,3 +216,70 @@ def fast_split(n: int, bound: int | None = None):
     if p is None or p == n:
         return None
     return p, n // p
+
+
+def factorial_mod(m: int, n: int) -> int:
+    """``m! mod n`` in ``O~(sqrt(m))`` ring operations (Bostan-Gaudry-Schost).
+
+    Builds ``f(X) = (X+1)...(X+c)`` for ``c = isqrt(m)`` and evaluates it at
+    ``0, c, 2c, ...`` -- each value is one block of the factorial -- then mops up
+    the tail.  The same product-tree machinery as :func:`fast_spf`.
+    """
+    if m < 0:
+        raise ValueError("factorial_mod expects m >= 0")
+    if n == 1:
+        return 0
+    if m >= n:
+        # n has a factor <= m, so the factorial is divisible by every prime of n
+        # only when m >= every prime; fall back to the plain loop for safety.
+        result = 1
+        for i in range(2, m + 1):
+            result = result * i % n
+            if result == 0:
+                return 0
+        return result
+    c = isqrt(m)
+    if c <= 1:
+        result = 1
+        for i in range(2, m + 1):
+            result = result * i % n
+        return result
+    f = product_of([[j % n, 1 % n] for j in range(1, c + 1)], n)
+    points = [i * c % n for i in range(c)]
+    values = multipoint_eval(f, points, n)
+    result = 1
+    for v in values:
+        result = result * v % n
+    for i in range(c * c + 1, m + 1):
+        result = result * (i % n) % n
+    return result
+
+
+def threshold_spf(n: int) -> int | None:
+    """Smallest prime factor by binary search on ``gcd(i! mod n, n) > 1``.
+
+    The predicate is monotone in ``i`` -- a prime ``p`` divides ``i!`` exactly
+    when ``i >= p`` -- so the least ``i`` making it true *is* ``spf(n)``.
+
+    Read on the fractal picture: row ``p`` is where the mod-``p`` gasket first
+    makes holes, so "which gaskets have started making holes by row ``i``" is
+    "which primes divide ``i!``", and the threshold is the smallest of them.
+
+    ``O(log n)`` factorials, each ``O~(n**0.25)``.  Returns ``n`` for primes.
+    """
+    if n < 2:
+        raise ValueError("threshold_spf expects n >= 2")
+    for p in (2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37):
+        if n % p == 0:
+            return p
+    hi = isqrt(n)
+    if gcd(factorial_mod(hi, n), n) == 1:
+        return n  # no factor <= sqrt(n): n is prime
+    lo = 2
+    while lo < hi:
+        mid = (lo + hi) // 2
+        if gcd(factorial_mod(mid, n), n) > 1:
+            hi = mid
+        else:
+            lo = mid + 1
+    return lo

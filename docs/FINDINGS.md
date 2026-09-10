@@ -692,6 +692,64 @@ where the row cost length. The information is real and priced accordingly.
 The fractal didn't break the wall. It made the wall visible, which is a better
 place to stand than where round 5 left off.
 
+## Round 7: the gasket derives Strassen — and doesn't beat him
+
+Round 6 said the mod-`p` gasket first makes holes at row `p`. That has a sharp
+arithmetic shadow:
+
+> *which gaskets have started making holes by row `i`* = *which primes divide
+> `i!`* = `gcd(i! mod n, n)`
+
+**Theorem 20.** `gcd(i! mod n, n) = ∏ p^min(e, v_p(i!))` over `p^e ‖ n`. Hence
+`gcd(i! mod n, n) > 1` **iff** `i ≥ spf(n)` — a *monotone* threshold. Verified
+exactly on 29,155 `(n, i)` pairs.
+
+The jump rows of that gcd are where some `v_p(i!)` crosses `v_p(n)`. For
+squarefree `n` they are **exactly the prime factors**, each entering at its own
+row:
+
+| n | jump rows | distinct primes |
+|---|---|---|
+| 210 | 2, 3, 5, 7 | 2, 3, 5, 7 |
+| 1,155 | 3, 5, 7, 11 | 3, 5, 7, 11 |
+| 1,022,117 | 1009, 1013 | 1009, 1013 |
+| 12 = 2²·3 | 2, 3, **4** | 2, 3 |
+
+(the extra jump at 4 is where `v_2(i!)` reaches 2 — same statement, multiplicity
+filling.)
+
+### The derivation
+
+1. Row `p` is where the mod-`p` gasket first has holes (T18).
+2. So `gcd(i! mod n, n) > 1` iff `i ≥ spf(n)`.
+3. Monotone ⟹ `O(log n)` binary-search steps locate `spf(n)`.
+4. `i! mod n` costs `Õ(√i)` (Bostan–Gaudry–Schost).
+
+Total `Õ(n^(1/4))` — **Strassen's deterministic bound, falling out of the
+geometry** rather than being imposed on it. Implemented as `threshold_spf`.
+
+### And the honest part
+
+Measured, this pretty derivation is **~20× slower** than the block-scan form of
+the *same* bound already in `exp08`: binary search pays for `O(log n)` separate
+factorial computations where one product tree covers the whole range.
+
+| p | binary search + BGS | block scan | ratio |
+|---|---|---|---|
+| 1,290,539 | 3.43 s | 0.17 s | 20× |
+| 24,251,417 | 28.24 s | 1.14 s | 25× |
+| 212,771,729 | 109.83 s | 7.75 s | 14× |
+
+**No new bound.** Beating `Õ(n^(1/4))` this way needs `i! mod n` in less than
+`Õ(√i)` — a known open problem, equivalent to improving deterministic factoring.
+The one place the literature does better, `Õ(n^(1/5))` (Hittmeir; Harvey), gets
+there by combining the factorial with extra sieving, not by asking the gasket a
+better question.
+
+So the contribution is explanatory, and precisely so: `Õ(n^(1/4))` is **the
+geometry's own answer** to the cheapest question you can ask the picture — *has
+any hole appeared by row `i`?* — not an artifact of one clever construction.
+
 ## Where the search space stands now
 
 After two rounds the picture is no longer a list of failed attempts; it is a

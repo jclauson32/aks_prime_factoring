@@ -111,9 +111,10 @@ remainder **is** the prime factor `q`, with `y = 1`.
 | **T18** | the mod-`p` triangle is a Sierpiński gasket; exact `O(log N)` box count | proved, verified |
 | **T19** | first row with a zero mod `n` = the **largest** prime factor (dual of T4) | proved, 127/127 |
 | **T20** | `gcd(i! mod n, n) > 1` iff `i ≥ spf(n)` — monotone; derives Strassen's `Õ(n^(1/4))` | proved, 29,155 pairs |
+| **R8** | Harvey's `N^(1/5)` algorithm (arXiv:2010.05450) implemented from the paper | correct, 281/281 |
 
 Every row is machine-checked in [`aksfactor/theorems.py`](aksfactor/theorems.py)
-and exercised by `run_tests.py` (88 tests, all passing).
+and exercised by `run_tests.py` (97 tests, all passing).
 
 ## The honest verdict
 
@@ -575,6 +576,65 @@ So the contribution is explanatory, and precisely so: `Õ(n^(1/4))` is **the
 geometry's own answer** to the cheapest question you can ask the picture — *has
 any hole appeared by row `i`?* — not an artifact of one clever construction.
 
+## Round 8: Harvey's N^(1/5), implemented
+
+Round 7 named the live thread: Hittmeir and Harvey beat the `Õ(n^(1/4))` bound
+this project kept rediscovering. So I read the paper
+([arXiv:2010.05450](https://arxiv.org/abs/2010.05450)) and implemented it.
+
+Three ingredients, **none of which come from Pascal's triangle**:
+
+1. **Lehman's strategy** — for `N = pq` there are small `a, b` with `aq + bp` in
+   a short, explicitly known interval; knowing `u = aq + bp` recovers `p, q` from
+   the roots of `y² − uy + abN`.
+2. **Hittmeir's congruence** — `α^(aq+bp) ≡ α^(aN+b) (mod p)` by Fermat, so a
+   candidate `u` is testable *modulo p without knowing p*, via a gcd.
+3. **One global BSGS sweep** — writing the offset as `i + jm` turns the search
+   into matching `α^(−jm)·t_{a,b}` against a table of powers. Hittmeir sweeps
+   chunks; Harvey's exponential gain is sweeping the whole space at once.
+
+**Correctness.** Algorithm 4.2 on 256 adjacent-prime semiprimes: 256/256.
+Algorithm 4.3 end to end on 25 semiprimes, balanced and unbalanced: 25/25.
+Primes correctly reported prime: 5/5.
+
+**Where the sweep takes over.** Algorithm 4.3 clears factors below `(N/r)^(1/2)`
+with Strassen and hands the rest to the sweep; `r ~ N^0.2/lg^0.8 N` grows, so the
+sweep's share grows with `N`. At 24 bits it handles under 1% of the range; by 512
+bits, almost all of it. **It only becomes an `N^(1/5)` algorithm at scale.**
+
+**And it loses at every size I can test:**
+
+| p = spf(N) | digits | Harvey 4.3 | Strassen | ratio |
+|---|---|---|---|---|
+| 5,807 | 8 | 0.000 s | 0.000 s | 3.4× |
+| 31,513 | 10 | 0.014 s | 0.015 s | 0.9× |
+| 328,357 | 12 | 0.678 s | 0.072 s | 9.4× |
+
+The stated bounds cross near **180 bits (`N ~ 10^54`)** — far past anything
+reachable from Python, though well *below* cryptographic sizes, so at RSA scale
+the `N^(1/5)` bound genuinely is the better one. (Both hopeless in absolute terms
+there; it's a comparison of two astronomical numbers.)
+
+### What it needed, measured against this project's ladder
+
+The gasket supplies a **scale**, `p`, and every question I asked of it across
+seven rounds was some form of *at what scale does the structure change?* Harvey
+asks a different question:
+
+- Lehman's relation `aq + bp` is **additive**; every construction in this
+  repository was multiplicative. Pascal's triangle knows `p` as a scale — it
+  knows nothing about `aq + bp` landing in a short interval.
+- Hittmeir's test is Fermat — the one classical tool that survives from the AKS
+  side of this project.
+- Harvey's contribution is that the resulting search space, unlike a scale, is
+  **flat enough to square-root with a single BSGS**.
+
+That is the answer to round 7's question. **A scale cannot be square-rooted** —
+Theorem 7's aliasing says sampling below it returns nothing. A *list of
+candidates* can be, and Lehman's theorem is what turns factoring into a list. The
+`N^(1/5)` speedup is baby-step/giant-step over that list, and no rearrangement of
+Pascal's triangle produces the list in the first place.
+
 ## Benchmarks
 
 Balanced semiprimes, finding `spf(n)`:
@@ -612,13 +672,14 @@ aksfactor/
   qpascal.py    q-deformed Pascal row: q-Kummer criterion, tunable period
   classgroup.py binary quadratic forms, Gauss composition, Schnorr-Lenstra
   fractal.py    the gasket: Lucas geometry, digit-DP box counts, row/column duals
+  harvey.py     Harvey's N^(1/5) deterministic factoring: Lehman + Fermat + BSGS
   grouporder.py counts reachable group orders: ring unit orders vs #E(F_p)
   fast.py       O~(n^(1/4)) search: product tree, Newton division, remainder
                 tree, multipoint evaluation, BGS factorial, threshold search
   cli.py        python -m aksfactor {factor,row,entry,verify,fold}
 docs/           THEORY.md (proofs), FINDINGS.md (what it buys)
-experiments/    fifteen reproducible scripts; results/ holds their generated reports
-tests/          88 tests; run_tests.py needs no pytest
+experiments/    sixteen reproducible scripts; results/ holds their generated reports
+tests/          97 tests; run_tests.py needs no pytest
 ```
 
 Regenerate every measurement (and the figure above) with `./run_experiments.sh`

@@ -11,6 +11,7 @@ from .factor import certificate, factor, pascal_split
 from .pascal import row_entry, row_prefix, row_support
 from .classgroup import schnorr_lenstra_split
 from .cyclo import norm_one_search, pollard_pminus1
+from .harvey import harvey_factor
 from .fractal import first_zero_row, fractal_dimension, render, support_count
 from .qpascal import q_first_hit, q_period, shift_split
 from .ring import fold_attack
@@ -146,6 +147,21 @@ def _cmd_plot(args) -> int:
     return 0
 
 
+def _cmd_harvey(args) -> int:
+    n = args.n
+    stats: dict = {}
+    got = harvey_factor(n, r=args.r, m=args.m, stats=stats)
+    print(f"n = {n}")
+    if got:
+        print(f"  {n} = {got[0]} * {got[1]}")
+    else:
+        print(f"  no factors found -- n is prime")
+    if stats:
+        print(f"  sweep: r={stats.get('r')}, m={stats.get('m')}, "
+              f"triples examined={stats.get('triples')}")
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(prog="aksfactor", description=__doc__)
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -205,6 +221,13 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--legend", type=int, nargs=2, default=None,
                    metavar=("P", "Q"))
     p.set_defaults(func=_cmd_plot)
+
+    p = sub.add_parser("harvey",
+                       help="Harvey's N^(1/5) deterministic factoring (arXiv:2010.05450)")
+    p.add_argument("n", type=int)
+    p.add_argument("--r", type=int, default=None)
+    p.add_argument("--m", type=int, default=None)
+    p.set_defaults(func=_cmd_harvey)
 
     args = ap.parse_args(argv)
     return args.func(args)

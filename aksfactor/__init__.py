@@ -19,6 +19,7 @@ from .cyclo import (
     pollard_pminus1,
     williams_pplus1,
 )
+from .harvey import harvey_factor, harvey_search, lehman_recover
 from .fractal import (
     first_zero_row,
     fractal_dimension,
@@ -67,6 +68,9 @@ __all__ = [
     "first_nonzero",
     "first_zero_row",
     "fractal_dimension",
+    "harvey_factor",
+    "harvey_search",
+    "lehman_recover",
     "fold_attack",
     "fold_coefficients",
     "fold_identity",

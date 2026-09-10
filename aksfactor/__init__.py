@@ -29,6 +29,7 @@ from .pascal import (
     row_series,
     row_support,
 )
+from .qpascal import q_first_hit, q_pascal_row, q_period, shift_split
 from .ring import (
     aks_pow,
     fold_attack,
@@ -62,6 +63,9 @@ __all__ = [
     "pascal_split",
     "pascal_spf",
     "pollard_pminus1",
+    "q_first_hit",
+    "q_pascal_row",
+    "q_period",
     "williams_pplus1",
     "residue_shape",
     "row_entry",
@@ -69,5 +73,6 @@ __all__ = [
     "row_prefix",
     "row_series",
     "row_support",
+    "shift_split",
     "__version__",
 ]

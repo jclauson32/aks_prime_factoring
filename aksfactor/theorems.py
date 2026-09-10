@@ -20,6 +20,10 @@ __all__ = [
     "check_t5_closed_form",
     "check_gist",
     "check_all",
+    "check_t7_aliasing",
+    "check_t9_second_digit",
+    "check_t15_no_row_leaks",
+    "check_t16_q_kummer",
 ]
 
 
@@ -179,3 +183,53 @@ def check_t9_second_digit(n: int, kmax: int | None = None) -> tuple[bool, dict]:
             splits += 1
     return True, {"n": n, "trials": trials, "splits": splits,
                   "rate": (splits / trials) if trials else None}
+
+
+def check_t15_no_row_leaks(n: int, samples: int = 6) -> tuple[bool, dict]:
+    """T15: below ``spf(n)``, *no* row leaks anything about the factorization.
+
+    For ``k < spf(n)`` every ``i <= k`` is invertible mod ``n``, so
+
+        C(N, k) = prod_{i<k} (N - i) / k!   ==   depends only on (N mod n, k).
+
+    Two rows congruent mod ``n`` therefore agree at every position below
+    ``spf(n)``.  Shifting to a different row buys nothing there -- which closes
+    off the whole "try another row" family in one line.
+    """
+    import random as _random
+
+    s = spf_trial(n)
+    if s is None or s == n:
+        return True, {"n": n, "prime": True}
+    rng = _random.Random(n)
+    for k in range(0, min(s, 14)):
+        for _ in range(samples):
+            big = rng.randrange(n, 40 * n)
+            same = big % n + n * rng.randrange(1, 9)
+            if comb(big, k) % n != comb(same, k) % n:
+                return False, {"n": n, "k": k, "N": big, "N2": same}
+    return True, {"n": n, "spf": s, "checked_below": min(s, 14)}
+
+
+def check_t16_q_kummer(n: int, bases=(2, 3, 5, 6, 7), kmax: int = 40) -> tuple[bool, dict]:
+    """T16: the q-analogue of Kummer's theorem, checked against the explicit row.
+
+    ``p | [n,k]_q``  iff  ``(k mod d) > (n mod d)``  or  ``p | C(n//d, k//d)``,
+    where ``d = ord_p(q)``.
+    """
+    from .qpascal import q_lucas_divides, q_pascal_row, q_period
+
+    checked = 0
+    for p in factorize_small(n):
+        for base in bases:
+            if base % p == 0:
+                continue
+            d = q_period(base, p)
+            if d is None:
+                continue
+            row = q_pascal_row(n, min(kmax, n), base, p)
+            for k in range(1, len(row)):
+                checked += 1
+                if (row[k] % p == 0) != q_lucas_divides(n, k, d, p):
+                    return False, {"n": n, "p": p, "q": base, "k": k, "d": d}
+    return True, {"n": n, "checked": checked}

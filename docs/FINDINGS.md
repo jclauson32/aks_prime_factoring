@@ -421,6 +421,105 @@ fresh order `h(-D)` per discriminant `D = -kn`, giving Schnorr-Lenstra). Both
 leave the world of polynomial quotients of `Z/n` entirely. That is the price of
 a varying order, and nothing in the Pascal/AKS setting pays it.
 
+## Round 4: deforming the period
+
+Round 3 ended asking for a construction whose parameter *varies* at fixed `p`.
+Round 4 found one, inside Pascal's triangle itself — and then found out why
+varying is not enough.
+
+### The q-deformation
+
+Replace `C(n,k)` by the Gaussian binomial `[n,k]_q`. Divisibility by `p` is then
+governed not by `p` but by `d = ord_p(q)`, which **moves as the base `q` moves**:
+
+```
+p | [n,k]_q   <=>   (k mod d) > (n mod d)                 [clause 1]
+               or    p | C(floor(n/d), floor(k/d))         [clause 2]
+```
+
+a q-analogue of Kummer's theorem, verified exhaustively against the explicit
+q-Pascal row. Clause 1 fires at `k = (n mod d) + 1`, which can sit far below
+`spf(n)` — **inside the region Theorem 2 seals off**:
+
+| n | factors | spf(n) | classical row below spf | q-row first hit | base |
+|---|---|---|---|---|---|
+| 143 | 11 x 13 | 11 | 0 everywhere | k = 4 | 2 |
+| 221 | 13 x 17 | 13 | 0 everywhere | k = 2 | 4 |
+| 437 | 19 x 23 | 19 | 0 everywhere | k = 6 | 2 |
+| 899 | 29 x 31 | 29 | 0 everywhere | k = 4 | 2 |
+
+(Bases with `gcd(q-1,n) > 1` are excluded — those have `ord_p(q) = 1` and a
+single gcd would already have split `n`.)
+
+That is a real deformation of the barrier. The classical period `p` is rigid;
+this one is tunable.
+
+### And a first guess that was wrong
+
+The obvious conclusion — "`ord_p(q)` divides `p-1`, so this is just Pollard
+`p-1`" — is **false**, and the measurement says so. With `p-1` smooth, a random
+base *still* has order close to `p-1`:
+
+| p (smooth p-1) | largest prime factor of p-1 | `ord_p(q)/(p-1)` for q = 2..8 |
+|---|---|---|
+| 1,193,011 | 23 | 1.00, 0.20, 0.50, 0.50, 0.17, 0.33, 0.33 |
+
+Smooth `p-1` supplies many small *divisors* but almost no elements of small
+*order*. Clause 1 needs a small order, not a smooth one — so the raw
+q-deformation is strictly **weaker** than Pollard, not equal to it.
+
+### The dichotomy that actually closes it
+
+Tune the base: put `Q = q^M` with `M` a smooth prime-power ladder to bound `B`.
+Then `ord_p(Q)` is the `B`-rough part of `ord_p(q)`, so it is `1` when `ord_p(q)`
+is `B`-smooth and `> B` otherwise. Measured over 120 random pairs:
+
+| ladder bound B | tuned period = 1 | 1 < period <= B | period > B |
+|---|---|---|---|
+| 50 | 0 | **0** | 60 |
+| 200 | 2 | **0** | 58 |
+
+**The middle column is empty.** And `period = 1` means `Q ≡ 1 (mod p)`, so
+`gcd(Q-1, n)` has already split `n` — Pollard `p-1` verbatim, q-row contributing
+nothing. So tuning either lands exactly on Pollard, or leaves clause 1 as a
+`1/B` lottery. Measured work stays `Theta(p)`.
+
+### Also closed: every other row
+
+While here, one more family died in a single line.
+
+> **Theorem 15.** For `k < spf(n)`, `C(N,k) mod n` depends only on `N mod n`.
+
+Because `k!` is invertible there, `C(N,k) ≡ prod_i((N mod n) - i) * (k!)^(-1)`.
+So rows `N` and `N'` congruent mod `n` are *identical* below `spf(n)`: row `2n`,
+row `n+1`, row `n^2`, any row at all, all carry the same nothing. Theorem 2 is
+just the case `N = n`, where the shared value happens to be zero. Verified on
+thousands of (row, position) pairs.
+
+### The lesson
+
+| construction | governing quantity | varies at fixed `p`? | over what set |
+|---|---|---|---|
+| classical Pascal row | period `p` | no | — |
+| **q-Pascal row** | period `ord_p(q)` | **yes** | divisors of `p-1` |
+| norm-one subgroup, degree `d` | order `Phi_d(p)` | no | — |
+| elliptic curve | order `p+1-t` | yes | interval of width `4 sqrt(p)` |
+
+Round 3 asked for a parameter that varies. Round 4 supplied one and learned that
+this was the wrong thing to ask for:
+
+> **It is not variation that matters, but the density of the set varied over.**
+
+The divisors of `p-1` are sparse and structured, and the elements realising the
+small ones are vanishingly rare — hence the dichotomy. An elliptic curve's order
+ranges over an *interval*: dense, so every fresh curve is a genuinely fresh
+number and sampling until smooth is well behaved. That density is what separates
+`L[1/2]` from `Theta(p)`.
+
+**Open, for round 5.** A construction over `Z/n` whose governing quantity at
+fixed `p` ranges over a *dense* set — an interval, not a divisor lattice — while
+staying computable without knowing `p`.
+
 ## Where the search space stands now
 
 After two rounds the picture is no longer a list of failed attempts; it is a

@@ -423,6 +423,106 @@ fresh `h(-D)` per discriminant `D = -kn` (Schnorr-Lenstra). Both leave polynomia
 quotients of `Z/n` behind entirely, and that departure is precisely what buys the
 varying order.
 
+## Theorem 15 — no row leaks below `spf(n)`
+
+Let `k < spf(n)`. Then `C(N, k) mod n` depends only on `N mod n` and `k`.
+
+*Proof.* Every `i <= k` is coprime to `n` (else `n` would have a prime factor
+`<= k < spf(n)`), so `k!` is invertible mod `n` and
+
+```
+C(N,k) = (N)(N-1)...(N-k+1) / k!   ==   prod_i ((N mod n) - i) * (k!)^(-1)  (mod n).
+```
+
+Both sides depend on `N` only through `N mod n`. ∎
+
+**Consequence.** Rows `N` and `N'` with `N ≡ N' (mod n)` are *identical* mod `n`
+at every position below `spf(n)`. So "try a different row" — row `2n`, row
+`n+1`, row `n^2`, any row at all — buys exactly nothing in the region where the
+classical row is empty. Theorem 2 is the special case `N = n`, where the shared
+value happens to be `0`.
+
+This closes the row-shifting family completely, and it explains why: below
+`spf(n)` the binomial coefficient is a *polynomial identity* in `N mod n`,
+carrying no arithmetic information about how `n` factors.
+
+## Theorem 16 — the q-analogue of Kummer's theorem
+
+Let `q` be coprime to `n`, `p | n` prime, and `d = ord_p(q)`. For the Gaussian
+binomial coefficient `[n,k]_q`:
+
+```
+p | [n,k]_q   <=>   (k mod d) > (n mod d)                  [clause 1]
+               or    p | C(floor(n/d), floor(k/d))          [clause 2]
+```
+
+*Proof sketch.* `p | Phi_d(q)`, and q-Lucas gives
+`[n,k]_q ≡ C(floor(n/d), floor(k/d)) * [n mod d, k mod d]_q (mod Phi_d(q))`.
+The second factor vanishes identically iff `k mod d > n mod d`. ∎
+
+Verified exhaustively against the explicit q-Pascal row in
+`tests/test_qpascal.py`.
+
+**What changes.** The classical row's period is `p`, rigidly (Theorem 7). The
+q-row's period is `d = ord_p(q)`, which **moves with the base `q`** — the first
+construction in this project whose governing parameter genuinely varies at fixed
+`p`. Clause 1 fires at
+
+```
+k = (n mod d) + 1        (when n mod d <= d - 2),
+```
+
+which can be far below `spf(n)`, inside the region Theorem 2 seals off.
+
+**What does not change.** `ord_p(q)` divides `p - 1` for every `q`, so the
+achievable periods form the divisor lattice of `p - 1`. Clause 1 fires early
+exactly when `ord_p(q) | n - j` for a small `j`, i.e. when
+`gcd(q^(n-j) - 1, n) > 1`. Measured work stays `Theta(p)`
+([exp12](../experiments/results/exp12_qdeformation.md)).
+
+The reason is subtler than "it reduces to Pollard `p-1`", which was this
+project's first guess and is **false**: with `p - 1` smooth a random base still
+has order close to `p - 1`, so clause 1 needs a *small* order, not a smooth one,
+and the raw q-deformation is strictly weaker than Pollard.
+
+Tuning the base is what closes the gap, and it closes it onto a dichotomy. Put
+`Q = q^M` for `M` a smooth prime-power ladder to bound `B`; then
+`ord_p(Q) = ord_p(q)/gcd(ord_p(q), M)` is the `B`-rough part of the order, hence
+
+```
+ord_p(Q) = 1        (when ord_p(q) is B-smooth)      or      ord_p(Q) > B.
+```
+
+Measured over 120 random pairs, the middle regime `1 < ord_p(Q) <= B` was **empty**.
+And `ord_p(Q) = 1` means `Q ≡ 1 (mod p)`, so `gcd(Q - 1, n)` has already split
+`n` — that is Pollard `p-1` verbatim, with the q-row adding nothing. So tuning
+the period either lands exactly on Pollard or leaves clause 1 as a `1/B`
+lottery. There is no regime in which the tunable period pays for itself.
+
+### The refined hierarchy
+
+| construction | governing quantity | varies at fixed `p`? | over what set |
+|---|---|---|---|
+| classical Pascal row mod `n` | period `p` | no | -- |
+| **q-Pascal row mod `n`** | period `ord_p(q)` | **yes** | divisors of `p - 1` |
+| norm-one subgroup, degree `d` | order `Phi_d(p)` | no | -- |
+| elliptic curve | order `p + 1 - t` | yes | an interval of width `4 sqrt(p)` |
+
+Proposition 14 asked for a parameter that varies. Theorem 16 supplies one, and
+in doing so sharpens the question: **it is not variation that matters, but the
+*density* of the set varied over.**
+
+The divisors of `p - 1` are a sparse, structured set, and the elements realising
+the small ones are vanishingly rare — which is why tuning collapses to the
+dichotomy above. An elliptic curve's order ranges over an *interval* of width
+`4 sqrt(p)`: dense, so every fresh curve is a genuinely fresh number, and
+sampling until one is smooth is a well-behaved process. That density, not the
+mere existence of a parameter, is what separates `L[1/2]` from `Theta(p)`.
+
+**Open, restated for round 5.** Find a construction over `Z/n` whose governing
+quantity at fixed `p` ranges over a *dense* set — an interval, not a divisor
+lattice — while remaining computable without knowing `p`.
+
 ## Relationship to AKS
 
 AKS verifies `(x+a)^n == x^n + a (mod n, x^r - 1)` for `r` of size `polylog(n)`

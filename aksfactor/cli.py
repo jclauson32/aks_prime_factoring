@@ -10,6 +10,7 @@ from .arith import is_prime
 from .factor import certificate, factor, pascal_split
 from .pascal import row_entry, row_prefix, row_support
 from .cyclo import norm_one_search, pollard_pminus1
+from .qpascal import q_first_hit, q_period, shift_split
 from .ring import fold_attack
 from .theorems import check_all
 
@@ -99,6 +100,21 @@ def _cmd_normone(args) -> int:
     return 0
 
 
+def _cmd_qrow(args) -> int:
+    n, q = args.n, args.base
+    print(f"q-Pascal row of n = {n}, base q = {q}")
+    if gcd(q - 1, n) != 1:
+        print(f"  (base is degenerate: gcd(q-1, n) = {gcd(q - 1, n)} splits n by itself)")
+    got = shift_split(n, q, args.kmax)
+    if got:
+        j, f = got
+        print(f"  clause-1 hit at j = {j}: ord(q) divides n - {j}")
+        print(f"  factor {f}, cofactor {n // f}")
+    else:
+        print(f"  no clause-1 hit for j <= {args.kmax}")
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(prog="aksfactor", description=__doc__)
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -137,6 +153,12 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--degree", type=int, default=2)
     p.add_argument("--bases", type=int, default=60)
     p.set_defaults(func=_cmd_normone)
+
+    p = sub.add_parser("qrow", help="q-deformed Pascal row: tunable-period search")
+    p.add_argument("n", type=int)
+    p.add_argument("--base", type=int, default=2)
+    p.add_argument("--kmax", type=int, default=10000)
+    p.set_defaults(func=_cmd_qrow)
 
     args = ap.parse_args(argv)
     return args.func(args)

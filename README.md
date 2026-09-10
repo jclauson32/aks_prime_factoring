@@ -105,9 +105,11 @@ remainder **is** the prime factor `q`, with `y = 1`.
 | **T9** | the *second* n-adic digit of the row splits `n` at **constant** rate, not `1/p` | proved, verified |
 | **T13** | the norm-one subgroup has order `(p^d−1)/(p−1)`, which `p−1` does not divide | proved; refutes an earlier claim |
 | **P14** | ring group orders are capped at `partitions(d)` per `p`; elliptic orders grow with `√p` | proved, measured |
+| **T15** | below `spf(n)`, `C(N,k) mod n` depends only on `N mod n` — *no* row leaks there | proved, verified |
+| **T16** | q-analogue of Kummer: the q-row's period is `ord_p(q)`, which **varies** with `q` | proved, verified |
 
 Every row is machine-checked in [`aksfactor/theorems.py`](aksfactor/theorems.py)
-and exercised by `run_tests.py` (57 tests, all passing).
+and exercised by `run_tests.py` (64 tests, all passing).
 
 ## The honest verdict
 
@@ -288,6 +290,57 @@ cannot supply one — their orders are pinned by the degree partition. Escaping
 needs a different algebraic group, which is what an elliptic curve is and what no
 rearrangement of Pascal's triangle will produce.
 
+## Round 4: deforming the period
+
+Round 3 asked for a parameter that *varies* at fixed `p`. Round 4 found one
+inside Pascal's triangle — then found out why that was the wrong thing to ask
+for.
+
+Replace `C(n,k)` with the Gaussian binomial `[n,k]_q`. Divisibility by `p` is
+then governed by `d = ord_p(q)`, which moves as `q` moves (**T16**, a q-analogue
+of Kummer verified exhaustively). It fires at `k = (n mod d) + 1` — which can sit
+**below `spf(n)`, inside the region Theorem 2 seals off**:
+
+| n | spf(n) | classical row below spf | q-row first hit | base |
+|---|---|---|---|---|
+| 143 = 11·13 | 11 | 0 everywhere | k = 4 | 2 |
+| 221 = 13·17 | 13 | 0 everywhere | k = 2 | 4 |
+| 899 = 29·31 | 29 | 0 everywhere | k = 4 | 2 |
+
+A real deformation of the barrier. My first guess about why it still fails —
+"`ord_p(q)` divides `p−1`, so it's just Pollard" — was **wrong**: with `p−1`
+smooth a random base still has order near `p−1`, so the raw q-deformation is
+strictly *weaker* than Pollard. What actually closes it is a dichotomy. Tune the
+base to `Q = q^M` with `M` a smooth ladder to bound `B`; then `ord_p(Q)` is the
+`B`-rough part of the order, so:
+
+| ladder bound B | tuned period = 1 | 1 < period ≤ B | period > B |
+|---|---|---|---|
+| 50 | 0 | **0** | 60 |
+| 200 | 2 | **0** | 58 |
+
+The middle is **empty**. Period 1 means `Q ≡ 1 (mod p)` — `gcd(Q−1,n)` has
+already split `n`, i.e. Pollard verbatim. Otherwise clause 1 is a `1/B` lottery.
+Work stays `Θ(p)`.
+
+Also closed, in one line: **Theorem 15** — for `k < spf(n)`, `C(N,k) mod n`
+depends only on `N mod n`, so *every* row is identical below `spf(n)`. Row `2n`,
+row `n+1`, row `n²` — all carry the same nothing. "Try another row" is dead.
+
+### The lesson
+
+Round 3 asked for a parameter that varies. Round 4 supplied one and learned:
+
+> **It is not variation that matters, but the density of the set varied over.**
+
+Divisors of `p−1` are sparse and structured, and elements realising the small
+ones are vanishingly rare — hence the dichotomy. An elliptic curve's order ranges
+over an *interval*: dense, so every fresh curve is a genuinely fresh number.
+
+**Open, for round 5:** a construction over `Z/n` whose governing quantity at
+fixed `p` ranges over a *dense* set — an interval, not a divisor lattice — while
+staying computable without knowing `p`.
+
 ## Benchmarks
 
 Balanced semiprimes, finding `spf(n)`:
@@ -316,19 +369,20 @@ aksfactor/
                 independent falling-factorial reference; all three cross-checked
   pascal.py     row_entry (random access), row_series (Kronecker-packed AKS
                 truncation), row_exact; the x*y decomposition
-  theorems.py   machine-checkable form of T1-T5, T7, T9 and the conjecture
+  theorems.py   machine-checkable form of T1-T5, T7, T9, T15, T16 and the conjecture
   factor.py     pascal_spf / pascal_split / factor, with certificates
   ring.py       (x+a)^n mod (n, x^r - 1), the fold identity, the fold attack,
                 and the norm (symmetry obstruction)
   cyclo.py      norm-one cyclotomic factoring: Lucas sequences, Williams p+1,
                 general degree-d via resultants
+  qpascal.py    q-deformed Pascal row: q-Kummer criterion, tunable period
   grouporder.py counts reachable group orders: ring unit orders vs #E(F_p)
   fast.py       O~(n^(1/4)) search: product tree, Newton division, remainder
                 tree, fast multipoint evaluation
   cli.py        python -m aksfactor {factor,row,entry,verify,fold}
 docs/           THEORY.md (proofs), FINDINGS.md (what it buys)
-experiments/    eleven reproducible scripts; results/ holds their generated reports
-tests/          57 tests; run_tests.py needs no pytest
+experiments/    twelve reproducible scripts; results/ holds their generated reports
+tests/          64 tests; run_tests.py needs no pytest
 ```
 
 Regenerate every measurement (and the figure above) with `./run_experiments.sh`

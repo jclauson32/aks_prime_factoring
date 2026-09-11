@@ -55,3 +55,26 @@ def test_quadratic_floor_sum_is_a_class_number():
         if p > 3 and p % 4 == 3:
             h = class_number(-p)
             assert quadratic_floor_sum(p) == (p - 1) * (2 * p - 1) // 6 - (p - 1 - 2 * h) // 2
+
+
+def test_divisor_is_a_vertex_and_its_edges_bracket_p_over_q():
+    from fractions import Fraction
+
+    from aksfactor.hyperbola import divisor_vertex_edges
+
+    rng = random.Random(5)
+    for _ in range(10):
+        while True:
+            p = rng.randrange(1 << 13, 1 << 14) | 1
+            if is_prime(p):
+                break
+        while True:
+            q = rng.randrange(p + 2, 3 * p) | 1
+            if is_prime(q):
+                break
+        got = divisor_vertex_edges(p * q)
+        assert got is not None and got[0] == p
+        slopes = sorted(Fraction(dy, dx) for dx, dy, _, _ in got[2])
+        assert len(slopes) == 2 and slopes[0] < Fraction(p, q) < slopes[1]
+        for dx, dy, k, gap in got[2]:
+            assert (dy * q + dx * p) ** 2 - 4 * k * p * q == gap * gap

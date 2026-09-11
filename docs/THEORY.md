@@ -790,9 +790,11 @@ For `X <= sqrt(N - 1)`,
 ```
 
 since `floor(N/y) - floor((N-1)/y) = [y | N]`. The left side is monotone in `X`
-and jumps at `X = spf(N)`, so it is a binary-searchable predicate; better, the
-two sums' running totals, read from the top row down, agree exactly until the
-row of the largest divisor below `sqrt N`, so one pass of each finds it.
+and jumps at `X = spf(N)`, so it is a binary-searchable predicate. Better, no
+search is needed: `{xy > N-1}` is `{xy > N}` plus the divisor points
+`(N/d, d)`, which lie on the strictly convex curve `xy = N` and are therefore
+extreme points of `{xy >= N}` -- *vertices* of the hull of the lattice points of
+`{xy > N-1}`. One hull walk, testing `xy = N` at each point, finds them.
 
 Each sum is computed exactly from the convex hull of `{(x, y) in Z^2 : xy > m}`.
 That region is convex, so no lattice point lies strictly between its hull and
@@ -801,9 +803,16 @@ the curve, and the number of points on or under the curve in row `y` is
 `(dx, -dy)` covers rows `y-dy .. y-1` and contributes
 `dy x + (dy+1)(dx-1)/2` points. Walking from row `sqrt N` to row `N^(1/3)` takes
 `O(N^(1/3) log N)` steps with a Stern-Brocot stack (Vinogradov's bound; the
-walk is Sladkey's), and rows below `N^(1/3)` are summed directly. Factoring
-this way costs `O~(N^(1/3))` (`exp26`: `p` found in 16 of 16 semiprimes up to 50
-bits).
+walk is Sladkey's), and rows below `N^(1/3)` are summed directly. The factoring
+walk stops at `p`, so it costs about `3 N^(1/3)` steps per factor of two in
+`sqrt(N)/p` -- `O~(N^(1/3))` in the worst case (`exp26`).
+
+At the divisor vertex `(q, p)` the two hull edges `(dx, dy)` are Farey
+neighbours bracketing `p/q`, and each gives the identity
+`(dy q + dx p)^2 - 4 (dx dy) N = (dy q - dx p)^2` that Lehman's method searches
+for (60 of 60 vertices, 120 of 120 edges). The two methods enumerate these
+certificates differently -- two thirds of the hull's lie outside Lehman's
+search box -- but they are the same objects at the same exponent.
 
 **Curved pieces (heuristic).** Each hull edge is an exact linear piece of
 `floor(N/y)`. On `[x, 2x]`, a degree-`d` Taylor piece of length `h` misses

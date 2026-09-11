@@ -34,7 +34,7 @@ from round 14 (as corrected in round 15):
 | 23 | Ramanujan `tau(N) mod 691` | order-free, divisor-bound | pins `(p+q) mod 691` exactly; as hard as factoring (Bach-Charles) | `exp24` |
 | 24 | four-square count `r_4(N) = 8 sigma(N)` | divisor-bound | gives `p+q`; the count costs about `N` | `exp24` |
 | 25 | Pascal rho `x -> C(x, k)` | **collision** | `k=2` is Pollard's rho (`c = -5/16`); even `k` collide `sqrt 2` sooner (P22), paid back in squarings | `exp25` |
-| 26 | divisor count under the hyperbola, two hull walks (P23) | size | exact and deterministic; `O~(N^(1/3))`, Lehman's exponent | `exp26` |
+| 26 | divisor count under the hyperbola; the divisor is a hull vertex (P23) | size | one exact walk; `O~(N^(1/3))`; its edges are Lehman certificates | `exp26` |
 | 27 | curved hull pieces (degree `d`) | size | would give `N^(1/(d+2))`; `d = 2` floor sums compute class numbers | `exp26` |
 | 28 | low-degree Fourier learner on the bits of `N` | -- | finds planted parity, `(p+q) mod 4`, top bits of `p` (size); nothing below | `exp27` |
 
@@ -132,10 +132,19 @@ out, a geometric one. `#{d | N : d <= X}` is the difference of two lattice-point
 counts under the hyperbolas `xy = N` and `xy = N - 1`, and each count is exact
 from the convex hull of the points above the curve: no lattice point hides
 between a convex region's hull and its boundary. A Stern-Brocot stack walks the
-hull in `O(N^(1/3) log N)` steps, and the two walks' running totals agree until
-the first divisor, so one pass finds `p`. It is correct on 400 of 400 random
-counts against an independent reference and factors 16 of 16 semiprimes up to
-50 bits -- at `N^(1/3)`, which is Lehman's exponent, and slower than rho.
+hull in `O(N^(1/3) log N)` steps. Then the search disappears altogether: the
+divisor points lie on the strictly convex curve `xy = N`, so they are vertices
+of the hull of `{xy > N-1}`, and one walk that checks `xy = N` at each point
+finds `p` (60 of 60). The counts are correct on 400 of 400 random cases against
+an independent reference, and the method factors every test semiprime -- at
+`N^(1/3)` in the worst case, which is Lehman's exponent, and slower than rho.
+
+It is not a coincidence of exponents. The two hull edges at the divisor vertex
+bracket `p/q`, and each one *is* a Fermat-Lehman certificate:
+`(dy q + dx p)^2 - 4 (dx dy) N` is the square `(dy q - dx p)^2`. The hull and
+Lehman enumerate these certificates in different orders (two thirds of the
+hull's fall outside Lehman's search box), but they are the same Farey
+fractions round 10 found, at the same cost.
 
 The interesting part is why it stops there. Each hull edge is an exact linear
 piece of `floor(N/y)`; exact curved pieces of degree `d` would need only

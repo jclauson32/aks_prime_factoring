@@ -85,10 +85,11 @@ p, q = 1009, 2003
 n = p * q
 rows = [[x, divisors_up_to(n, x)] for x in (p - 2, p - 1, p, p + 1, isqrt(n - 1))]
 report.table(["X", f"#{{d | {n} : d <= X}}"], rows)
-report.p("Binary search on `X` would cost `log N` pairs of walks. It is not needed: "
-         "walking the hulls for `N` and `N - 1` side by side, their cumulative row "
-         "counts agree exactly until the row of the first divisor, so one pair of "
-         "walks locates `p`.")
+report.p("Binary search on `X` would cost `log N` pairs of walks. It is not needed. "
+         "The hull of `{xy > N - 1}` contains every lattice point of `{xy > N}` "
+         "plus the divisor points `(N/d, d)`, and those lie on the strictly convex "
+         "curve `xy = N`, so each is an extreme point -- a *vertex* of the hull. "
+         "One walk of that hull, testing `x * y = N` at each point, finds `p`.")
 report.p()
 
 rows = []
@@ -113,10 +114,71 @@ for bits in (32, 38, 44, 50):
                  f"{statistics.mean(times):.3f} s", f"{statistics.mean(rho_times):.4f} s"])
 report.table(["bits of N", "p found", "steps / N^(1/3)", "hyperbola walk",
               "Pollard rho"], rows)
-report.p("It works, exactly and deterministically, at `O~(N^(1/3))` -- Lehman's "
-         "exponent, and worse than the `N^(1/4)` of Strassen and rho, which pull "
-         "away in the last column. It is a size method: the hull's edge "
-         "directions are Farey fractions, the same fan round 10 found in Lehman.")
+report.p("The walk stops at the divisor, so its cost is the number of hull "
+         "vertices between rows `p` and `sqrt N` -- a constant times `N^(1/3)` per "
+         "factor of two in `sqrt(N)/p`. Balanced semiprimes (`q < 2p` above) are its best "
+         "case; the worst is `p` near `N^(1/3)`:")
+report.p()
+rows = []
+for bits, pbits in ((44, 22), (44, 18), (44, 16), (50, 25), (50, 20), (50, 18)):
+    st_all = []
+    for _ in range(3):
+        pp = randprime(1 << (pbits - 1), 1 << pbits)
+        qq = randprime((1 << (bits - 1)) // pp + 1, (1 << bits) // pp)
+        nn = pp * qq
+        small = min(pp, qq)
+        st = {}
+        assert hyperbola_factor(nn, st) == small
+        st_all.append((st["steps"] / nn ** (1 / 3), math.log2(math.sqrt(nn) / small)))
+    rows.append([bits, pbits, f"{statistics.mean(a for a, _ in st_all):.2f}",
+                 f"{statistics.mean(b for _, b in st_all):.1f}"])
+report.table(["bits of N", "bits of p (target)", "steps / N^(1/3)", "log2(sqrt(N)/p)"], rows)
+per_doubling = statistics.mean(float(r[2]) / float(r[3]) for r in rows if float(r[3]) > 2)
+report.p(f"Away from `sqrt N` the cost is {per_doubling:.1f} `N^(1/3)` steps per "
+         f"factor of two in `sqrt(N)/p`, as the curvature count predicts.")
+report.p()
+report.p("Exactly and deterministically, then, at `O~(N^(1/3))` in the worst "
+         "case -- Lehman's exponent, and worse than the `N^(1/4)` of Strassen and "
+         "rho, which pull away in the last column of the table before.")
+report.p()
+
+report.p("### The divisor vertex and Lehman")
+report.p()
+from fractions import Fraction
+
+from aksfactor.hyperbola import divisor_vertex_edges
+
+total = vertex = bracket = edges = in_box = 0
+for _ in range(60):
+    pp = randprime(1 << 15, 1 << 16)
+    qq = randprime(pp + 2, 3 * pp)
+    nn = pp * qq
+    total += 1
+    got = divisor_vertex_edges(nn)
+    if not got or got[0] != pp:
+        continue
+    vertex += 1
+    slopes = sorted(Fraction(dy, dx) for dx, dy, _, _ in got[2])
+    bracket += len(slopes) == 2 and slopes[0] < Fraction(pp, qq) < slopes[1]
+    for dx, dy, k, gap in got[2]:
+        edges += 1
+        c = dy * qq + dx * pp
+        assert c * c - 4 * k * nn == gap * gap
+        in_box += k <= nn ** (1 / 3) and c - 2 * math.sqrt(k * nn) <= nn ** (1 / 6) / (4 * math.sqrt(k))
+report.table(["check", "count"], [
+    ["divisor point is a hull vertex", f"{vertex} of {total}"],
+    ["its two edges bracket the slope p/q", f"{bracket} of {vertex}"],
+    ["edge (dx, dy) satisfies (dy q + dx p)^2 - 4(dx dy)N = (dy q - dx p)^2", f"{edges} of {edges}"],
+    ["... with (k, c) = (dx dy, dy q + dx p) inside Lehman's search box", f"{in_box} of {edges}"],
+])
+report.p("The edges at the divisor are rational approximations of `p/q` from both "
+         "sides, and each is literally a Fermat-Lehman certificate. But the hull "
+         "and Lehman enumerate differently: Lehman walks `k <= N^(1/3)` and a "
+         "short `c`-window for each; the hull walks the curve's own best "
+         "approximations at the local curvature, and its certificates fall "
+         "outside Lehman's box "
+         f"{edges - in_box} times in {edges}. Same objects -- Farey fractions near "
+         "`p/q`, the fan round 10 found in Lehman -- and the same exponent.")
 report.p()
 
 report.p("## 3. Where it stops: curved pieces and class numbers")

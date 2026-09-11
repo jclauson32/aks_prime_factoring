@@ -122,11 +122,11 @@ remainder **is** the prime factor `q`, with `y = 1`.
 | **T21** | row `pq` contains row `p` at stride `q`; exact support count via Fine's theorem (corrects an earlier density figure) | proved, 58,300 + 2,264 pairs |
 | **R16** | no cheap function of `N` beats the Bayes baseline for `(p+q) mod ℓ`; `τ(N) mod 691` would pin it exactly, but is as hard as factoring | measured |
 | **P22** | Pascal rho: `x → C(x,2)` *is* Pollard's rho; the row palindrome doubles the fibre statistic for even `k`, √2 fewer steps, no cheaper | proved (k=2), measured |
-| **P23** | `#{d∣N : d≤X}` from two exact hyperbola lattice counts; one pair of hull walks factors in `Õ(N^(1/3))`; curved pieces would reach `N^(1/(d+2))` but quadratic floor sums encode class numbers | implemented, measured |
+| **P23** | `#{d∣N : d≤X}` from two exact hyperbola lattice counts; divisors are vertices of the hull of `xy > N−1`, so one walk factors in `Õ(N^(1/3))`; its edges are Lehman certificates; curved pieces would reach `N^(1/(d+2))` but quadratic floor sums encode class numbers | proved, implemented |
 | **R19** | a low-degree Fourier learner on the bits of `N` finds planted parities, `(p+q) mod 4` and the top bits of `p` — and nothing about the low or middle bits | measured |
 
 Every row is machine-checked in [`aksfactor/theorems.py`](aksfactor/theorems.py)
-and exercised by `run_tests.py` (159 tests, all passing).
+and exercised by `run_tests.py` (160 tests, all passing).
 
 ## The honest verdict
 
@@ -1128,7 +1128,7 @@ aksfactor/
   cli.py        python -m aksfactor {factor,row,entry,verify,fold}
 docs/           THEORY.md (proofs), FINDINGS.md (what it buys), LAB.md (idea ledger)
 experiments/    twenty-seven reproducible scripts; results/ holds their generated reports
-tests/          159 tests; run_tests.py needs no pytest
+tests/          160 tests; run_tests.py needs no pytest
 ```
 
 Regenerate every measurement (and the figure above) with `./run_experiments.sh`

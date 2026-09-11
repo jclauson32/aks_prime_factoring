@@ -17,10 +17,12 @@ rows ``N^(1/3)`` and ``N^(1/2)`` (curvature: each dyadic block of the arc has ab
 steps -- the classical ``O(N^(1/3) log N)`` method for the divisor problem
 (Vinogradov; made practical by Sladkey).
 
-Walking the hulls for ``N`` and ``N - 1`` side by side, the cumulative row counts
-agree until the first divisor, so one pair of walks locates ``p``: factoring in
+No binary search is needed.  Every divisor point ``(N/d, d)`` lies on the
+strictly convex curve ``xy = N``, so it is a *vertex* of the hull of
+``{xy > N - 1}``, and one walk of that hull finds it: factoring in
 ``O~(N^(1/3))``, by a route that has neither a group, a factorial, nor a square
-root in it.  The edges are the exact linear pieces of ``floor(N/y)``; a
+root in it.  The two hull edges at the divisor are Farey neighbours bracketing
+``p/q``, and each is a Lehman certificate (``divisor_vertex_edges``).  The edges are the exact linear pieces of ``floor(N/y)``; a
 faster method would need exact *curved* pieces (``hyperbola_piece_exponent``),
 and already for parabolas the full-period floor sum computes class numbers
 (``quadratic_floor_sum``).
@@ -28,7 +30,6 @@ and already for parabolas the full-period floor sum computes class numbers
 
 from __future__ import annotations
 
-import bisect
 from math import gcd, isqrt
 
 
@@ -122,34 +123,89 @@ def divisors_up_to(n: int, x: int) -> int:
     return row_sum(n, x)[0] - row_sum(n - 1, x)[0]
 
 
-def hyperbola_factor(n: int, stats: dict | None = None):
-    """Largest divisor of ``n`` in ``(cbrt n, sqrt n]``, or ``None``, by walking the
-    hulls of ``xy > n`` and ``xy > n-1`` and finding the first row where the
-    cumulative counts differ.  Divisors below ``cbrt n`` are left to trial
-    division (``O(n^(1/3))``, the same budget)."""
-    top = isqrt(n - 1)
-    sa, sb = {}, {}
-    _, a = row_sum(n, top, sa)
-    _, b = row_sum(n - 1, top, sb)
+def hull_walk(n: int, top: int, stats: dict | None = None):
+    """Yield the lattice points ``(x, y, (dx, dy))`` along the lower-left hull of
+    ``{xy > n}``, from row ``top`` down to row ``cbrt(n)``; ``(dx, dy)`` is the
+    primitive step that arrived there (``None`` at the start)."""
+
+    def outside(x, y):
+        return x * y > n
+
+    y = top
+    x = n // top + 1
+    yield x, y, None
+    stack = [(1, 0), (0, 1)]
+    low = icbrt(n)
+    steps = 0
+    while y > low:
+        dx1, dy1 = stack.pop()
+        while y - dy1 >= 1 and outside(x + dx1, y - dy1):
+            x += dx1
+            y -= dy1
+            steps += 1
+            yield x, y, (dx1, dy1)
+        if y <= low:
+            break
+        dx2, dy2 = dx1, dy1
+        while stack:
+            dx1, dy1 = stack[-1]
+            if outside(x + dx1, y - dy1):
+                break
+            dx2, dy2 = dx1, dy1
+            stack.pop()
+        if not stack:
+            break
+        while True:
+            mx, my = dx1 + dx2, dy1 + dy2
+            steps += 1
+            if outside(x + mx, y - my):
+                stack.append((mx, my))
+                dx1, dy1 = mx, my
+            elif (x + mx) * (x + mx) * dy1 >= n * dx1:
+                break
+            else:
+                dx2, dy2 = mx, my
+        if stats is not None:
+            stats["steps"] = steps
     if stats is not None:
-        stats["steps"] = sa["steps"] + sb["steps"]
-        stats["vertices"] = sa["vertices"] + sb["vertices"]
-    rows_b = [r for r, _ in b][::-1]
-    tot_b = [t for _, t in b][::-1]
+        stats["steps"] = steps
 
-    def cum_b(r):
-        i = bisect.bisect_left(rows_b, r)
-        if rows_b[i] == r:
-            return tot_b[i]
-        return tot_b[i] + sum((n - 1) // y for y in range(r, rows_b[i]))
 
-    prev = top + 1
-    for r, t in a:
-        if t != cum_b(r):
-            for y in range(prev - 1, r - 1, -1):
-                if n % y == 0:
-                    return y
-        prev = r
+def hyperbola_factor(n: int, stats: dict | None = None):
+    """Largest divisor of ``n`` in ``[cbrt n, sqrt n)``, or ``None``: one hull walk.
+
+    ``Outside(n-1) = Outside(n) + {(x, y) : xy = n}``, and a lattice point on the
+    strictly convex curve ``xy = n`` is an extreme point of ``{xy >= n}``, so
+    every divisor point ``(n/d, d)`` is a *vertex* of the hull of ``{xy > n-1}``.
+    Walk that hull and test ``x * y == n`` at each point.  Divisors below
+    ``cbrt n`` are left to trial division (``O(n^(1/3))``, the same budget).
+    """
+    st = {}
+    for x, y, _ in hull_walk(n - 1, isqrt(n - 1), st):
+        if x * y == n:
+            if stats is not None:
+                stats["steps"] = st.get("steps", 0)
+            return y
+    if stats is not None:
+        stats["steps"] = st.get("steps", 0)
+    return None
+
+
+def divisor_vertex_edges(n: int):
+    """The two hull edges of ``{xy > n-1}`` at the divisor vertex ``(q, p)``.
+
+    Each primitive edge ``(dx, dy)`` gives Lehman's identity
+    ``(dy q + dx p)^2 - 4 (dx dy) n = (dy q - dx p)^2``; returns
+    ``(p, q, [(dx, dy, k, gap), ...])`` with ``k = dx dy``, ``gap = |dy q - dx p|``.
+    """
+    pts = list(hull_walk(n - 1, isqrt(n - 1)))
+    for i, (x, y, e) in enumerate(pts):
+        if x * y == n:
+            edges = [e]
+            if i + 1 < len(pts):
+                edges.append(pts[i + 1][2])
+            out = [(dx, dy, dx * dy, abs(dy * x - dx * y)) for dx, dy in (e for e in edges if e)]
+            return y, x, out
     return None
 
 

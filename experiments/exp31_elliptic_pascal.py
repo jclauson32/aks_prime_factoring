@@ -171,6 +171,45 @@ report.p(f"`p - 1` has the prime factor {big}, so every Gaussian triangle mod {p
          f"them are `{B}`-smooth.")
 report.p()
 
+report.p("How many different cells can each family offer at one prime? Sampling "
+         "many members of each family at `p = 10007`:")
+report.p()
+
+
+def curve_order(a, b, p):
+    """#E(F_p) for y^2 = x^3 + a x + b by counting."""
+    total = 1
+    for x in range(p):
+        r = (x ** 3 + a * x + b) % p
+        total += 1 if r == 0 else (2 if pow(r, (p - 1) // 2, p) == 1 else 0)
+    return total
+
+
+pc = 10009 if 10009 % 3 == 1 else 10039          # a prime = 1 (mod 3) for the CM family
+gauss_cells = {next(d for d in range(1, p) if pow(qq, d, p) == 1) for qq in range(2, 400)}
+cm_orders = {curve_order(0, b, pc) for b in range(1, 200) if (27 * b * b) % pc}
+generic_orders = set()
+for _ in range(60):
+    while True:
+        a, b = rng.randrange(p), rng.randrange(p)
+        if (4 * a ** 3 + 27 * b * b) % p:
+            break
+    generic_orders.add(curve_order(a, b, p))
+report.table(["family", "members sampled", "distinct group orders (cells divide these)"], [
+    ["Pascal", "--", "1: the cell is `p`"],
+    ["Gaussian, q = 2..399", 398, f"{len(gauss_cells)} cells, all dividing `p - 1`: one order"],
+    ["Fibonomial / Lucas", "--", "2: `p - 1` or `p + 1`"],
+    [f"elliptic with CM, `y^2 = x^3 + b` at p = {pc}", 199, f"{len(cm_orders)}"],
+    ["elliptic, generic", 60, f"{len(generic_orders)}"],
+])
+report.p(f"The family with complex multiplication offers only {len(cm_orders)} orders "
+         f"-- the six twists of a curve with `j = 0` -- so it is barely more "
+         f"redrawable than `p +- 1`. Generic curves offer a new order almost every "
+         f"time: the Hasse interval holds about `4 sqrt p` of them. That count of "
+         f"tickets per prime is the whole difference between the rigid order methods "
+         f"and ECM.")
+report.p()
+
 report.p("## 5. Jumping to a row: ECM")
 report.p()
 report.p("Row `M` of an elliptic triangle mod `N` begins with `a_M = W_M`, and `p | W_M` "

@@ -42,6 +42,7 @@ from round 14 (as corrected in round 15):
 | 30 | quadratic sieve (reference) | **sign + smoothness** | pure Python, 110-bit `N` in seconds; overtakes rho at 80 bits; `L[1/2]` | `exp29` |
 | 31 | Lenstra's ECM (reference) | **order, redrawn** | first curve 60% on `p` where `p - 1` fails 100%; 64-bit `p` of a 160-bit `N` in seconds; `L_p[1/2]` | `exp30` |
 | 32 | Pascal's triangle over divisibility sequences (P24) | order | gasket cell = rank of apparition; elliptic cell = point order, redrawable; row `lcm(1..B)` is ECM | `exp31` |
+| 33 | Shor's algorithm, simulated classically | order, **read directly** | factors to `N = 1517` on a 22-qubit register; simulation cost `N^2`, the amplitudes a quantum computer holds for free | `exp32` |
 
 ## Round 15: the central column
 
@@ -262,3 +263,20 @@ own double-and-add, and taking a gcd is exactly ECM stage 1; it factors 32-bit
 project -- look along a row of the triangle mod `N` for entries sharing a
 factor with `N` -- was a real mechanism. It needed a triangle whose cell width
 could be redrawn.
+
+## Round 24: Shor, simulated
+
+The only known polynomial-time factoring algorithm is quantum, and it uses the
+order mechanism. The difference from every classical order method -- `p - 1`,
+ECM, the Pascal and elliptic triangles -- is that it *reads* the order `r`
+instead of exponentiating blindly by a multiple of it, so it never needs `r` to
+be smooth. Simulated exactly, with the first register held as `Q = 2^t >= N^2`
+amplitudes, a Fourier transform and continued fractions, it factors every test
+number up to `1517 = 37 x 41` through the period finding alone.
+
+The simulation pays for every amplitude: its time per run grows like `N^2`,
+which is worse than trial division. That is the whole shape of the gap. A
+quantum computer holds the `Q` values of `a^x` in `2 log2 N` qubits and extracts
+`r` by interference; a classical one has to write them down. Twenty-three
+classical rounds found no way to read `r` without them, and by Miller's
+reduction any such way would factor `N`.

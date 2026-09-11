@@ -99,3 +99,18 @@ def test_point_count_factors():
         g, _ = factor_with_point_count(n, a, (x, y), count(a % p, b % p, p) * count(a % q, b % q, q))
         done += g in (p, q)
     assert done >= 9
+
+
+def test_first_separating_row_is_the_smaller_cell():
+    from aksfactor.figures import zero_pattern
+
+    w = curve_eds(0, 17, 2, 5, 4)
+    for p, q in [(11, 13), (23, 29), (31, 37)]:
+        rp, rq = point_order(0, 17, 2, 5, p), point_order(0, 17, 2, 5, q)
+        if rp == rq:
+            continue
+        rows = max(rp, rq) + 2
+        zp = zero_pattern(eds_mod(*w[1:5], rows + 1, p ** 6), p, 6, rows)
+        zq = zero_pattern(eds_mod(*w[1:5], rows + 1, q ** 6), q, 6, rows)
+        first = next(n for n in range(rows) if any(zp[n][k] != zq[n][k] for k in range(1, n)))
+        assert first == min(rp, rq)

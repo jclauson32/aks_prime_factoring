@@ -864,6 +864,16 @@ a_gcd(m,n)`) and `[n, k]_a = a_n .. a_(n-k+1) / (a_1 .. a_k)`. Then:
 Item 2 holds on every entry tested for the four families (rows 0-44, primes
 5-47), and item 3 on 74 of 74 primes (`exp31`).
 
+**Corollary (the elliptic Theorem 4).** Modulo `N = pq`, rows below
+`min(r_p, r_q)` have no entry divisible by either prime, and if `r_p != r_q` the
+first row containing an entry divisible by exactly one of them is
+`min(r_p, r_q)` -- as the first row of Pascal's triangle mod `N` with such an
+entry is `spf(N)`. (By the carry rule: row `n < r` has no carry in the lowest
+digit, and row `r` has one at every interior position. Checked on 95 of 95
+pairs with distinct cells.) When `r_p = r_q` the two gaskets coincide at the
+first level and no low row separates the primes -- the same event in which ECM
+finds both primes at once and the gcd is `N`.
+
 **Reading.** For Pascal's triangle `r(p) = p`: the gasket's cell *is* the
 factor. For the Gaussian and Fibonomial triangles `r(p)` divides `p - 1` or
 `p +- 1` -- orders fixed by `p`, Proposition 14's single ticket. For the elliptic

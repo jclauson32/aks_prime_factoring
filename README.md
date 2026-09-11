@@ -183,7 +183,7 @@ The per-round ledger is [`docs/LAB.md`](docs/LAB.md); proofs are in
 | **R29** | one elliptic point count `#E(ℤ/N)` factors `N` (40/40); point counting mod `N` is equivalent to factoring (Kunihiro–Koyama) | implemented, cited |
 
 Every row is machine-checked in [`aksfactor/theorems.py`](aksfactor/theorems.py)
-and exercised by `run_tests.py` (186 tests, all passing).
+and exercised by `run_tests.py` (187 tests, all passing).
 
 ## The honest verdict
 
@@ -1193,7 +1193,7 @@ aksfactor/
   cli.py        python -m aksfactor {factor,row,entry,verify,fold}
 docs/           THEORY.md (proofs), FINDINGS.md (what it buys), LAB.md (idea ledger)
 experiments/    thirty-six reproducible scripts; results/ holds their generated reports
-tests/          186 tests; run_tests.py needs no pytest
+tests/          187 tests; run_tests.py needs no pytest
 ```
 
 Regenerate every measurement (and the figure above) with `./run_experiments.sh`

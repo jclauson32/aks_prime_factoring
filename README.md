@@ -119,9 +119,11 @@ remainder **is** the prime factor `q`, with `y = 1`.
 | **R13** | the budget is `φ(N) mod ℓ` for primes `ℓ ≤ (1/4)ln N`; `N` reveals exactly the `p↔q` symmetry and nothing more | proved, measured |
 | **R14** | generic ring programs achieve exactly `1−φ(N)/N`; every method's content is one *mechanism*; four are known (taxonomy corrected in round 15) | measured |
 | **R15** | the central column computes Legendre symbols: a Pascal-native *sign* method, Strassen's exponent | implemented, measured |
+| **T21** | row `pq` contains row `p` at stride `q`; exact support count via Fine's theorem (corrects an earlier density figure) | proved, 58,300 + 2,264 pairs |
+| **R16** | no cheap function of `N` beats the Bayes baseline for `(p+q) mod ℓ`; `τ(N) mod 691` would pin it exactly, but is as hard as factoring | measured |
 
 Every row is machine-checked in [`aksfactor/theorems.py`](aksfactor/theorems.py)
-and exercised by `run_tests.py` (139 tests, all passing).
+and exercised by `run_tests.py` (149 tests, all passing).
 
 ## The honest verdict
 
@@ -1101,7 +1103,7 @@ aksfactor/
                 independent falling-factorial reference; all three cross-checked
   pascal.py     row_entry (random access), row_series (Kronecker-packed AKS
                 truncation), row_exact; the x*y decomposition
-  theorems.py   machine-checkable form of T1-T5, T7, T9, T15, T16 and the conjecture
+  theorems.py   machine-checkable form of T1-T5, T7, T9, T15, T16, T20, T21 and the conjecture
   factor.py     pascal_spf / pascal_split / factor, with certificates
   ring.py       (x+a)^n mod (n, x^r - 1), the fold identity, the fold attack,
                 and the norm (symmetry obstruction)
@@ -1113,14 +1115,15 @@ aksfactor/
   harvey.py     Harvey's N^(1/5) deterministic factoring: Lehman + Fermat + BSGS
   lattice.py    exact LLL and Coppersmith: polynomial-time factoring given a hint
   generic.py    the generic-ring baseline: what algebra buys without an alignment
+  leakage.py    round 16: feature scans, Ramanujan tau mod 691, four-square counts
   central.py    the central column: Legendre symbols from Pascal's triangle
   grouporder.py counts reachable group orders: ring unit orders vs #E(F_p)
   fast.py       O~(n^(1/4)) search: product tree, Newton division, remainder
                 tree, multipoint evaluation, BGS factorial, threshold search
   cli.py        python -m aksfactor {factor,row,entry,verify,fold}
 docs/           THEORY.md (proofs), FINDINGS.md (what it buys), LAB.md (idea ledger)
-experiments/    twenty-three reproducible scripts; results/ holds their generated reports
-tests/          139 tests; run_tests.py needs no pytest
+experiments/    twenty-four reproducible scripts; results/ holds their generated reports
+tests/          149 tests; run_tests.py needs no pytest
 ```
 
 Regenerate every measurement (and the figure above) with `./run_experiments.sh`

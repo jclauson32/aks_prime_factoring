@@ -90,3 +90,27 @@ def test_t20_factorial_threshold():
     for n in (12, 60, 91, 143, 210, 875, 1155, 2310, 9009, 1024, 1009 * 1013):
         ok, detail = check_t20_factorial_threshold(n)
         assert ok, detail
+
+
+def test_t21_stride_embedding():
+    from aksfactor.arith import sieve
+    from aksfactor.theorems import check_t21_stride_embedding
+
+    primes = [x for x in sieve(120) if x > 2]
+    for i, p in enumerate(primes):
+        for q in primes[i + 1:i + 6]:
+            ok, detail = check_t21_stride_embedding(p, q)
+            assert ok, detail
+
+
+def test_t21_support_count_follows_fine():
+    """All multiples of the larger prime are non-zero; the smaller prime's
+    multiples follow Fine's theorem -- few for close primes, many otherwise."""
+    from aksfactor.pascal import row_entry
+
+    for p, q, expect in [(1009, 1013, 8), (1009, 1511, 1004), (3, 11, 4)]:
+        n = p * q
+        at_q = sum(1 for m in range(1, p) if row_entry(n, m * q))
+        at_p = sum(1 for m in range(1, q) if row_entry(n, m * p))
+        assert at_q == p - 1
+        assert at_p == expect

@@ -37,6 +37,7 @@ from .fast import (
     multipoint_eval,
     threshold_spf,
 )
+from .leakage import feature_accuracy, r4, tau_sum_candidates, tau_table
 from .pascal import (
     first_nonzero,
     residue_shape,
@@ -69,6 +70,7 @@ __all__ = [
     "factorize",
     "factorial_mod",
     "fast_split",
+    "feature_accuracy",
     "fast_spf",
     "first_nonzero",
     "first_zero_row",
@@ -106,7 +108,10 @@ __all__ = [
     "row_series",
     "render",
     "row_support",
+    "r4",
     "support_count",
+    "tau_sum_candidates",
+    "tau_table",
     "threshold_spf",
     "schnorr_lenstra_split",
     "shift_split",

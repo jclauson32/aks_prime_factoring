@@ -718,6 +718,42 @@ So the fractal reading's contribution is explanatory, and precisely so: it shows
 `O~(n^(1/4))` is *the geometry's own answer* to the cheapest question one can
 pose, not an artifact of one clever algorithm.
 
+## Theorem 21 — row `pq` contains row `p` at stride `q`
+
+For primes `p < q` and `n = pq`:
+
+```
+C(pq, m q)  =  C(p, m)                       (mod pq),   0 <= m <= p;
+C(pq, m p)  =  0 (mod q)  and  C(q, m) (mod p),           0 <  m <  q.
+```
+
+*Proof.* Lucas in each prime, then CRT. Modulo `q`, `pq` has base-`q` digits
+`(0, p)` and `mq` has `(0, m)`, giving `C(p, m)`. Modulo `p`, the low digit of
+`pq` is `0` while that of `mq` is `mq mod p != 0` for `0 < m < p`, so both sides
+vanish (and `C(p,m) = 0 (mod p)` there too); `m = 0, p` agree trivially. For the
+second line, `mp mod q != 0` forces `q | C(pq, mp)`, and modulo `p` the pair
+`(pq, mp)` is `(q, m)` shifted by one base-`p` digit. ∎
+
+Verified on 58,300 stride-`q` entries and 7,322 stride-`p` entries.
+
+**Consequence (exact support count).** Every multiple of the *larger* prime is
+non-zero -- those entries reproduce row `p` -- while by the second line the
+multiple `mp` is non-zero exactly when `p` does not divide `C(q, m)`. Fine's
+theorem counts those: if `q = sum d_i p^i` in base `p`, then row `q` has
+`prod (d_i + 1)` entries not divisible by `p`. So for `0 < k < n`,
+
+```
+#{k : C(pq, k) != 0 (mod pq)}  =  (p - 1)  +  prod_i (d_i + 1)  -  2,
+```
+
+checked on all 2,264 pairs of odd primes `p < q < 6p` below 400. The second
+term swings with `q mod p`: for `n = 1009 x 1013` (`q = 1·p + 4`) it is `8`, so
+the support is almost exactly row `p` at stride `q`, density `~1/q`; for
+`n = 1009 x 1511` (`q = 1·p + 502`) it is `1004`, density near `1/p + 1/q`.
+An earlier write-up gave `~1/p + 1/q` as the density; that is the upper end of
+this range, reached when `q = -1 (mod p)`, not its typical value. In every case
+the count is at least `p - 1`.
+
 ## Relationship to AKS
 
 AKS verifies `(x+a)^n == x^n + a (mod n, x^r - 1)` for `r` of size `polylog(n)`

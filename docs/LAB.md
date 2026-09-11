@@ -28,6 +28,11 @@ from round 14 (as corrected in round 15):
 | 17 | generic straight-line programs | none | exactly the zero-divisor density `1 - phi(N)/N` | `exp22` |
 | 18 | central column `sum C(2k,k) x^k` | **sign** | Legendre symbol at `T ~ p/2`, below `p`; Strassen's exponent, ~15x the constant | `exp23` |
 | 19 | `d`-th power characters | sign -> order | threshold `p/d`, but needs `d \| p-1` -- walks back into order | `exp23` |
+| 20 | row `pq` at stride `q` (T21) | size | row `p` copied verbatim; locating the stride is locating `q` | `exp24` |
+| 21 | Hensel-lifting `p` from the low bits | -- | all `2^(k-1)` branches survive; never prunes | `exp24` |
+| 22 | cheap functions of `N` vs `(p+q) mod ell` | -- | max excess over Bayes baseline `+0.011` (noise); control 100% | `exp24` |
+| 23 | Ramanujan `tau(N) mod 691` | order-free, divisor-bound | pins `(p+q) mod 691` exactly; as hard as factoring (Bach-Charles) | `exp24` |
+| 24 | four-square count `r_4(N) = 8 sigma(N)` | divisor-bound | gives `p+q`; the count costs about `N` | `exp24` |
 
 ## Round 15: the central column
 
@@ -53,3 +58,38 @@ but it costs `O~(sqrt(p))` like Strassen, with a constant about 15 times worse
 lowers the threshold to `(p-1)/d` (7 of 8 exactly; the eighth a below-window
 coincidence), but only when `d | p-1`, which is the order mechanism's smoothness
 condition wearing a different hat.
+
+## Round 16: hunting for anything that sees `p` rather than `N`
+
+Round 13 set the price of polynomial-time factoring at one residue
+`(p+q) mod ell` per small prime. This round looked for that residue in five
+places (`exp24`):
+
+- **Inside the row.** Theorem 21: row `pq` contains row `p` verbatim at stride
+  `q` (58,300 of 58,300 entries). The row *has* `p` in it -- at a stride that is
+  `q` itself. Checking the theorem also exposed a wrong figure in the round-3
+  write-up: the support density is not `~1/p + 1/q` in general. Fine's theorem
+  gives the exact count, `(p-1) + prod(d_i+1) - 2` over the base-`p` digits of
+  `q`, which runs from about `p + 2(q-p)` for close primes up to `p + q` when
+  `q = -1 (mod p)`.
+- **Low bits.** Every odd residue of `p` mod `2^k` has a partner; lifting never
+  prunes.
+- **Cheap functions of `N`.** Seven features, four moduli, 6,000 semiprimes. The
+  positive control (close primes, `floor(sqrt N)`) scores 100%; on random
+  semiprimes nothing exceeds the Bayes baseline `2/(ell-1)` by more than 0.011.
+  The first scan used a too-weak baseline (uniform over the allowed set) and
+  every feature "beat" it by the same margin -- a uniform excess across
+  unrelated features is a baseline bug, and was.
+- **Ramanujan's tau.** `tau(N) = (1+p^11)(1+q^11) (mod 691)`, and the eleventh
+  power is a bijection on `F_691`, so `tau(N) mod 691` cuts `(p+q) mod 691`
+  from 345.5 candidates to 1.00. It is the first quantity in the project worth
+  exactly the currency round 13 asked for -- and it is known to be as hard as
+  factoring (Bach-Charles). The trace formula names `p^11` in its divisor term;
+  the q-expansion needs `N` coefficients; mod 2 it is cheap and says only
+  whether `N` is an odd square.
+- **Four squares.** `r_4(N) = 8 sigma(N)` gives `p + q`. The volume term is the
+  average; `p + q` is the fluctuation.
+
+Every source that carries the residue is a function of the divisors. Every
+source computable from `N` in polynomial time is symmetric and carries nothing
+beyond `N`.

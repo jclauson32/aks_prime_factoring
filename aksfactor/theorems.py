@@ -25,6 +25,7 @@ __all__ = [
     "check_t15_no_row_leaks",
     "check_t16_q_kummer",
     "check_t20_factorial_threshold",
+    "check_t21_stride_embedding",
 ]
 
 
@@ -267,3 +268,39 @@ def check_t20_factorial_threshold(n: int, cap: int = 120) -> tuple[bool, dict]:
         if (got > 1) != (i >= spf):
             return False, {"n": n, "i": i, "monotone": False, "spf": spf}
     return True, {"n": n, "spf": spf, "checked": min(n, cap) - 1}
+
+
+def check_t21_stride_embedding(p: int, q: int) -> tuple[bool, dict]:
+    """T21: row ``pq`` contains row ``p`` at stride ``q``.
+
+    For primes ``p < q`` and ``n = pq``:
+
+    * ``C(pq, mq) = C(p, m)  (mod pq)``  for ``0 <= m <= p``;
+    * ``C(pq, mp) = 0 (mod q)`` and ``C(pq, mp) = C(q, m) (mod p)`` for ``0 < m < q``.
+
+    Lucas in each prime, then CRT.  The first line is why every multiple of the
+    *larger* prime is a non-zero entry of row ``n`` mod ``n``; the second is why
+    multiples of the *smaller* prime are non-zero only when ``p`` does not divide
+    ``C(q, m)``.  By Fine's theorem that happens for ``prod(d_i + 1) - 2`` values
+    of ``m``, where ``d_i`` are the base-``p`` digits of ``q`` -- a handful when
+    ``q`` is just above ``p``, and close to ``q`` when ``q = -1 (mod p)``.
+    """
+    from .pascal import row_entry
+
+    n = p * q
+    for m in range(0, p + 1):
+        if row_entry(n, m * q) != comb(p, m) % n:
+            return False, {"p": p, "q": q, "m": m, "stride": "q"}
+    at_p = 0
+    for m in range(1, q):
+        v = row_entry(n, m * p)
+        if v % q or v % p != comb(q, m) % p:
+            return False, {"p": p, "q": q, "m": m, "stride": "p"}
+        at_p += v != 0
+    fine, rest = 1, q
+    while rest:
+        rest, d = divmod(rest, p)
+        fine *= d + 1
+    if at_p != fine - 2:
+        return False, {"p": p, "q": q, "at_p": at_p, "fine": fine}
+    return True, {"p": p, "q": q, "at_p": at_p}

@@ -285,11 +285,12 @@ Not proved impossible — just measured, and localised. Beating this needs one o
    with reduction mod `x^r - 1`, and under truncation it needs degree `> p`
    before it sees anything at all.
 3. **Sparse interpolation of the row.** The row mod `n` is sparse — its support
-   is contained in the multiples of the prime factors, density `~1/p + 1/q` —
-   and evaluations `(1+z)^n mod n` are available in `O(log n)` each. But
-   Prony/Ben-Or–Tiwari needs about as many evaluations as there are non-zero
-   terms, and for `n = pq` that count is `p + q - 1 ≈ sqrt(n)` at best. Same
-   wall, different shape.
+   is contained in the multiples of the prime factors, density at most
+   `~1/p + 1/q` (round 16: the exact count is `(p-1) + prod(d_i+1) - 2` over
+   the base-`p` digits of `q`, Theorem 21) — and evaluations `(1+z)^n mod n`
+   are available in `O(log n)` each. But Prony/Ben-Or–Tiwari needs about as
+   many evaluations as there are non-zero terms, and for `n = pq` that count is
+   at least `p - 1 ≈ sqrt(n)`. Same wall, different shape.
 
 Each of these has a concrete experiment harness in `experiments/`. The
 negative results are the contribution: they say precisely which door to try

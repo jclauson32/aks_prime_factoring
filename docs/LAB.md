@@ -33,6 +33,7 @@ from round 14 (as corrected in round 15):
 | 22 | cheap functions of `N` vs `(p+q) mod ell` | -- | max excess over Bayes baseline `+0.011` (noise); control 100% | `exp24` |
 | 23 | Ramanujan `tau(N) mod 691` | order-free, divisor-bound | pins `(p+q) mod 691` exactly; as hard as factoring (Bach-Charles) | `exp24` |
 | 24 | four-square count `r_4(N) = 8 sigma(N)` | divisor-bound | gives `p+q`; the count costs about `N` | `exp24` |
+| 25 | Pascal rho `x -> C(x, k)` | **collision** | `k=2` is Pollard's rho (`c = -5/16`); even `k` collide `sqrt 2` sooner (P22), paid back in squarings | `exp25` |
 
 ## Round 15: the central column
 
@@ -93,3 +94,29 @@ places (`exp24`):
 Every source that carries the residue is a function of the divisors. Every
 source computable from `N` in polynomial time is symmetric and carries nothing
 beyond `N`.
+
+## Round 17: the fourth mechanism
+
+With the central column, Pascal's triangle had been placed on three of the four
+mechanisms. The fourth is collision, and the triangle has it too: iterate the
+second column. `x -> C(x, 2)` is conjugate to `y -> y^2 - 5/16` by
+`x = 2y + 1/2`, so "Pascal rho" is Pollard's rho with a particular constant.
+
+The higher columns give a small, real, and useless surprise. Each row of the
+triangle is a palindrome, so `C(x, k)` is a polynomial in `(x - (k-1)/2)^2` for
+even `k`. That doubles the fibre statistic `kappa` (measured `2.000` against
+`1.000`), and the walks collide `sqrt 2` times sooner -- 300-walk constants agree
+with `sqrt(pi/(2 kappa))` to within a standard error for every `k` from 2 to 9.
+The saving is exactly consumed by the extra squaring each step needs.
+
+Two bookkeeping errors were caught before anything was committed: the first
+step counter skipped Brent's advance loop, which made the constants look better
+than Pollard's; and a timing column compared a generic `k`-multiplication
+implementation, which measured the implementation, not the method. Evaluations
+are now counted in full, and cost is priced in multiplications.
+
+With all four mechanisms placed, the map is complete, and it says one thing:
+the triangle hosts every mechanism at that mechanism's baseline. ECM's speed
+comes from redrawing groups, Harvey's from Lehman's geometry, and NFS's from
+smoothness in number fields. None of them comes from anything the triangle
+supplies.

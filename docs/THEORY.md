@@ -754,6 +754,33 @@ An earlier write-up gave `~1/p + 1/q` as the density; that is the upper end of
 this range, reached when `q = -1 (mod p)`, not its typical value. In every case
 the count is at least `p - 1`.
 
+## Proposition 22 — Pascal rho
+
+Iterating a column of the triangle, `x -> C(x, k) mod N`, is a collision
+method, and for `k = 2` it is exactly Pollard's rho: with `x = 2y + 1/2`,
+
+```
+C(x, 2)  =  2 (y^2 - 5/16) + 1/2 .
+```
+
+For general `k`, the heuristic rho length of a polynomial map `f` on `F_p` is
+`sqrt(pi p / (2 kappa))` with `kappa = (1/p) sum_v m_v (m_v - 1)` over fibre sizes;
+`kappa` counts the orbits of the fibre's Galois group on ordered pairs of
+distinct roots. The row reflection `C(k-1-x, k) = (-1)^k C(x, k)` decides it:
+
+* `k = 2` and odd `k`: the reflection sends the fibre over `v` to the fibre over
+  `-v`, imposes nothing inside a fibre, and `kappa = 1` (generic `S_k`);
+* even `k >= 4`: `C(x, k)` is a polynomial in `(x - (k-1)/2)^2`, the fibre
+  group sits inside the hyperoctahedral group, which has two orbits on ordered
+  pairs (antipodal or not), and `kappa = 2`. For `k = 4` explicitly,
+  `C(x, 4) = ((u^2 - 5/4)^2 - 1)/24` with `u = x - 3/2`.
+
+Measured `kappa` is `1.000`/`2.000` to three decimals for `k = 2..9`, and 300-walk
+rho constants match `sqrt(pi/(2 kappa))` within one standard error (`exp25`). The
+even columns' `sqrt 2` fewer steps costs a second squaring per step, so per
+collision they are no cheaper. This is the Brent-Pollard `x^(2^j) + c`
+phenomenon, here forced by the symmetry of the triangle for every `p`.
+
 ## Relationship to AKS
 
 AKS verifies `(x+a)^n == x^n + a (mod n, x^r - 1)` for `r` of size `polylog(n)`

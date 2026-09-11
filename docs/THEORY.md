@@ -781,6 +781,48 @@ even columns' `sqrt 2` fewer steps costs a second squaring per step, so per
 collision they are no cheaper. This is the Brent-Pollard `x^(2^j) + c`
 phenomenon, here forced by the symmetry of the triangle for every `p`.
 
+## Proposition 23 — the divisor predicate under the hyperbola
+
+For `X <= sqrt(N - 1)`,
+
+```
+#{d | N : d <= X}  =  sum_{y <= X} floor(N/y)  -  sum_{y <= X} floor((N-1)/y),
+```
+
+since `floor(N/y) - floor((N-1)/y) = [y | N]`. The left side is monotone in `X`
+and jumps at `X = spf(N)`, so it is a binary-searchable predicate; better, the
+two sums' running totals, read from the top row down, agree exactly until the
+row of the largest divisor below `sqrt N`, so one pass of each finds it.
+
+Each sum is computed exactly from the convex hull of `{(x, y) in Z^2 : xy > m}`.
+That region is convex, so no lattice point lies strictly between its hull and
+the curve, and the number of points on or under the curve in row `y` is
+`ceil(hull_x(y)) - 1`. An edge from `(x, y)` along the primitive vector
+`(dx, -dy)` covers rows `y-dy .. y-1` and contributes
+`dy x + (dy+1)(dx-1)/2` points. Walking from row `sqrt N` to row `N^(1/3)` takes
+`O(N^(1/3) log N)` steps with a Stern-Brocot stack (Vinogradov's bound; the
+walk is Sladkey's), and rows below `N^(1/3)` are summed directly. Factoring
+this way costs `O~(N^(1/3))` (`exp26`: `p` found in 16 of 16 semiprimes up to 50
+bits).
+
+**Curved pieces (heuristic).** Each hull edge is an exact linear piece of
+`floor(N/y)`. On `[x, 2x]`, a degree-`d` Taylor piece of length `h` misses
+`N/y` by about `N h^(d+1) / x^(d+2)`; allowing `O(1)` stray lattice points per
+piece gives `h ~ x N^(-1/(d+2))`, hence `N^(1/(d+2))` pieces per dyadic block.
+`d = 2, 3, 4` would give `N^(1/4)`, `N^(1/5)`, `N^(1/6)`, provided (i) exact
+degree-`d` floor sums over a piece cost polylog time and (ii) the stray points
+near each arc can be located exactly. Already for `d = 2`, (i) meets class
+numbers: for primes `p = 3 (mod 4)`, `p > 3`,
+
+```
+sum_{k<p} floor(k^2/p)  =  (p-1)(2p-1)/6  -  (p-1-2 h(-p))/2 ,
+```
+
+from `sum_k (k^2 mod p) = 2 sum_(QR r) r` and Dirichlet's
+`h(-p) = -(1/p) sum a (a/p)` (checked for all 154 such primes below 2000). The
+hyperbola needs short arcs rather than full periods, so this does not prove (i)
+false; it places it next to a problem with no known polynomial-time algorithm.
+
 ## Relationship to AKS
 
 AKS verifies `(x+a)^n == x^n + a (mod n, x^r - 1)` for `r` of size `polylog(n)`

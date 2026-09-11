@@ -34,6 +34,8 @@ from round 14 (as corrected in round 15):
 | 23 | Ramanujan `tau(N) mod 691` | order-free, divisor-bound | pins `(p+q) mod 691` exactly; as hard as factoring (Bach-Charles) | `exp24` |
 | 24 | four-square count `r_4(N) = 8 sigma(N)` | divisor-bound | gives `p+q`; the count costs about `N` | `exp24` |
 | 25 | Pascal rho `x -> C(x, k)` | **collision** | `k=2` is Pollard's rho (`c = -5/16`); even `k` collide `sqrt 2` sooner (P22), paid back in squarings | `exp25` |
+| 26 | divisor count under the hyperbola, two hull walks (P23) | size | exact and deterministic; `O~(N^(1/3))`, Lehman's exponent | `exp26` |
+| 27 | curved hull pieces (degree `d`) | size | would give `N^(1/(d+2))`; `d = 2` floor sums compute class numbers | `exp26` |
 
 ## Round 15: the central column
 
@@ -120,3 +122,24 @@ the triangle hosts every mechanism at that mechanism's baseline. ECM's speed
 comes from redrawing groups, Harvey's from Lehman's geometry, and NFS's from
 smoothness in number fields. None of them comes from anything the triangle
 supplies.
+
+## Round 18: the binary search, done with lattice points
+
+The question from before the restart -- *is there any way to binary search for
+the factor?* -- has a factorial answer (Theorem 20, `O~(N^(1/4))`) and, it turns
+out, a geometric one. `#{d | N : d <= X}` is the difference of two lattice-point
+counts under the hyperbolas `xy = N` and `xy = N - 1`, and each count is exact
+from the convex hull of the points above the curve: no lattice point hides
+between a convex region's hull and its boundary. A Stern-Brocot stack walks the
+hull in `O(N^(1/3) log N)` steps, and the two walks' running totals agree until
+the first divisor, so one pass finds `p`. It is correct on 400 of 400 random
+counts against an independent reference and factors 16 of 16 semiprimes up to
+50 bits -- at `N^(1/3)`, which is Lehman's exponent, and slower than rho.
+
+The interesting part is why it stops there. Each hull edge is an exact linear
+piece of `floor(N/y)`; exact curved pieces of degree `d` would need only
+`N^(1/(d+2))` of them. At `d = 4` that would beat every known deterministic
+factoring method. But the first step up, exact quadratic floor sums, contains
+the class number: `sum_{k<p} floor(k^2/p)` is a linear function of `h(-p)`,
+checked on 154 of 154 primes. Short arcs are not full periods, so that is a
+signpost rather than a proof -- and it points into known hard territory.

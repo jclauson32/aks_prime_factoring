@@ -361,6 +361,16 @@ climbs to `p - 1` because every small prime added to the exponent helps a
 little; a collision pays nothing until a long chain is in place, so there is no
 slope to climb.
 
+Given a loop instruction, selection does find iteration -- but not rho. Its best
+loop bodies iterate a map built from `C(x, 2)` and test whether the output *hits*
+0 or 1 mod `p`, a search whose success grows like `R/p` in `R` steps. Rho's
+collisions grow like `R^2/p`. On the small training primes the two are
+comparable; with `3 sqrt p` repetitions on primes 64 times larger, rho still
+succeeds every time while the evolved body falls from 65% to 15%. (The loop
+model first took a single gcd at the end, which fails once *both* primes have
+collided and made rho look worse with more effort; it now checks after every
+repetition, as real implementations do.)
+
 ## Round 27: every method, the same numbers
 
 Thirteen methods, three balanced semiprimes per size from 40 to 100 bits, each

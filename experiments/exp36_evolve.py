@@ -16,6 +16,10 @@ from aksfactor.arith import factorize, is_prime
 from aksfactor.evolve import (
     OPS,
     PASCAL_OPS,
+    RHO_BODY,
+    evolve_loops,
+    loop_cost,
+    loop_score,
     SMALL_PRIMES as SMALL,
     as_polynomial,
     cost,
@@ -212,4 +216,60 @@ report.p(f"The collision mechanism is now the only one that works -- the hand-wr
          f"time. A collision pays nothing until a long, coordinated chain of "
          f"iterations and differences is in place, and random mutation does not "
          f"assemble one.")
+report.p()
+
+report.p("## Given a loop")
+report.p()
+report.p("Straight-line programs cannot say *repeat this*. Loop programs can: a "
+         "short body updates three state registers in place and is repeated as "
+         "often as the budget allows, an `acc` instruction multiplies an "
+         "accumulator by a difference of two registers, and the output is tested "
+         "against `N` after every repetition, as a real rho implementation does. "
+         "Rho is four instructions in this language -- `x <- C(x,2)`, "
+         "`y <- C(C(y,2),2)`, `acc *= x - y`.")
+report.p()
+loop_rows = [["rho body, written by hand", f"{loop_score(RHO_BODY, stest, B3):.3f}", "`" + str(RHO_BODY) + "`"]]
+bodies = []
+for run in range(2):
+    body = evolve_loops(strain, B3, 60, 80, rng)
+    bodies.append(body)
+    loop_rows.append([f"evolved loop, run {run + 1}", f"{loop_score(body, stest, B3):.3f}", "`" + str(body) + "`"])
+report.table(["program", "test success, safe primes", "body"], loop_rows)
+best_body = max(bodies, key=lambda b: loop_score(b, strain, B3))
+report.p("Now selection finds something that works where `p - 1` cannot. Does it "
+         "scale? Give each body `3 sqrt p` repetitions on semiprimes of safe primes "
+         "of growing size:")
+report.p()
+scale_rows = []
+for lo in (1000, 4000, 16000, 64000):
+    pool = []
+    while len(pool) < 8:
+        v = rng.randrange(lo, 2 * lo) | 1
+        if is_prime(v) and is_prime((v - 1) // 2):
+            pool.append(v)
+    sc = safe_cases(120, pool)
+    reps = 3 * int(lo ** 0.5)
+    scale_rows.append([f"{lo}-{2 * lo}",
+                       f"{loop_score(RHO_BODY, sc, reps * loop_cost(RHO_BODY)):.3f}",
+                       f"{loop_score(best_body, sc, reps * loop_cost(best_body)):.3f}"])
+report.table(["primes in", "rho body", "best evolved body"], scale_rows)
+rho_col = [float(r[1]) for r in scale_rows]
+ev_col = [float(r[2]) for r in scale_rows]
+report.p(f"With repetitions growing as `sqrt p`, the hand-written rho succeeds on "
+         f"{min(rho_col):.0%} to {max(rho_col):.0%} of the numbers at every size -- "
+         f"the birthday bound at work. The best evolved body goes from "
+         f"{ev_col[0]:.0%} at the smallest primes to {ev_col[-1]:.0%} at the "
+         f"largest. " + ("Selection found a trick that pays on the primes it trained "
+                         "on and fades on larger ones; the collision mechanism, which "
+                         "does not fade, is the one it did not assemble."
+                         + (" The evolved body has no accumulator: it iterates a map "
+                            "and asks whether the output *hits* 0 or 1 mod `p`. A hit "
+                            "is found with probability growing like `R/p` in `R` "
+                            "steps; a collision, like `R^2/p` -- the birthday "
+                            "paradox. On small primes the two look alike, and "
+                            "selection took the one it could reach."
+                            if not any(ins[0] == "acc" for ins in best_body) else "")
+                         if ev_col[-1] < 0.5 * min(rho_col) else
+                         "Here the evolved body keeps up with rho; the table is the "
+                         "evidence."))
 report.write()

@@ -309,3 +309,104 @@ def output_exponent(program):
         else:
             exps.append(None)
     return exps[-1]
+
+
+# ------------------------------------------------------------------ loop programs
+LOOP_OPS = ("cb2", "mul", "add", "sub", "sq", "acc")
+
+
+def loop_cost(body) -> float:
+    return sum(1 for ins in body if ins[0] in ("cb2", "mul", "sq", "acc")) or 1
+
+
+def run_loop(body, n: int, a: int, budget: float) -> int:
+    """State ``s = [a, a, 1]`` updated in place by ``body`` repeated
+    ``budget // cost(body)`` times; ``("acc", i, j)`` multiplies an accumulator
+    by ``s_i - s_j``.  Output: the accumulator if the body has one, else ``s_0``."""
+    s = [a % n, a % n, 1]
+    acc, has_acc = 1, False
+    half = (n + 1) // 2
+    reps = int(budget // loop_cost(body))
+    for _ in range(reps):
+        for op, t, i, j in body:
+            if op == "cb2":
+                s[t] = s[i] * (s[i] - 1) * half % n
+            elif op == "mul":
+                s[t] = s[i] * s[j] % n
+            elif op == "sq":
+                s[t] = s[i] * s[i] % n
+            elif op == "add":
+                s[t] = (s[i] + s[j]) % n
+            elif op == "sub":
+                s[t] = (s[i] - s[j]) % n
+            else:
+                acc = acc * (s[i] - s[j]) % n
+                has_acc = True
+    return acc if has_acc else s[0]
+
+
+def loop_splits(body, n: int, a: int, budget: float) -> bool:
+    """Run ``body`` as in ``run_loop`` but test the output after every repetition,
+    as a real rho implementation does -- a single final gcd fails as soon as
+    both primes have collided, which would make success non-monotone in effort."""
+    s = [a % n, a % n, 1]
+    acc, has_acc = 1, False
+    half = (n + 1) // 2
+    reps = int(budget // loop_cost(body))
+    for _ in range(reps):
+        for op, t, i, j in body:
+            if op == "cb2":
+                s[t] = s[i] * (s[i] - 1) * half % n
+            elif op == "mul":
+                s[t] = s[i] * s[j] % n
+            elif op == "sq":
+                s[t] = s[i] * s[i] % n
+            elif op == "add":
+                s[t] = (s[i] + s[j]) % n
+            elif op == "sub":
+                s[t] = (s[i] - s[j]) % n
+            else:
+                acc = acc * (s[i] - s[j]) % n
+                has_acc = True
+        out = acc if has_acc else s[0]
+        for g in (gcd(out, n), gcd(out - 1, n)):
+            if 1 < g < n:
+                return True
+            if g == n and has_acc:
+                return False                 # both primes collided in one step
+    return False
+
+
+def loop_score(body, cases, budget) -> float:
+    return sum(loop_splits(body, n, a, budget) for n, a in cases) / len(cases)
+
+
+def random_loop_instruction(rng):
+    return (rng.choice(LOOP_OPS), rng.randrange(3), rng.randrange(3), rng.randrange(3))
+
+
+def evolve_loops(cases, budget, generations, population, rng, max_body: int = 5):
+    """Elitist search over loop bodies of up to ``max_body`` instructions."""
+    def fit(b):
+        return loop_score(b, cases, budget)
+
+    pop = [[random_loop_instruction(rng) for _ in range(rng.randrange(1, max_body + 1))]
+           for _ in range(population)]
+    for _ in range(generations):
+        scored = sorted(((fit(b), b) for b in pop), key=lambda t: -t[0])
+        elite = [b for _, b in scored[: population // 5]]
+        pop = list(elite)
+        while len(pop) < population:
+            parent = list(rng.choice(elite))
+            r = rng.random()
+            if r < 0.4:
+                parent[rng.randrange(len(parent))] = random_loop_instruction(rng)
+            elif r < 0.7 and len(parent) < max_body:
+                parent.insert(rng.randrange(len(parent) + 1), random_loop_instruction(rng))
+            elif len(parent) > 1:
+                parent.pop(rng.randrange(len(parent)))
+            pop.append(parent)
+    return max(pop, key=fit)
+
+
+RHO_BODY = [("cb2", 0, 0, 0), ("cb2", 1, 1, 0), ("cb2", 1, 1, 0), ("acc", 0, 1, 0)]

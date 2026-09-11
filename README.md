@@ -98,7 +98,8 @@ has not found one, and the repository says precisely why:
 - Every factoring method manufactures a zero divisor mod `N` through one of four
   mechanisms — **order**, **size**, **collision**, **sign** (round 14, corrected
   in 15). Each has a best known method, and each is implemented here and run on
-  the same numbers: ECM, Harvey's `N^(1/5)`, Pollard rho, the quadratic sieve.
+  the same numbers: ECM, Harvey's `N^(1/5)`, Pollard rho, the quadratic and
+  number field sieves.
 - Pascal's triangle reaches all four mechanisms — the row, the factorial
   threshold, the column map `x → C(x,2)`, the central column — and on each it
   lands at the mechanism's baseline, `N^(1/4)` at best.
@@ -158,9 +159,10 @@ The per-round ledger is [`docs/LAB.md`](docs/LAB.md); proofs are in
 | **P24** | Pascal's triangle over any strong divisibility sequence: integer entries, a mod-`p` gasket whose cell is the rank of apparition; for elliptic divisibility sequences the cell is a point order and row `lcm(1..B)` is **ECM** | proved (cited), verified |
 | **R24** | Shor's algorithm simulated exactly: the order mechanism with `r` read by interference, no smoothness needed; the classical simulation costs `N²` | implemented, measured |
 | **R25** | dequantising Shor: every computable function of `aˣ mod N` tested has a flat spectrum (heaviest revealing weight 2–11× uniform); only the Jacobi symbol is heavy, and it reveals `r mod 2` | measured |
+| **R26** | a complete toy number field sieve (two-sided sieve, characters, algebraic square root by Newton lifting): factors 40–80-bit `N`, slower than the QS at these sizes, for a measured reason | implemented, measured |
 
 Every row is machine-checked in [`aksfactor/theorems.py`](aksfactor/theorems.py)
-and exercised by `run_tests.py` (177 tests, all passing).
+and exercised by `run_tests.py` (181 tests, all passing).
 
 ## The honest verdict
 
@@ -1160,14 +1162,15 @@ aksfactor/
   ecm.py        round 22: Lenstra's ECM (Montgomery curves, two stages) and p - 1
   divseq.py     round 23: triangles over divisibility sequences; the elliptic Pascal triangle
   shor.py       round 24: Shor's algorithm simulated classically (state vector + FFT)
+  nfs.py        round 26: a toy number field sieve (degree 3, pure Python)
   central.py    the central column: Legendre symbols from Pascal's triangle
   grouporder.py counts reachable group orders: ring unit orders vs #E(F_p)
   fast.py       O~(n^(1/4)) search: product tree, Newton division, remainder
                 tree, multipoint evaluation, BGS factorial, threshold search
   cli.py        python -m aksfactor {factor,row,entry,verify,fold}
 docs/           THEORY.md (proofs), FINDINGS.md (what it buys), LAB.md (idea ledger)
-experiments/    thirty-three reproducible scripts; results/ holds their generated reports
-tests/          177 tests; run_tests.py needs no pytest
+experiments/    thirty-four reproducible scripts; results/ holds their generated reports
+tests/          181 tests; run_tests.py needs no pytest
 ```
 
 Regenerate every measurement (and the figure above) with `./run_experiments.sh`

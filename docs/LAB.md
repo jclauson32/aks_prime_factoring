@@ -44,6 +44,7 @@ from round 14 (as corrected in round 15):
 | 32 | Pascal's triangle over divisibility sequences (P24) | order | gasket cell = rank of apparition; elliptic cell = point order, redrawable; row `lcm(1..B)` is ECM | `exp31` |
 | 33 | Shor's algorithm, simulated classically | order, **read directly** | factors to `N = 1517` on a 22-qubit register; simulation cost `N^2`, the amplitudes a quantum computer holds for free | `exp32` |
 | 34 | dequantising Shor by heavy Fourier coefficients | order | every computable function of `a^x mod N` tested is flat (weight `2-11/r`); Jacobi is heavy but reveals only `r mod 2` | `exp33` |
+| 35 | a toy number field sieve (reference) | **sign, two rings** | factors 40-80-bit `N`; at degree 3 its numbers are 9-15 bits larger than the QS's, so the QS wins here | `exp34` |
 
 ## Round 15: the central column
 
@@ -304,3 +305,26 @@ Two claims were corrected before commit. The collapsed register's indicator had
 been called uncomputable; it is computable, and the experiment now measures its
 flat spectrum instead. And a test function `e(c/v)` turned out to be the
 additive character with time reversed, so it was replaced.
+
+## Round 26: the number field sieve
+
+The last best-known method missing from the repository was the number field
+sieve, the sign mechanism at `L[1/3]`. The toy here is complete: base-`m`
+polynomials ranked by a crude root score, a two-sided line sieve over `(a, b)`,
+rational and algebraic factor bases, quadratic characters, GF(2) elimination,
+and the square root in `Z[alpha]` by Newton lifting from an inert prime. It
+factors every test semiprime from 40 to 80 bits.
+
+It is slower than the quadratic sieve at every size here, and the experiment
+shows why rather than asserting it: at degree 3 the two numbers it needs
+smooth are together 9 to 15 bits larger than the sieve's `Q(x)`. Its advantage
+needs the degree to grow with `N`, and appears in practice near a hundred
+decimal digits.
+
+The square root had a real bug on the way: the Newton lift estimated its
+`p`-adic precision from bit lengths, undershot by one power of `p` once the
+exponent reached 16, and then silently failed on every dependency of one
+40-bit number. Planted squares with 60-bit coefficients exposed it; the lift
+now tracks the exponent exactly and recovers 2000-bit square roots. Two
+poorly chosen polynomials also starved the sieve of relations, which is why
+polynomial selection now ranks candidates by their roots modulo small primes.

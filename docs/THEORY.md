@@ -775,6 +775,20 @@ distinct roots. The row reflection `C(k-1-x, k) = (-1)^k C(x, k)` decides it:
   pairs (antipodal or not), and `kappa = 2`. For `k = 4` explicitly,
   `C(x, 4) = ((u^2 - 5/4)^2 - 1)/24` with `u = x - 3/2`.
 
+*Why (sketch).* `p kappa` counts pairs `x != x'` with `C(x,k) = C(x',k)`, i.e. the
+`F_p`-points off the diagonal of the curve `C(x,k) = C(x',k)`. By Weil's bound
+each absolutely irreducible component contributes `p + O(sqrt p)` points, so
+`kappa` is the number of such components. For odd `k` (and `k = 2`) the curve
+`(C(x,k) - C(x',k))/(x - x')` is a single component, and the reflection sends
+`C` to `-C`, contributing nothing: `kappa = 1`. For even `k`, write
+`C(x,k) = g(u^2)` with `u = x - (k-1)/2`, `deg g = k/2`. The curve splits into the
+reflection `u' = -u` (one component, `p` points) and the lift of
+`(g(w) - g(w'))/(w - w') = 0` through `w = u^2, w' = u'^2`: a degree-`k/2 - 1` curve
+with about `p` points, each lifting to four `(u, u')` exactly when both `w` and
+`w'` are squares (probability `1/4`), again about `p` points. Hence `kappa = 2`.
+For `k = 4` the second curve is the conic `u^2 + u'^2 = 5/2`, and `kappa` is
+`2 + O(1/p)` exactly, matching the measured `2.000`.
+
 Measured `kappa` is `1.000`/`2.000` to three decimals for `k = 2..9`, and 300-walk
 rho constants match `sqrt(pi/(2 kappa))` within one standard error (`exp25`). The
 even columns' `sqrt 2` fewer steps costs a second squaring per step, so per

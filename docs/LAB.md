@@ -353,6 +353,14 @@ spent its budget on a poor exponent, one evolved program seemed to win (0.190
 against 0.160). Decoded symbolically, it *was* `p - 1`, with a better exponent;
 the experiment now optimises the baseline's exponent before comparing.
 
+The limit shows when `p - 1` is made useless. On semiprimes of safe primes
+`p = 2p' + 1`, drawn from disjoint training and test pools, an optimised `p - 1`
+scores zero and a hand-written Floyd walk on `C(x, 2)` scores 0.09 -- and
+evolution, even with `C(x, 2)` on offer, scores essentially nothing. Selection
+climbs to `p - 1` because every small prime added to the exponent helps a
+little; a collision pays nothing until a long chain is in place, so there is no
+slope to climb.
+
 ## Round 27: every method, the same numbers
 
 Thirteen methods, three balanced semiprimes per size from 40 to 100 bits, each

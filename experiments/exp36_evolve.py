@@ -16,6 +16,7 @@ from aksfactor.arith import factorize, is_prime
 from aksfactor.evolve import (
     OPS,
     PASCAL_OPS,
+    SMALL_PRIMES as SMALL,
     as_polynomial,
     cost,
     evolve,
@@ -168,4 +169,47 @@ report.p(f"At a budget of {B2} multiplications the collision mechanism is nearly
          f"test numbers, because a collision mod a {BITS}-bit prime needs about "
          f"`sqrt p` iterations -- while `p - 1` succeeds on {pm_s:.1%}. {tail} The "
          f"mechanism selection finds first is the one that pays first.")
+report.p()
+
+report.p("## When `p - 1` cannot pay")
+report.p()
+safe = [x for x in range(1000, 8192) if is_prime(x) and is_prime((x - 1) // 2)
+        and (x - 1) // 2 > max(SMALL)]
+rng.shuffle(safe)
+pool_train, pool_test = safe[: len(safe) // 2], safe[len(safe) // 2:]
+
+
+def safe_cases(k, pool):
+    out = []
+    while len(out) < k:
+        a_, b_ = rng.sample(pool, 2)
+        out.append((a_ * b_, rng.randrange(2, a_ * b_ - 1)))
+    return out
+
+
+strain, stest = safe_cases(200, pool_train), safe_cases(300, pool_test)
+B3, L3 = 100, 90
+fl3 = floyd_program(B3)
+e3, _ = optimised_pminus1(strain, B3)
+rows3 = [["Floyd's rho on `C(x, 2)`, written by hand", f"{score(fl3, stest):.3f}"],
+         ["Pollard p - 1, optimised exponent", f"{pminus1_success(e3, stest):.3f}"]]
+for ops, label in ((PASCAL_OPS, "evolved, with C(x, 2)"), (OPS, "evolved, arithmetic only")):
+    best = evolve(strain, L3, B3, 120, 100, rng, None, ops)
+    rows3.append([label, f"{score(best, stest):.3f}"])
+report.p(f"Safe primes `p = 2p' + 1` with `p'` above every exponent prime on offer "
+         f"make every order-mechanism program useless: `a^E = 1 (mod p)` needs "
+         f"`p' | E`. Training and test semiprimes come from disjoint pools of "
+         f"{len(pool_train)} and {len(pool_test)} such primes, so no program can "
+         f"memorise them; budget {B3} multiplications.")
+report.p()
+report.table(["program", "test success"], rows3)
+ev_best = max(float(r[1]) for r in rows3[2:])
+report.p(f"The collision mechanism is now the only one that works -- the hand-written "
+         f"Floyd walk scores {score(fl3, stest):.3f} -- and selection does not find "
+         f"it: the best evolved program scores {ev_best:.3f}. The difference is the "
+         f"shape of the search. Every small prime added to a `p - 1` exponent raises "
+         f"its success a little, so selection can climb to it one mutation at a "
+         f"time. A collision pays nothing until a long, coordinated chain of "
+         f"iterations and differences is in place, and random mutation does not "
+         f"assemble one.")
 report.write()

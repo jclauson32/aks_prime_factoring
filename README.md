@@ -90,6 +90,34 @@ divisor of `n`. Checked at 204,464 interior positions across every row
 semiprime. So for `n = p*q` the conjecture is exactly right: the first non-zero
 remainder **is** the prime factor `q`, with `y = 1`.
 
+## Where it ended up
+
+Twenty-five rounds later, the search for a polynomial-time classical algorithm
+has not found one, and the repository says precisely why:
+
+- Every factoring method manufactures a zero divisor mod `N` through one of four
+  mechanisms — **order**, **size**, **collision**, **sign** (round 14, corrected
+  in 15). Each has a best known method, and each is implemented here and run on
+  the same numbers: ECM, Harvey's `N^(1/5)`, Pollard rho, the quadratic sieve.
+- Pascal's triangle reaches all four mechanisms — the row, the factorial
+  threshold, the column map `x → C(x,2)`, the central column — and on each it
+  lands at the mechanism's baseline, `N^(1/4)` at best.
+- The gasket picture was right, and it needed a different triangle. Built over
+  an elliptic divisibility sequence, Pascal's triangle mod `p` is a gasket whose
+  cell is the order of a point on a curve, and that cell can be redrawn. Row
+  `lcm(1..B)` of that triangle **is** Lenstra's ECM (round 23).
+- The one polynomial-time algorithm known, Shor's, is the order mechanism with
+  the order *read* by interference. Simulated here, it costs `N²`, and every
+  classically computable function of `aˣ mod N` tested has a flat spectrum, so
+  the interference step does not dequantise (rounds 24–25).
+- Along the way, many reformulations turned out equivalent to factoring: the
+  second n-adic digit, `N^(1/4)` bits of `p`, `φ(N) mod ℓ`, `τ(N) mod 691`,
+  `r₄(N)`, exact lattice counts under `xy = N`. Every construction computable
+  from `N` alone came out symmetric in `p ↔ q`.
+
+The per-round ledger is [`docs/LAB.md`](docs/LAB.md); proofs are in
+[`docs/THEORY.md`](docs/THEORY.md).
+
 ## Results
 
 | | statement | status |

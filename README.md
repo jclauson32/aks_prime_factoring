@@ -129,9 +129,10 @@ remainder **is** the prime factor `q`, with `y = 1`.
 | **R22** | Lenstra's ECM: the order mechanism with redrawn groups — first curve works on 60% of `p` where `p − 1` never does; 64-bit `p` in seconds | implemented, measured |
 | **P24** | Pascal's triangle over any strong divisibility sequence: integer entries, a mod-`p` gasket whose cell is the rank of apparition; for elliptic divisibility sequences the cell is a point order and row `lcm(1..B)` is **ECM** | proved (cited), verified |
 | **R24** | Shor's algorithm simulated exactly: the order mechanism with `r` read by interference, no smoothness needed; the classical simulation costs `N²` | implemented, measured |
+| **R25** | dequantising Shor: every computable function of `aˣ mod N` tested has a flat spectrum (heaviest revealing weight 2–11× uniform); only the Jacobi symbol is heavy, and it reveals `r mod 2` | measured |
 
 Every row is machine-checked in [`aksfactor/theorems.py`](aksfactor/theorems.py)
-and exercised by `run_tests.py` (176 tests, all passing).
+and exercised by `run_tests.py` (177 tests, all passing).
 
 ## The honest verdict
 
@@ -1137,8 +1138,8 @@ aksfactor/
                 tree, multipoint evaluation, BGS factorial, threshold search
   cli.py        python -m aksfactor {factor,row,entry,verify,fold}
 docs/           THEORY.md (proofs), FINDINGS.md (what it buys), LAB.md (idea ledger)
-experiments/    thirty-two reproducible scripts; results/ holds their generated reports
-tests/          176 tests; run_tests.py needs no pytest
+experiments/    thirty-three reproducible scripts; results/ holds their generated reports
+tests/          177 tests; run_tests.py needs no pytest
 ```
 
 Regenerate every measurement (and the figure above) with `./run_experiments.sh`

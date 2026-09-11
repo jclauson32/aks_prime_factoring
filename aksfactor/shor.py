@@ -135,3 +135,41 @@ def shor(n: int, rng, max_runs: int = 20, stats: dict | None = None,
     if stats is not None:
         stats.update(runs=runs)
     return None
+
+
+def dft_any(values):
+    """DFT of any length by Bluestein's chirp-z transform over ``fft``."""
+    n = len(values)
+    if n & (n - 1) == 0:
+        return fft(values)
+    m = 1
+    while m < 2 * n - 1:
+        m <<= 1
+    chirp = [cmath.exp(-1j * math.pi * (k * k % (2 * n)) / n) for k in range(n)]
+    a = [values[k] * chirp[k] for k in range(n)] + [0] * (m - n)
+    b = [0] * m
+    b[0] = chirp[0].conjugate()
+    for k in range(1, n):
+        b[k] = b[m - k] = chirp[k].conjugate()
+    fa, fb = fft(a), fft(b)
+    conv = fft([x * y for x, y in zip(fa, fb)])
+    conv = [conv[0] / m] + [conv[m - k] / m for k in range(1, m)]   # inverse via reversal
+    return [conv[k] * chirp[k] for k in range(n)]
+
+
+def order_spectrum(n: int, a: int, psi, r: int | None = None):
+    """Fourier weights ``|g^(j)|^2`` of ``g(s) = psi(a^s mod n)`` over one period.
+
+    In Shor's algorithm the first register's outcome ``y ~ j Q / r`` carries
+    exactly this weight when ``psi`` is the second register's measurement; a
+    classical heavy-coefficient search (Goldreich-Levin, Kushilevitz-Mansour)
+    for a frequency revealing ``r`` needs about ``1 / max weight`` queries.
+    """
+    if r is None:
+        r, v = 1, a % n
+        while v != 1:
+            v = v * a % n
+            r += 1
+    g = [psi(pow(a, s, n)) for s in range(r)]
+    spec = dft_any(g)
+    return r, [abs(z / r) ** 2 for z in spec]

@@ -43,6 +43,7 @@ from round 14 (as corrected in round 15):
 | 31 | Lenstra's ECM (reference) | **order, redrawn** | first curve 60% on `p` where `p - 1` fails 100%; 64-bit `p` of a 160-bit `N` in seconds; `L_p[1/2]` | `exp30` |
 | 32 | Pascal's triangle over divisibility sequences (P24) | order | gasket cell = rank of apparition; elliptic cell = point order, redrawable; row `lcm(1..B)` is ECM | `exp31` |
 | 33 | Shor's algorithm, simulated classically | order, **read directly** | factors to `N = 1517` on a 22-qubit register; simulation cost `N^2`, the amplitudes a quantum computer holds for free | `exp32` |
+| 34 | dequantising Shor by heavy Fourier coefficients | order | every computable function of `a^x mod N` tested is flat (weight `2-11/r`); Jacobi is heavy but reveals only `r mod 2` | `exp33` |
 
 ## Round 15: the central column
 
@@ -280,3 +281,26 @@ quantum computer holds the `Q` values of `a^x` in `2 log2 N` qubits and extracts
 `r` by interference; a classical one has to write them down. Twenty-three
 classical rounds found no way to read `r` without them, and by Miller's
 reduction any such way would factor `N`.
+
+## Round 25: can the interference be done classically?
+
+Shor's measurement reads `r` from the Fourier spectrum of a function of
+`a^x mod N`. Classical algorithms can find heavy Fourier coefficients too --
+Goldreich-Levin, Kushilevitz-Mansour -- in about `1/tau` queries for weight
+`tau`, so the question is whether any computable function of `a^x mod N` puts
+`1/poly` weight on a frequency that reveals `r`.
+
+None does. Additive and quadratic characters, low, middle and high bits, and a
+residue symbol mod 7 all have their heaviest revealing coefficient at 2 to 11
+times the uniform weight `1/r`, the size of the maximum of a random spectrum,
+with orders from a few hundred to thirty thousand. The Jacobi symbol is the
+exception, with all its weight at `j = r/2`, and it reveals only that `r` is
+even. Even Shor's own collapsed register -- the indicator of one coset of
+`<a>`, which *is* classically computable -- is perfectly flat over its `r`
+peaks. What the quantum measurement provides is a sample from a spread-out
+distribution, not a heavy coefficient a classical search could find.
+
+Two claims were corrected before commit. The collapsed register's indicator had
+been called uncomputable; it is computable, and the experiment now measures its
+flat spectrum instead. And a test function `e(c/v)` turned out to be the
+additive character with time reversed, so it was replaced.

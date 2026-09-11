@@ -19,6 +19,7 @@ from .cyclo import (
     pollard_pminus1,
     williams_pplus1,
 )
+from .generic import alignment_gain, generic_rate, zero_divisor_density
 from .lattice import coppersmith_small_root, factor_with_hint, lll
 from .harvey import harvey_factor, harvey_search, lehman_recover
 from .fractal import (
@@ -73,6 +74,9 @@ __all__ = [
     "harvey_search",
     "lehman_recover",
     "lll",
+    "generic_rate",
+    "zero_divisor_density",
+    "alignment_gain",
     "coppersmith_small_root",
     "factor_with_hint",
     "fold_attack",

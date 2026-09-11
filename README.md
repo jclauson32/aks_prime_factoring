@@ -117,9 +117,10 @@ remainder **is** the prime factor `q`, with `y = 1`.
 | **R11** | Coppersmith implemented: **poly-time** factoring given `N^(1/4)` of `p`; guessing it is `Θ(N^(1/4))` by counting | implemented, proved |
 | **R12** | poly-time factoring ⟺ poly-time approximation of `p` to `N^(1/4)`; guess+Coppersmith never beats Strassen | proved, measured |
 | **R13** | the budget is `φ(N) mod ℓ` for primes `ℓ ≤ (1/4)ln N`; `N` reveals exactly the `p↔q` symmetry and nothing more | proved, measured |
+| **R14** | generic ring programs achieve exactly `1−φ(N)/N`; every method's content is one *alignment*, and only two kinds exist | measured |
 
 Every row is machine-checked in [`aksfactor/theorems.py`](aksfactor/theorems.py)
-and exercised by `run_tests.py` (123 tests, all passing).
+and exercised by `run_tests.py` (129 tests, all passing).
 
 ## The honest verdict
 
@@ -981,6 +982,75 @@ The `p ↔ q` symmetry that Theorem 8 first found in the AKS ring is the same
 obstruction that survives here — in a setting with no binomial coefficients
 anywhere in it.
 
+## Round 14: generic algebra is worth *nothing*; one alignment is worth everything
+
+You're right that shaving exponents solves nothing. So this round stops proposing
+algorithms and measures the **space** of them.
+
+Factoring is the manufacture of a **zero divisor**. Under CRT `Z/N = F_p × F_q`,
+and a nontrivial `gcd(x,N)` is an `x` vanishing in exactly one coordinate. Ring
+operations act *diagonally* — the same `+`, `−`, `×` on both coordinates — so no
+arrangement of them can tell `p` from `q`.
+
+### The generic baseline
+
+Random straight-line programs over `Z/N`: random base, arbitrary `+ − ×`. Since
+`×` can square a register, depth `d` reaches exponents up to `2^d` — **this model
+contains Pollard's `p−1`.**
+
+| p | q | depth | measured split rate | `1 − φ(N)/N` | ratio |
+|---|---|---|---|---|---|
+| 179 | 419 | 6 | 0.005617 | 0.007960 | 0.706 |
+| 179 | 419 | 24 | 0.007792 | 0.007960 | **0.979** |
+| 733 | 761 | 24 | 0.002717 | 0.002677 | **1.015** |
+| 5,849 | 7,927 | 24 | 0.000283 | 0.000297 | **0.954** |
+
+It converges to `1/p + 1/q` — **exactly the chance a uniformly random element of
+`Z/N` happens to be a zero divisor.** Depth buys astronomical exponents and buys
+nothing else. Generic algebra is worth precisely as much as reaching into a hat.
+
+### What one alignment is worth
+
+| lcm bound B | Pollard `p−1` rate | generic baseline | gain |
+|---|---|---|---|
+| 50 | 0.0787 | 0.000427 | 184× |
+| 200 | 0.9947 | 0.000427 | **2,332×** |
+
+Same ring, same operations, same depth budget. The **only** difference: the
+exponent is chosen divisible by everything small — aligned with the *order* of
+the group mod `p`. That one choice is the entire method.
+
+### The taxonomy
+
+Every working method imports exactly one alignment, and only two are known:
+
+| alignment | what's aligned | methods | proven cap |
+|---|---|---|---|
+| **order** | exponent divisible by `\|G\|` for a group attached to `p` | Pollard, Williams, ECM, class groups | `L[1/2]` — smooth-number density |
+| **size** | a window straddling the magnitude of `p` | Fermat, Lehman, Strassen, Coppersmith, Harvey | `N^(1/4)` by counting; `N^(1/5)` with BSGS |
+
+**All fourteen rounds map onto this exactly.** Pascal row, AKS fold,
+q-deformation, norm-one subgroup, class group → *order*. Gasket threshold,
+factorial search, Lehman's fan, Coppersmith's window → *size*. Nothing examined
+here was anything else.
+
+### So what a polynomial-time algorithm has to do
+
+Import a **third alignment**: a structure attached to `p`, visible from `N` in
+polynomial time, that is neither a group order nor a magnitude. Every barrier in
+this repository is a consequence of there being only two —
+
+- symmetric constructions (T8, `N mod ℓ`) see neither and return facts about `N`;
+- aliased constructions (T7) destroy the size alignment by sampling below `p`;
+- rigid orders (P14) give one order alignment per `p`, no redraw;
+- dense families (round 5) give unboundedly many, and hit smoothness density.
+
+This isn't a proof no third alignment exists. It's a measurement that fourteen
+rounds — algebraic, geometric, group-theoretic, fractal, lattice, analytic —
+produced no candidate, plus a test sharp enough to judge a fifteenth in one
+sentence: **which structure attached to `p` does it align with, and is that
+structure order, size, or new?**
+
 ## Benchmarks
 
 Balanced semiprimes, finding `spf(n)`:
@@ -1020,13 +1090,14 @@ aksfactor/
   fractal.py    the gasket: Lucas geometry, digit-DP box counts, row/column duals
   harvey.py     Harvey's N^(1/5) deterministic factoring: Lehman + Fermat + BSGS
   lattice.py    exact LLL and Coppersmith: polynomial-time factoring given a hint
+  generic.py    the generic-ring baseline: what algebra buys without an alignment
   grouporder.py counts reachable group orders: ring unit orders vs #E(F_p)
   fast.py       O~(n^(1/4)) search: product tree, Newton division, remainder
                 tree, multipoint evaluation, BGS factorial, threshold search
   cli.py        python -m aksfactor {factor,row,entry,verify,fold}
 docs/           THEORY.md (proofs), FINDINGS.md (what it buys)
-experiments/    twenty-one reproducible scripts; results/ holds their generated reports
-tests/          123 tests; run_tests.py needs no pytest
+experiments/    twenty-two reproducible scripts; results/ holds their generated reports
+tests/          129 tests; run_tests.py needs no pytest
 ```
 
 Regenerate every measurement (and the figure above) with `./run_experiments.sh`

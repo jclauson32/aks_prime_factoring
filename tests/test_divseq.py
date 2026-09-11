@@ -58,3 +58,17 @@ def test_elliptic_triangle_factors():
             break
     q = 1000000007
     assert elliptic_triangle_factor(p * q, 1000, 400, rng) in (p, q)
+
+
+def test_zero_pattern_matches_exact_binomials():
+    from math import comb
+
+    from aksfactor.figures import zero_pattern
+
+    nat = list(range(121))
+    for p in (5, 7, 11):
+        z = zero_pattern(nat, p, 4, 120)
+        assert all((comb(n, k) % p == 0) == z[n][k] for n in range(120) for k in range(n + 1))
+    w = curve_eds(0, 17, 2, 5, 40)
+    z = zero_pattern(eds_mod(*w[1:5], 41, 7 ** 5), 7, 5, 38)
+    assert all((nomial(w, n, k) % 7 == 0) == z[n][k] for n in range(38) for k in range(n + 1))

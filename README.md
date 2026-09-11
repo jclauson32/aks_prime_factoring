@@ -107,6 +107,20 @@ has not found one, and the repository says precisely why:
   an elliptic divisibility sequence, Pascal's triangle mod `p` is a gasket whose
   cell is the order of a point on a curve, and that cell can be redrawn. Row
   `lcm(1..B)` of that triangle **is** Lenstra's ECM (round 23).
+
+<p align="center">
+  <img src="docs/figures/pascal_mod_77.png" width="45%" alt="Pascal's triangle mod 77">
+  &nbsp;
+  <img src="docs/figures/elliptic_mod_77.png" width="45%" alt="An elliptic triangle mod 77">
+</p>
+
+  Rows 0–191 of Pascal's triangle (left) and of the triangle over the elliptic
+  divisibility sequence of `P = (2, 5)` on `y² = x³ + 17` (right), mod
+  `77 = 7 × 11`. Red entries are divisible by 7 only, blue by 11 only, dark by
+  both: the coloured ones are exactly the entries that share a factor with 77.
+  Pascal's cells are 7 and 11 themselves; the elliptic cells are 13 and 12, the
+  orders of `P` mod 7 and mod 11 — and a different curve gives different cells.
+  (`experiments/render_gaskets.py`)
 - The one polynomial-time algorithm known, Shor's, is the order mechanism with
   the order *read* by interference. Simulated here, it costs `N²`, and every
   classically computable function of `aˣ mod N` tested has a flat spectrum, so

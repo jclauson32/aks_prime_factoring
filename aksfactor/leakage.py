@@ -133,12 +133,12 @@ def r4(n: int) -> int:
 
 
 def walsh_scan(train, test, target, bits: int, triple_top: int = 0,
-               skip: tuple = (0,), keep_sigma: float = 4.5) -> dict:
+               skip: tuple = (0,), keep_sigma: float = 4.5, max_degree: int = 2) -> dict:
     """Low-degree Fourier learner for one target bit of the factorisation.
 
     ``train``/``test`` are lists of ``(N, p, q)``; ``target(N, p, q)`` is a bool.
     Every Walsh character ``chi_S(N) = (-1)^(sum_{i in S} bit_i N)`` with
-    ``|S| <= 2`` (and ``|S| = 3`` among the top ``triple_top`` bits) is
+    ``|S| <= max_degree`` (and ``|S| = 3`` among the top ``triple_top`` bits) is
     correlated with the target on the training half, using bitsets over the
     samples (one AND and one popcount per character).  Characters beyond
     ``keep_sigma`` standard errors vote on the test half.
@@ -152,8 +152,10 @@ def walsh_scan(train, test, target, bits: int, triple_top: int = 0,
     from math import log, sqrt
 
     idx = [i for i in range(bits) if i not in skip]
-    subsets = [(i,) for i in idx] + list(combinations(idx, 2))
-    if triple_top:
+    subsets = []
+    for deg in range(1, max_degree + 1):
+        subsets += list(combinations(idx, deg))
+    if triple_top and max_degree < 3:
         subsets += list(combinations([i for i in idx if i >= bits - triple_top], 3))
     cols = []
     for i in range(bits):

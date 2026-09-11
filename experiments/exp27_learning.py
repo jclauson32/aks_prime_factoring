@@ -93,9 +93,34 @@ report.p(f"Below the top bits there is nothing. For bits 10 down to 1 of `p` and
          f"{worst_ratio:.2f} times the maximum expected from noise alone over "
          f"{chars:,} characters.")
 report.p()
-report.p("What this rules out is narrow and worth stating exactly: low-degree "
-         "structure in the bits of `N` that predicts the low or middle bits of "
-         "`p`. A learner with more capacity could in principle find "
+report.p("## Degree four, all bits")
+report.p()
+rows4 = []
+deg4 = {}
+for name, why, fn in targets[5:]:
+    got = walsh_scan(train, test, fn, BITS, max_degree=4)
+    deg4[name] = got
+    rows4.append([name, f"{got['accuracy']:.4f}", f"{got['majority']:.4f}",
+                  f"{got['max_corr']:.4f}", f"{got['null_max']:.4f}"])
+chars4 = deg4[targets[5][0]]["characters"]
+report.p(f"The same targets against every character of degree at most four over all "
+         f"39 non-constant bits of `N` -- {chars4:,} characters:")
+report.p()
+report.table(["target", "test accuracy", "majority", "max |corr|", "null max"], rows4)
+ratio4 = max(g["max_corr"] / g["null_max"] for g in deg4.values())
+gain4 = max(g["accuracy"] - g["majority"] for g in deg4.values())
+se4 = (0.25 / len(test)) ** 0.5
+report.p(f"The strongest correlation is {ratio4:.2f} times the typical noise maximum "
+         f"-- maxima over {chars4:,} characters land on either side of it -- and the "
+         f"best gain over the majority guess is {gain4:+.4f}, "
+         f"{'within' if gain4 < 2 * se4 else 'beyond'} two standard errors "
+         f"(+-{2 * se4:.4f}) of the test accuracy. Characters that cross the "
+         f"selection threshold by chance do not generalise: where they are used, "
+         f"test accuracy does not rise above the majority guess.")
+report.p()
+report.p("What this rules out is narrow and worth stating exactly: structure of "
+         "degree at most four in the bits of `N` that predicts the low or middle "
+         "bits of `p`. A learner with more capacity could in principle find "
          "higher-degree structure that this one would miss; the controls "
          "establish only that the pipeline -- sampling, splitting, scoring -- "
          "registers signal when there is some. The picture matches every other "

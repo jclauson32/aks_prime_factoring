@@ -184,6 +184,10 @@ One bookkeeping trap caught on the way: bit 0 of `N` is always 1, so its
 "character" is a constant and its "correlation" is the target's bias. It
 reported `0.73` for an unbalanced target before it was excluded.
 
+Later extended to every character of degree at most four over all bits, 92,170
+of them: the strongest correlation sits at the noise maximum, and nothing
+generalises to the test set.
+
 ## Round 20: Schnorr's lattice, tested
 
 In 2021 Schnorr claimed that lattice reduction finds the smooth relations of a

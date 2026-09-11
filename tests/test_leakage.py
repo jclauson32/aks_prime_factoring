@@ -100,3 +100,35 @@ def test_feature_detector_positive_control():
     assert acc > 0.9
     noise = feature_accuracy(data, 7, lambda n, ell: bin(n).count("1") % ell)
     assert noise < 0.9
+
+
+def _semiprimes(count, seed):
+    rng = random.Random(seed)
+    out = []
+    while len(out) < count:
+        p = rng.randrange(1 << 13, 1 << 14) | 1
+        if not is_prime(p):
+            continue
+        q = rng.randrange(p + 2, 2 * p) | 1
+        if is_prime(q):
+            out.append((p * q, p, q))
+    return out
+
+
+def test_walsh_scan_finds_a_planted_character():
+    from aksfactor.leakage import walsh_scan
+
+    data = _semiprimes(6000, 1)
+    got = walsh_scan(data[:4000], data[4000:], lambda n, p, q: ((n >> 3) ^ (n >> 17)) & 1, 28)
+    assert got["accuracy"] == 1.0 and got["argmax"] == (3, 17)
+
+
+def test_walsh_scan_null_stays_under_its_bound():
+    from aksfactor.leakage import walsh_scan
+
+    data = _semiprimes(6000, 2)
+    coin = random.Random(9)
+    labels = {n: coin.random() < 0.5 for n, _, _ in data}
+    got = walsh_scan(data[:4000], data[4000:], lambda n, p, q: labels[n], 28)
+    assert got["max_corr"] < 1.3 * got["null_max"]
+    assert abs(got["accuracy"] - 0.5) < 0.05

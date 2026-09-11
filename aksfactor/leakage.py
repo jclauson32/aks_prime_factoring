@@ -130,3 +130,71 @@ def r4(n: int) -> int:
                 if d * d == rc:
                     count += 1 if d == 0 else 2
     return count
+
+
+def walsh_scan(train, test, target, bits: int, triple_top: int = 0,
+               skip: tuple = (0,), keep_sigma: float = 4.5) -> dict:
+    """Low-degree Fourier learner for one target bit of the factorisation.
+
+    ``train``/``test`` are lists of ``(N, p, q)``; ``target(N, p, q)`` is a bool.
+    Every Walsh character ``chi_S(N) = (-1)^(sum_{i in S} bit_i N)`` with
+    ``|S| <= 2`` (and ``|S| = 3`` among the top ``triple_top`` bits) is
+    correlated with the target on the training half, using bitsets over the
+    samples (one AND and one popcount per character).  Characters beyond
+    ``keep_sigma`` standard errors vote on the test half.
+
+    ``skip`` drops constant bits -- bit 0 of an odd ``N`` would otherwise
+    report the target's bias as a "correlation".
+    Returns test accuracy, the majority baseline, the largest ``|corr|``, and
+    the largest ``|corr|`` expected under the null, ``sigma sqrt(2 ln 2M)``.
+    """
+    from itertools import combinations
+    from math import log, sqrt
+
+    idx = [i for i in range(bits) if i not in skip]
+    subsets = [(i,) for i in idx] + list(combinations(idx, 2))
+    if triple_top:
+        subsets += list(combinations([i for i in idx if i >= bits - triple_top], 3))
+    cols = []
+    for i in range(bits):
+        v = 0
+        for s, (n, _, _) in enumerate(train):
+            if (n >> i) & 1:
+                v |= 1 << s
+        cols.append(v)
+    tv = 0
+    for s, row in enumerate(train):
+        if target(*row):
+            tv |= 1 << s
+    m = len(train)
+    t_cnt = tv.bit_count()
+    corr = {}
+    for sub in subsets:
+        par = 0
+        for i in sub:
+            par ^= cols[i]
+        corr[sub] = (2 * t_cnt - m - 4 * (par & tv).bit_count() + 2 * par.bit_count()) / m
+    sigma = 1 / sqrt(m)
+    keep = {sub: c for sub, c in corr.items() if abs(c) > keep_sigma * sigma}
+    ybar = (2 * t_cnt - m) / m
+    hits = ones = 0
+    for n, p, q in test:
+        y = 1 if target(n, p, q) else -1
+        ones += y == 1
+        score = ybar
+        for sub, c in keep.items():
+            par = 0
+            for i in sub:
+                par ^= (n >> i) & 1
+            score += c * (1 - 2 * par)
+        hits += (1 if score >= 0 else -1) == y
+    best = max(corr.items(), key=lambda kv: abs(kv[1]))
+    return {
+        "accuracy": hits / len(test),
+        "majority": max(ones, len(test) - ones) / len(test),
+        "max_corr": abs(best[1]),
+        "argmax": best[0],
+        "null_max": sigma * sqrt(2 * log(2 * len(subsets))),
+        "kept": len(keep),
+        "characters": len(subsets),
+    }

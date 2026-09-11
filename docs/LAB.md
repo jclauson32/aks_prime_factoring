@@ -36,6 +36,7 @@ from round 14 (as corrected in round 15):
 | 25 | Pascal rho `x -> C(x, k)` | **collision** | `k=2` is Pollard's rho (`c = -5/16`); even `k` collide `sqrt 2` sooner (P22), paid back in squarings | `exp25` |
 | 26 | divisor count under the hyperbola, two hull walks (P23) | size | exact and deterministic; `O~(N^(1/3))`, Lehman's exponent | `exp26` |
 | 27 | curved hull pieces (degree `d`) | size | would give `N^(1/(d+2))`; `d = 2` floor sums compute class numbers | `exp26` |
+| 28 | low-degree Fourier learner on the bits of `N` | -- | finds planted parity, `(p+q) mod 4`, top bits of `p` (size); nothing below | `exp27` |
 
 ## Round 15: the central column
 
@@ -143,3 +144,22 @@ factoring method. But the first step up, exact quadratic floor sums, contains
 the class number: `sum_{k<p} floor(k^2/p)` is a linear function of `h(-p)`,
 checked on 154 of 154 primes. Short arcs are not full periods, so that is a
 signpost rather than a proof -- and it points into known hard territory.
+
+## Round 19: a learner on the bits of `N`
+
+The machine-learning version of the question: is there structure in the bits of
+`N` that predicts bits of `p`? The learner correlates all 1,000 Walsh characters
+of degree at most two (three among the top bits) with a target bit, on 45,000
+balanced 40-bit semiprimes, and predicts on 15,000 more.
+
+It is calibrated both ways. It finds a planted parity at 100%; it finds
+`(p+q) mod 4` at 100%, because `N mod 4` genuinely determines it (the `ell = 4`
+case of round 13: symmetric information, not a leak); and it finds the top bits
+of `p` partially (0.82 against a 0.75 majority), because they are the size of
+`N` seen through a square root. For bits 10 down to 1, and for `p mod 3` and
+`p mod 4`, the gain over the majority is zero and the strongest correlation sits
+at the maximum expected from noise.
+
+One bookkeeping trap caught on the way: bit 0 of `N` is always 1, so its
+"character" is a constant and its "correlation" is the target's bias. It
+reported `0.73` for an unbalanced target before it was excluded.

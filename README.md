@@ -123,9 +123,10 @@ remainder **is** the prime factor `q`, with `y = 1`.
 | **R16** | no cheap function of `N` beats the Bayes baseline for `(p+q) mod ℓ`; `τ(N) mod 691` would pin it exactly, but is as hard as factoring | measured |
 | **P22** | Pascal rho: `x → C(x,2)` *is* Pollard's rho; the row palindrome doubles the fibre statistic for even `k`, √2 fewer steps, no cheaper | proved (k=2), measured |
 | **P23** | `#{d∣N : d≤X}` from two exact hyperbola lattice counts; one pair of hull walks factors in `Õ(N^(1/3))`; curved pieces would reach `N^(1/(d+2))` but quadratic floor sums encode class numbers | implemented, measured |
+| **R19** | a low-degree Fourier learner on the bits of `N` finds planted parities, `(p+q) mod 4` and the top bits of `p` — and nothing about the low or middle bits | measured |
 
 Every row is machine-checked in [`aksfactor/theorems.py`](aksfactor/theorems.py)
-and exercised by `run_tests.py` (157 tests, all passing).
+and exercised by `run_tests.py` (159 tests, all passing).
 
 ## The honest verdict
 
@@ -1117,7 +1118,7 @@ aksfactor/
   harvey.py     Harvey's N^(1/5) deterministic factoring: Lehman + Fermat + BSGS
   lattice.py    exact LLL and Coppersmith: polynomial-time factoring given a hint
   generic.py    the generic-ring baseline: what algebra buys without an alignment
-  leakage.py    round 16: feature scans, Ramanujan tau mod 691, four-square counts
+  leakage.py    rounds 16, 19: feature scans, tau mod 691, four squares, Walsh learner
   collision.py  round 17: Pascal rho, x -> C(x, k) mod N, and its fibre statistic
   hyperbola.py  round 18: exact lattice counts under xy = N by hull walk; divisor predicate
   central.py    the central column: Legendre symbols from Pascal's triangle
@@ -1126,8 +1127,8 @@ aksfactor/
                 tree, multipoint evaluation, BGS factorial, threshold search
   cli.py        python -m aksfactor {factor,row,entry,verify,fold}
 docs/           THEORY.md (proofs), FINDINGS.md (what it buys), LAB.md (idea ledger)
-experiments/    twenty-six reproducible scripts; results/ holds their generated reports
-tests/          157 tests; run_tests.py needs no pytest
+experiments/    twenty-seven reproducible scripts; results/ holds their generated reports
+tests/          159 tests; run_tests.py needs no pytest
 ```
 
 Regenerate every measurement (and the figure above) with `./run_experiments.sh`

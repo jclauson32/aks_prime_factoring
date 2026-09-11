@@ -38,6 +38,8 @@ from round 14 (as corrected in round 15):
 | 27 | curved hull pieces (degree `d`) | size | would give `N^(1/(d+2))`; `d = 2` floor sums compute class numbers | `exp26` |
 | 27b | jump to the divisor vertex by slope (2D integer program) | size | divisor's normal cone is `Theta(N^(-1/3))`, ~1.4x its neighbours'; aiming needs `p` to `N^(1/6)` | `exp26` |
 | 28 | low-degree Fourier learner on the bits of `N` | -- | finds planted parity, `(p+q) mod 4`, top bits of `p` (size); nothing below | `exp27` |
+| 29 | Schnorr's prime-number lattice (2021) | sign (relations) | residues avoid the primes the vector used; as smooth as same-size integers with the same local law, no more; yield collapses by 44 bits | `exp28` |
+| 30 | quadratic sieve (reference) | **sign + smoothness** | pure Python, 110-bit `N` in seconds; overtakes rho at 80 bits; `L[1/2]` | `exp29` |
 
 ## Round 15: the central column
 
@@ -173,3 +175,37 @@ at the maximum expected from noise.
 One bookkeeping trap caught on the way: bit 0 of `N` is always 1, so its
 "character" is a constant and its "correlation" is the target's bias. It
 reported `0.73` for an unbalanced target before it was excluded.
+
+## Round 20: Schnorr's lattice, tested
+
+In 2021 Schnorr claimed that lattice reduction finds the smooth relations of a
+sieve fast enough to break RSA. The claim did not survive scrutiny at the time;
+this round rebuilds its core with an exact integer LLL and Kannan's embedding
+and asks the one question that decides it: are the residues `r = u - vN` from
+close vectors in the prime-number lattice smooth more often than chance?
+
+They are not, and the reason is structural. `u` and `v` use disjoint primes, and
+`r` is divisible by none of them, so a vector that uses half the factor base
+leaves `r` the other half. At the unused primes `u` and `v` are units, which
+makes `p | r` slightly *more* likely than for a random integer (`1/(p-1)`
+against `1/p`; at `p = 2`, always). Against integers of the same size drawn
+from exactly that local law, the lattice's smooth count is within a standard
+deviation. The method does factor a 32-bit number; its yield per lattice falls
+more than tenfold by 40 bits and to nothing at 44, because its residues are
+larger than `N`.
+
+The baseline took three tries: same-size integers predict three times too many
+smooth residues; adding only coprimality and parity undershoots by about a
+fifth, which in one run looked like a z = +3 lattice advantage. The full
+local law removes it. The experiment now computes all three live.
+
+## Round 21: the frontier, in one codebase
+
+A single-polynomial quadratic sieve in pure Python factors 110-bit semiprimes
+in seconds. On the same numbers it overtakes rho at 80 bits, and its running
+time grows about 2.7x per ten bits against rho's 6.0x (theory: 5.7). The sieve
+and the central column of round 15 use the same mechanism, the sign of a
+square root. The difference is that the sieve never asks for a Legendre symbol
+mod `p`: it lets smooth numbers and linear algebra over `F_2` produce the
+square. That is where all the sub-exponential methods get their power, and it
+is exactly what Pascal's triangle does not supply.

@@ -124,9 +124,11 @@ remainder **is** the prime factor `q`, with `y = 1`.
 | **P22** | Pascal rho: `x → C(x,2)` *is* Pollard's rho; the row palindrome doubles the fibre statistic for even `k`, √2 fewer steps, no cheaper | proved (k=2), measured |
 | **P23** | `#{d∣N : d≤X}` from two exact hyperbola lattice counts; divisors are vertices of the hull of `xy > N−1`, so one walk factors in `Õ(N^(1/3))`; its edges are Lehman certificates; curved pieces would reach `N^(1/(d+2))` but quadratic floor sums encode class numbers | proved, implemented |
 | **R19** | a low-degree Fourier learner on the bits of `N` finds planted parities, `(p+q) mod 4` and the top bits of `p` — and nothing about the low or middle bits | measured |
+| **R20** | Schnorr's lattice factoring: close-vector residues avoid the primes the vector used, and are no smoother than same-size integers with the same local law; yield collapses by 44 bits | implemented, measured |
+| **R21** | a pure-Python quadratic sieve overtakes the `N^(1/4)` family at 80 bits (2.7× vs 6.0× per 10 bits) — smoothness is the frontier | implemented, measured |
 
 Every row is machine-checked in [`aksfactor/theorems.py`](aksfactor/theorems.py)
-and exercised by `run_tests.py` (160 tests, all passing).
+and exercised by `run_tests.py` (165 tests, all passing).
 
 ## The honest verdict
 
@@ -1121,14 +1123,16 @@ aksfactor/
   leakage.py    rounds 16, 19: feature scans, tau mod 691, four squares, Walsh learner
   collision.py  round 17: Pascal rho, x -> C(x, k) mod N, and its fibre statistic
   hyperbola.py  round 18: exact lattice counts under xy = N by hull walk; divisor predicate
+  schnorr.py    round 20: exact integral LLL, Schnorr's prime-number lattice, relation algebra
+  qs.py         round 21: a small quadratic sieve, the sign mechanism with smoothness
   central.py    the central column: Legendre symbols from Pascal's triangle
   grouporder.py counts reachable group orders: ring unit orders vs #E(F_p)
   fast.py       O~(n^(1/4)) search: product tree, Newton division, remainder
                 tree, multipoint evaluation, BGS factorial, threshold search
   cli.py        python -m aksfactor {factor,row,entry,verify,fold}
 docs/           THEORY.md (proofs), FINDINGS.md (what it buys), LAB.md (idea ledger)
-experiments/    twenty-seven reproducible scripts; results/ holds their generated reports
-tests/          160 tests; run_tests.py needs no pytest
+experiments/    twenty-nine reproducible scripts; results/ holds their generated reports
+tests/          165 tests; run_tests.py needs no pytest
 ```
 
 Regenerate every measurement (and the figure above) with `./run_experiments.sh`

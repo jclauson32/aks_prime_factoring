@@ -85,46 +85,60 @@ report.p()
 
 report.p("## The taxonomy")
 report.p()
-report.p("Every working factoring method imports exactly one alignment with a "
-         "structure attached to `p`, and only two such structures are known:")
+report.p("Every working factoring method manufactures its zero divisor through one "
+         "of a small number of mechanisms. **An earlier version of this experiment "
+         "claimed there were only two, order and size. That was wrong** -- it "
+         "omitted Pollard's rho and the whole quadratic/number field sieve family, "
+         "and the latter beats both caps it listed. The corrected table:")
 report.p()
-report.p("| alignment | what is aligned | methods | proven cap |")
+report.p("| mechanism | how the zero divisor arises | methods | best known |")
 report.p("|---|---|---|---|")
-report.p("| **order** | exponent divisible by `\\|G\\|` for a group `G` attached to `p` | Pollard `p-1`, Williams `p+1`, ECM, class groups | `L[1/2]` -- the density of smooth numbers (Dickman) |")
-report.p("| **size** | a window straddling the magnitude of `p` | Fermat, Lehman, Strassen, Coppersmith, Harvey | `N^(1/4)` by counting; `N^(1/5)` with Lehman + BSGS |")
+report.p("| **order** | exponent divisible by `\\|G\\|` for a group `G` attached to `p` | Pollard `p-1`, Williams `p+1`, ECM, class groups | `L[1/2]` (ECM) -- capped by smooth-number density |")
+report.p("| **size** | a window or interval that contains `p` | trial division, Fermat, Lehman, Strassen, Coppersmith, Harvey | `N^(1/5)` deterministic (Harvey) |")
+report.p("| **collision** | two iterates agreeing mod `p` but not mod `q` | Pollard rho | `N^(1/4)` -- the birthday bound on a set of size `p` |")
+report.p("| **sign** | a square root whose CRT signs differ between `p` and `q` | Dixon, CFRAC, QS, NFS; the central column of round 15 | `L[1/3]` (NFS, heuristic) |")
 report.p()
-report.p("Each cap was measured or proved elsewhere in this repository: the "
-         "smoothness ceiling in round 5, the counting bound in round 11, the "
-         "`N^(1/5)` sweep in round 8 and its two closed escape routes in rounds 9 "
-         "and 10.")
+report.p("The sign mechanism is the strongest known, and it is worth being precise "
+         "about *where* its cost lives. Given a congruence `x^2 = y^2 (mod N)` with "
+         "`x != +-y`, the split is a single gcd. Finding the congruence is the hard "
+         "part, and the sieves do it through smooth relations -- so their running "
+         "time is set by smoothness density, just in a smaller-number setting than "
+         "the order methods. By Rabin's reduction, producing square roots mod `N` "
+         "on demand is exactly as hard as factoring.")
 report.p()
-report.p("And the fourteen rounds map onto the taxonomy exactly. The Pascal row, "
-         "the AKS fold, the q-deformation, the norm-one subgroup and the class "
-         "group are all **order** alignments. The gasket threshold, the factorial "
-         "binary search, Lehman's fan and Coppersmith's window are all **size** "
-         "alignments. Nothing examined here was anything else.")
+report.p("Mapped onto the fourteen rounds: the Pascal row, the AKS fold, the "
+         "q-deformation, the norm-one subgroup and the class group are **order**; "
+         "the gasket threshold, the factorial search, Lehman's fan and "
+         "Coppersmith's window are **size**. None of them was collision or sign "
+         "-- which is part of why none of them approached `L[1/3]`.")
 report.p()
 
 report.p("## What a polynomial-time algorithm has to do")
 report.p()
-report.p("It has to import a *third* alignment -- some structure attached to `p`, "
-         "visible from `N` in polynomial time, that is neither the order of a "
-         "group nor the magnitude of `p`. Every barrier in this repository is a "
-         "consequence of there being only two:")
+report.p("Every mechanism above has a super-polynomial cost, and in each one the "
+         "cost sits in the same place: **finding** the structure that makes the "
+         "zero divisor, not using it. A smooth group order, a window containing "
+         "`p`, a collision, a mixed-sign square root -- once any of these is in "
+         "hand, the factor falls out in polynomial time. A polynomial-time "
+         "algorithm needs one of them to be *findable* in polynomial time, or a "
+         "mechanism not on the list.")
+report.p()
+report.p("Every barrier in this repository is a statement about one of those "
+         "finding steps:")
 report.p()
 report.p("- symmetric constructions (Theorem 8, the norm; round 13, `N mod ell`) "
-         "see neither alignment and return information about `N` alone;")
-report.p("- aliased constructions (Theorem 7) destroy the size alignment by "
-         "sampling below the scale `p`;")
-report.p("- rigid group orders (Proposition 14) offer one order alignment per `p` "
-         "and no way to redraw;")
-report.p("- dense families (round 5) offer unboundedly many order alignments, and "
-         "run into the smoothness density instead.")
+         "find nothing, because they see `N` and not `p`;")
+report.p("- aliased constructions (Theorem 7) cannot locate a window below the "
+         "scale `p`;")
+report.p("- rigid group orders (Proposition 14) offer one order per `p` and no "
+         "way to redraw;")
+report.p("- dense families (round 5) redraw freely and run into smoothness "
+         "density instead.")
 report.p()
-report.p("This is not a proof that no third alignment exists. It is a measurement "
-         "of the fact that fourteen rounds of algebraic, geometric, "
-         "group-theoretic, fractal, lattice and analytic attempts produced no "
-         "candidate for one -- and a statement precise enough that a fifteenth "
-         "attempt can be judged in a sentence: *which structure attached to `p` "
-         "does it align with, and is that structure order, size, or new?*")
+report.p("This is not a proof that no polynomial-time mechanism exists. It is a "
+         "measurement that fourteen rounds of algebraic, geometric, "
+         "group-theoretic, fractal, lattice and analytic attempts produced none, "
+         "and a question precise enough to judge the next attempt in a sentence: "
+         "*which mechanism does it use, and why would its finding step be cheaper "
+         "than the best known one?*")
 report.write()

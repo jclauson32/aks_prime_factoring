@@ -20,15 +20,18 @@ They coincide.  Generic algebra is worth exactly nothing over drawing an element
 out of a hat, at any depth.  What every working method adds is a single
 **alignment** with a structure attached to ``p``:
 
-* **order alignment** -- choose the exponent to be divisible by ``|G|`` for some
-  group ``G`` attached to ``p`` (Pollard ``p-1``, Williams ``p+1``, ECM, class
-  groups).  Capped at ``L[1/2]`` by the density of smooth numbers.
-* **size alignment** -- choose an interval or window to straddle the magnitude of
-  ``p`` (Fermat, Lehman, Strassen, Coppersmith, Harvey).  Capped at ``N**(1/4)``
-  by counting, ``N**(1/5)`` with Lehman plus a baby-step/giant-step sweep.
+* **order** -- choose the exponent to be divisible by ``|G|`` for some group ``G``
+  attached to ``p`` (Pollard ``p-1``, Williams ``p+1``, ECM, class groups).
+  Capped at ``L[1/2]`` by the density of smooth numbers.
+* **size** -- choose an interval or window containing ``p`` (trial division,
+  Fermat, Lehman, Strassen, Coppersmith, Harvey).  ``N**(1/5)`` at best.
+* **collision** -- iterate until two values agree mod ``p`` (Pollard rho).
+  ``N**(1/4)``, the birthday bound.
+* **sign** -- produce a square root whose CRT signs differ (Dixon, QS, NFS).
+  ``L[1/3]`` heuristically, the best known.
 
-No third alignment is known.  ``docs/FINDINGS.md`` collects the fourteen rounds
-that failed to find one.
+An earlier version of this docstring listed only the first two and claimed no
+third was known.  Pollard rho and the sieves are the counterexamples.
 """
 
 from __future__ import annotations

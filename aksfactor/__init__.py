@@ -12,6 +12,7 @@ and does not buy you computationally.
 """
 
 from .arith import factorize, is_prime
+from .central import central_split, central_sum, jacobi
 from .classgroup import schnorr_lenstra_split
 from .cyclo import (
     lucas_v,
@@ -60,6 +61,8 @@ __version__ = "0.1.0"
 
 __all__ = [
     "aks_pow",
+    "central_split",
+    "central_sum",
     "certificate",
     "check_all",
     "factor",
@@ -85,6 +88,7 @@ __all__ = [
     "fold_norm",
     "fold_norm_expected",
     "is_prime",
+    "jacobi",
     "lucas_v",
     "norm_one_search",
     "multipoint_eval",

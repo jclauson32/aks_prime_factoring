@@ -117,10 +117,11 @@ remainder **is** the prime factor `q`, with `y = 1`.
 | **R11** | Coppersmith implemented: **poly-time** factoring given `N^(1/4)` of `p`; guessing it is `Θ(N^(1/4))` by counting | implemented, proved |
 | **R12** | poly-time factoring ⟺ poly-time approximation of `p` to `N^(1/4)`; guess+Coppersmith never beats Strassen | proved, measured |
 | **R13** | the budget is `φ(N) mod ℓ` for primes `ℓ ≤ (1/4)ln N`; `N` reveals exactly the `p↔q` symmetry and nothing more | proved, measured |
-| **R14** | generic ring programs achieve exactly `1−φ(N)/N`; every method's content is one *alignment*, and only two kinds exist | measured |
+| **R14** | generic ring programs achieve exactly `1−φ(N)/N`; every method's content is one *mechanism*; four are known (taxonomy corrected in round 15) | measured |
+| **R15** | the central column computes Legendre symbols: a Pascal-native *sign* method, Strassen's exponent | implemented, measured |
 
 Every row is machine-checked in [`aksfactor/theorems.py`](aksfactor/theorems.py)
-and exercised by `run_tests.py` (129 tests, all passing).
+and exercised by `run_tests.py` (139 tests, all passing).
 
 ## The honest verdict
 
@@ -1020,36 +1021,57 @@ Same ring, same operations, same depth budget. The **only** difference: the
 exponent is chosen divisible by everything small — aligned with the *order* of
 the group mod `p`. That one choice is the entire method.
 
-### The taxonomy
+### The taxonomy — *corrected in round 15*
 
-Every working method imports exactly one alignment, and only two are known:
+> **Correction.** This section originally said "only two alignments are known,"
+> order and size. That was wrong: **Pollard rho** (collisions) and the
+> **quadratic/number field sieves** (square-root signs) are neither, and NFS's
+> `L[1/3]` beats both caps the original table listed.
 
-| alignment | what's aligned | methods | proven cap |
+| mechanism | how the zero divisor arises | methods | best known |
 |---|---|---|---|
 | **order** | exponent divisible by `\|G\|` for a group attached to `p` | Pollard, Williams, ECM, class groups | `L[1/2]` — smooth-number density |
-| **size** | a window straddling the magnitude of `p` | Fermat, Lehman, Strassen, Coppersmith, Harvey | `N^(1/4)` by counting; `N^(1/5)` with BSGS |
+| **size** | a window that contains `p` | trial division, Fermat, Lehman, Strassen, Coppersmith, Harvey | `N^(1/5)` deterministic |
+| **collision** | two iterates agreeing mod `p` only | Pollard rho | `N^(1/4)` — birthday bound |
+| **sign** | a square root with mixed CRT signs | Dixon, QS, NFS; round 15's central column | `L[1/3]` (NFS) |
 
-**All fourteen rounds map onto this exactly.** Pascal row, AKS fold,
-q-deformation, norm-one subgroup, class group → *order*. Gasket threshold,
-factorial search, Lehman's fan, Coppersmith's window → *size*. Nothing examined
-here was anything else.
+Every round up to 14 was *order* or *size*. None was collision or sign — part of
+why none approached `L[1/3]`.
 
 ### So what a polynomial-time algorithm has to do
 
-Import a **third alignment**: a structure attached to `p`, visible from `N` in
-polynomial time, that is neither a group order nor a magnitude. Every barrier in
-this repository is a consequence of there being only two —
+In every mechanism the cost sits in the same place: **finding** the structure
+(smooth order, window, collision, mixed-sign root), never using it — once found,
+the factor is one gcd away. A polynomial-time algorithm needs one of those
+finding steps to be polynomial, or a mechanism not on the list. The barriers in
+this repository are each statements about a finding step:
 
-- symmetric constructions (T8, `N mod ℓ`) see neither and return facts about `N`;
-- aliased constructions (T7) destroy the size alignment by sampling below `p`;
-- rigid orders (P14) give one order alignment per `p`, no redraw;
-- dense families (round 5) give unboundedly many, and hit smoothness density.
+- symmetric constructions (T8, `N mod ℓ`) find nothing — they see `N`, not `p`;
+- aliased constructions (T7) can't locate a window below the scale `p`;
+- rigid orders (P14) give one order per `p`, no redraw;
+- dense families (round 5) redraw freely and hit smoothness density.
 
-This isn't a proof no third alignment exists. It's a measurement that fourteen
-rounds — algebraic, geometric, group-theoretic, fractal, lattice, analytic —
-produced no candidate, plus a test sharp enough to judge a fifteenth in one
-sentence: **which structure attached to `p` does it align with, and is that
-structure order, size, or new?**
+Not a proof that no polynomial mechanism exists — a measurement that fourteen
+rounds found none, and a test for the next attempt: **which mechanism does it
+use, and why would its finding step be cheaper than the best known one?**
+
+## Round 15 onward: the idea ledger
+
+From round 15 the attempts are logged in [`docs/LAB.md`](docs/LAB.md) — one row
+per idea, with its mechanism, its verdict, and the experiment behind it — so this
+README stops growing a section per round.
+
+Round 15 also **corrects round 14**: its taxonomy claimed only two mechanisms
+(order, size) were known. Pollard rho (collision) and the quadratic/number field
+sieves (square-root sign) are two more, and NFS's `L[1/3]` beats every cap round
+14 listed. The round-14 section above now carries the corrected table.
+
+The headline of round 15 itself: the **central column** of Pascal's triangle,
+`Σ C(2k,k) xᵏ = (1−4x)^(−1/2)`, truncated anywhere in `[(p−1)/2, p−1]`, equals the
+Legendre symbol `((1−4a)/p)` mod `p` (3,168/3,168 verified). That gives a
+Pascal-native factoring method on the *sign* mechanism, which detects `p` at
+`T ≈ p/2` — **below** `p`, where Strassen's factorial test is blind — at
+Strassen's exponent and about 15× his constant.
 
 ## Benchmarks
 
@@ -1091,13 +1113,14 @@ aksfactor/
   harvey.py     Harvey's N^(1/5) deterministic factoring: Lehman + Fermat + BSGS
   lattice.py    exact LLL and Coppersmith: polynomial-time factoring given a hint
   generic.py    the generic-ring baseline: what algebra buys without an alignment
+  central.py    the central column: Legendre symbols from Pascal's triangle
   grouporder.py counts reachable group orders: ring unit orders vs #E(F_p)
   fast.py       O~(n^(1/4)) search: product tree, Newton division, remainder
                 tree, multipoint evaluation, BGS factorial, threshold search
   cli.py        python -m aksfactor {factor,row,entry,verify,fold}
-docs/           THEORY.md (proofs), FINDINGS.md (what it buys)
-experiments/    twenty-two reproducible scripts; results/ holds their generated reports
-tests/          129 tests; run_tests.py needs no pytest
+docs/           THEORY.md (proofs), FINDINGS.md (what it buys), LAB.md (idea ledger)
+experiments/    twenty-three reproducible scripts; results/ holds their generated reports
+tests/          139 tests; run_tests.py needs no pytest
 ```
 
 Regenerate every measurement (and the figure above) with `./run_experiments.sh`

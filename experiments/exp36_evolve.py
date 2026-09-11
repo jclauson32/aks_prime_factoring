@@ -255,9 +255,10 @@ for lo in (1000, 4000, 16000, 64000):
 report.table(["primes in", "rho body", "best evolved body"], scale_rows)
 rho_col = [float(r[1]) for r in scale_rows]
 ev_col = [float(r[2]) for r in scale_rows]
+rho_range = (f"every number at every size" if min(rho_col) == max(rho_col) == 1.0 else
+             f"{min(rho_col):.0%} to {max(rho_col):.0%} of the numbers at every size")
 report.p(f"With repetitions growing as `sqrt p`, the hand-written rho succeeds on "
-         f"{min(rho_col):.0%} to {max(rho_col):.0%} of the numbers at every size -- "
-         f"the birthday bound at work. The best evolved body goes from "
+         f"{rho_range} -- the birthday bound at work. The best evolved body goes from "
          f"{ev_col[0]:.0%} at the smallest primes to {ev_col[-1]:.0%} at the "
          f"largest. " + ("Selection found a trick that pays on the primes it trained "
                          "on and fades on larger ones; the collision mechanism, which "
@@ -266,8 +267,10 @@ report.p(f"With repetitions growing as `sqrt p`, the hand-written rho succeeds o
                             "and asks whether the output *hits* 0 or 1 mod `p`. A hit "
                             "is found with probability growing like `R/p` in `R` "
                             "steps; a collision, like `R^2/p` -- the birthday "
-                            "paradox. On small primes the two look alike, and "
-                            "selection took the one it could reach."
+                            "paradox. Hitting a fixed target is the size mechanism in "
+                            "dynamical form -- trial division hits 0 along an "
+                            "arithmetic progression -- so with loops selection found "
+                            "size and order, and still not collision."
                             if not any(ins[0] == "acc" for ins in best_body) else "")
                          if ev_col[-1] < 0.5 * min(rho_col) else
                          "Here the evolved body keeps up with rho; the table is the "

@@ -40,6 +40,7 @@ from round 14 (as corrected in round 15):
 | 28 | low-degree Fourier learner on the bits of `N` | -- | finds planted parity, `(p+q) mod 4`, top bits of `p` (size); nothing below | `exp27` |
 | 29 | Schnorr's prime-number lattice (2021) | sign (relations) | residues avoid the primes the vector used; as smooth as same-size integers with the same local law, no more; yield collapses by 44 bits | `exp28` |
 | 30 | quadratic sieve (reference) | **sign + smoothness** | pure Python, 110-bit `N` in seconds; overtakes rho at 80 bits; `L[1/2]` | `exp29` |
+| 31 | Lenstra's ECM (reference) | **order, redrawn** | first curve 60% on `p` where `p - 1` fails 100%; 64-bit `p` of a 160-bit `N` in seconds; `L_p[1/2]` | `exp30` |
 
 ## Round 15: the central column
 
@@ -209,3 +210,30 @@ square root. The difference is that the sieve never asks for a Legendre symbol
 mod `p`: it lets smooth numbers and linear algebra over `F_2` produce the
 square. That is where all the sub-exponential methods get their power, and it
 is exactly what Pascal's triangle does not supply.
+
+## Round 22: the order mechanism, redrawn
+
+The Pascal row, the AKS fold, the norm-one torus and the q-deformation all live
+in groups whose order mod `p` is `p^d - 1` or a divisor of it: fixed by `p`.
+Proposition 14 called this "one ticket per prime". Lenstra's ECM is the same
+mechanism with the ticket redrawn: each curve has its own order `p + 1 - t`.
+
+On 200 semiprimes with a 28-bit `p`, Pollard's `p - 1` succeeds on 109 of the
+110 primes whose `p - 1` is smooth to its bounds and on none of the other 90,
+and four fresh bases rescue none of its 91 failures. With the same bounds,
+ECM's first curve succeeds on 60% and 62% of the two classes: the curve does not
+know `p - 1` exists. With `N` fixed at 160 bits, ECM found 64-bit factors in
+about five seconds of pure Python, its cost growing 3.5x per 8 bits of `p`
+where rho's grows 16x.
+
+Two bugs were caught on the way. Stage 2 of `p - 1` stepped `a^(q - B1 + 1)`
+instead of `a^q`, which undercounted its successes by forty percent. And the
+first scaling table stopped at 52-bit `p`, where ECM mostly wins on the first
+curve, so the times were flat and demonstrated nothing about the exponent. It
+now runs to 64 bits, and the conclusion is computed from the fit.
+
+With this round every mechanism of round 14 has its best practical method in
+the repository, run on the same numbers: ECM (order), Harvey (size), rho
+(collision) and the quadratic sieve (sign). Pascal's triangle reaches each
+mechanism, but never these methods, because what makes them fast (redrawn
+groups, Lehman's geometry, smooth numbers) is not in the triangle.

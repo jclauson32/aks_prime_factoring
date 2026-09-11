@@ -126,9 +126,10 @@ remainder **is** the prime factor `q`, with `y = 1`.
 | **R19** | a low-degree Fourier learner on the bits of `N` finds planted parities, `(p+q) mod 4` and the top bits of `p` — and nothing about the low or middle bits | measured |
 | **R20** | Schnorr's lattice factoring: close-vector residues avoid the primes the vector used, and are no smoother than same-size integers with the same local law; yield collapses by 44 bits | implemented, measured |
 | **R21** | a pure-Python quadratic sieve overtakes the `N^(1/4)` family at 80 bits (2.7× vs 6.0× per 10 bits) — smoothness is the frontier | implemented, measured |
+| **R22** | Lenstra's ECM: the order mechanism with redrawn groups — first curve works on 60% of `p` where `p − 1` never does; 64-bit `p` in seconds | implemented, measured |
 
 Every row is machine-checked in [`aksfactor/theorems.py`](aksfactor/theorems.py)
-and exercised by `run_tests.py` (165 tests, all passing).
+and exercised by `run_tests.py` (169 tests, all passing).
 
 ## The honest verdict
 
@@ -1125,14 +1126,15 @@ aksfactor/
   hyperbola.py  round 18: exact lattice counts under xy = N by hull walk; divisor predicate
   schnorr.py    round 20: exact integral LLL, Schnorr's prime-number lattice, relation algebra
   qs.py         round 21: a small quadratic sieve, the sign mechanism with smoothness
+  ecm.py        round 22: Lenstra's ECM (Montgomery curves, two stages) and p - 1
   central.py    the central column: Legendre symbols from Pascal's triangle
   grouporder.py counts reachable group orders: ring unit orders vs #E(F_p)
   fast.py       O~(n^(1/4)) search: product tree, Newton division, remainder
                 tree, multipoint evaluation, BGS factorial, threshold search
   cli.py        python -m aksfactor {factor,row,entry,verify,fold}
 docs/           THEORY.md (proofs), FINDINGS.md (what it buys), LAB.md (idea ledger)
-experiments/    twenty-nine reproducible scripts; results/ holds their generated reports
-tests/          165 tests; run_tests.py needs no pytest
+experiments/    thirty reproducible scripts; results/ holds their generated reports
+tests/          169 tests; run_tests.py needs no pytest
 ```
 
 Regenerate every measurement (and the figure above) with `./run_experiments.sh`

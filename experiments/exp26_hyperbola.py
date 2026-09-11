@@ -181,6 +181,40 @@ report.p("The edges at the divisor are rational approximations of `p/q` from bot
          "`p/q`, the fan round 10 found in Lehman -- and the same exponent.")
 report.p()
 
+report.p("### Random access by slope does not help")
+report.p()
+report.p("The hull vertex supporting a given slope can be found without walking -- "
+         "it minimises a linear form over the lattice points of a convex region, a "
+         "two-dimensional integer program. So if the divisor vertex had a wide "
+         "normal cone, random slopes would hit it quickly. It does not:")
+report.p()
+from aksfactor.hyperbola import vertex_cones
+
+rows = []
+for bits in (32, 40, 48):
+    ratio, scaled, pct = [], [], []
+    for _ in range(10):
+        pp = randprime(1 << (bits // 2 - 1), 1 << (bits // 2))
+        qq = randprime(pp + 2, 2 * pp)
+        nn = pp * qq
+        cones = vertex_cones(nn - 1, isqrt(nn - 1), int(0.6 * pp))
+        k = [i for i, (x, y, _) in enumerate(cones) if x * y == nn][0]
+        near = [c for _, _, c in cones[max(0, k - 300):k] + cones[k + 1:k + 301]]
+        d = cones[k][2]
+        ratio.append(d / statistics.median(near))
+        pct.append(sum(c < d for c in near) / len(near))
+        scaled.append(d * nn ** (1 / 3))
+    rows.append([bits, f"{statistics.median(ratio):.2f}", f"{statistics.mean(pct):.0%}",
+                 f"{statistics.median(scaled):.2f}"])
+report.table(["bits of N", "divisor cone / median nearby cone", "percentile",
+              "divisor cone x N^(1/3)"], rows)
+report.p("The divisor's cone is a little wider than its neighbours' -- it sits "
+         "exactly on the curve -- but it scales as `N^(-1/3)` like theirs, so "
+         "random slopes need `Theta(N^(1/3))` tries. Aiming instead requires `p/q` "
+         "to within `N^(-1/3)`, i.e. `p` to within `N^(1/6)`, and Coppersmith "
+         "finishes from far less.")
+report.p()
+
 report.p("## 3. Where it stops: curved pieces and class numbers")
 report.p()
 report.p("Each hull edge is an exact *linear* piece of `floor(N/y)`, summed in "

@@ -36,6 +36,7 @@ from round 14 (as corrected in round 15):
 | 25 | Pascal rho `x -> C(x, k)` | **collision** | `k=2` is Pollard's rho (`c = -5/16`); even `k` collide `sqrt 2` sooner (P22), paid back in squarings | `exp25` |
 | 26 | divisor count under the hyperbola; the divisor is a hull vertex (P23) | size | one exact walk; `O~(N^(1/3))`; its edges are Lehman certificates | `exp26` |
 | 27 | curved hull pieces (degree `d`) | size | would give `N^(1/(d+2))`; `d = 2` floor sums compute class numbers | `exp26` |
+| 27b | jump to the divisor vertex by slope (2D integer program) | size | divisor's normal cone is `Theta(N^(-1/3))`, ~1.4x its neighbours'; aiming needs `p` to `N^(1/6)` | `exp26` |
 | 28 | low-degree Fourier learner on the bits of `N` | -- | finds planted parity, `(p+q) mod 4`, top bits of `p` (size); nothing below | `exp27` |
 
 ## Round 15: the central column

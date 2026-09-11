@@ -209,6 +209,29 @@ def divisor_vertex_edges(n: int):
     return None
 
 
+def vertex_cones(n: int, top: int, stop_row: int):
+    """Hull vertices of ``{xy > n}`` with the angle of their normal cones.
+
+    Walks from row ``top`` down to ``stop_row``; returns ``(x, y, angle)`` for
+    every point where the edge direction turns, ``angle`` being the turn in
+    radians -- the range of slopes whose supporting line touches that vertex.
+    """
+    from math import atan2
+
+    pts = []
+    for pt in hull_walk(n, top):
+        pts.append(pt)
+        if pt[1] < stop_row:
+            break
+    out = []
+    for i in range(1, len(pts) - 1):
+        e_in, e_out = pts[i][2], pts[i + 1][2]
+        if e_in and e_out and e_in != e_out:
+            out.append((pts[i][0], pts[i][1],
+                        abs(atan2(e_out[1], e_out[0]) - atan2(e_in[1], e_in[0]))))
+    return out
+
+
 def hyperbola_piece_exponent(degree: int) -> float:
     """Pieces needed if ``floor(N/y)`` were summed with exact degree-``d`` arcs.
 

@@ -72,3 +72,30 @@ def test_zero_pattern_matches_exact_binomials():
     w = curve_eds(0, 17, 2, 5, 40)
     z = zero_pattern(eds_mod(*w[1:5], 41, 7 ** 5), 7, 5, 38)
     assert all((nomial(w, n, k) % 7 == 0) == z[n][k] for n in range(38) for k in range(n + 1))
+
+
+def test_point_count_factors():
+    from math import gcd
+
+    from aksfactor.divseq import factor_with_point_count
+
+    def count(a, b, p):
+        total = 1
+        for x in range(p):
+            r = (x ** 3 + a * x + b) % p
+            total += 1 if r == 0 else (2 if pow(r, (p - 1) // 2, p) == 1 else 0)
+        return total
+
+    rng = random.Random(9)
+    p, q = 2003, 3001
+    n = p * q
+    done = 0
+    for _ in range(10):
+        while True:
+            a, x, y = rng.randrange(n), rng.randrange(n), rng.randrange(n)
+            b = (y * y - x ** 3 - a * x) % n
+            if gcd((4 * a ** 3 + 27 * b * b) % n, n) == 1:
+                break
+        g, _ = factor_with_point_count(n, a, (x, y), count(a % p, b % p, p) * count(a % q, b % q, q))
+        done += g in (p, q)
+    assert done >= 9

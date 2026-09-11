@@ -242,3 +242,62 @@ def elliptic_triangle_factor(n: int, bound: int, curves: int, rng, stats: dict |
     if stats is not None:
         stats["curves"] = curves
     return None
+
+
+class _NonInvertible(Exception):
+    def __init__(self, g):
+        super().__init__(g)
+        self.g = g
+
+
+def _ec_add(P, Q, a, n):
+    if P is None:
+        return Q
+    if Q is None:
+        return P
+    (x1, y1), (x2, y2) = P, Q
+    if (x1 - x2) % n == 0:
+        if (y1 + y2) % n == 0:
+            return None
+        num, den = 3 * x1 * x1 + a, 2 * y1
+    else:
+        num, den = y2 - y1, x2 - x1
+    g = gcd(den % n, n)
+    if g != 1:
+        raise _NonInvertible(g)
+    lam = num * pow(den, -1, n) % n
+    x3 = (lam * lam - x1 - x2) % n
+    return x3, (lam * (x1 - x3) - y1) % n
+
+
+def _ec_mul(k, P, a, n):
+    R = None
+    while k:
+        if k & 1:
+            R = _ec_add(R, P, a, n)
+        P = _ec_add(P, P, a, n)
+        k >>= 1
+    return R
+
+
+def factor_with_point_count(n: int, a: int, point, count: int, small_primes=None):
+    """Split ``n`` given ``count = #E(Z/n)`` for ``y^2 = x^3 + a x + b`` through ``point``.
+
+    ``count = #E(F_p) #E(F_q)``, so ``[count] P = O`` modulo both primes.  For a
+    small prime ``l`` dividing only one of the two group orders (and the order
+    of ``P`` there), ``[count / l] P`` vanishes modulo the other prime only, and
+    the first non-invertible denominator met while computing it has a gcd with
+    ``n`` equal to that prime.  (Kunihiro and Koyama: counting points on
+    ``E(Z/n)`` is equivalent to factoring ``n``.)  Returns ``(factor, l)``.
+    """
+    from .arith import sieve
+
+    for ell in small_primes or sieve(10000):
+        if count % ell:
+            continue
+        try:
+            _ec_mul(count // ell, point, a, n)
+        except _NonInvertible as exc:
+            if 1 < exc.g < n:
+                return exc.g, ell
+    return None, None

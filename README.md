@@ -127,8 +127,12 @@ has not found one, and the repository says precisely why:
   the interference step does not dequantise (rounds 24–25).
 - Along the way, many reformulations turned out equivalent to factoring: the
   second n-adic digit, `N^(1/4)` bits of `p`, `φ(N) mod ℓ`, `τ(N) mod 691`,
-  `r₄(N)`, exact lattice counts under `xy = N`. Every construction computable
-  from `N` alone came out symmetric in `p ↔ q`.
+  `r₄(N)`, exact lattice counts under `xy = N`, the point count `#E(ℤ/N)`.
+  Every construction computable from `N` alone came out symmetric in `p ↔ q`.
+- Handed to selection instead of to a person, the same search ends in the same
+  place: evolving straight-line programs from random ones rediscovers Pollard's
+  `p − 1`, and nothing else, even when Pascal's collision map is on offer
+  (round 28).
 
 The per-round ledger is [`docs/LAB.md`](docs/LAB.md); proofs are in
 [`docs/THEORY.md`](docs/THEORY.md).
@@ -174,9 +178,12 @@ The per-round ledger is [`docs/LAB.md`](docs/LAB.md); proofs are in
 | **R24** | Shor's algorithm simulated exactly: the order mechanism with `r` read by interference, no smoothness needed; the classical simulation costs `N²` | implemented, measured |
 | **R25** | dequantising Shor: every computable function of `aˣ mod N` tested has a flat spectrum (heaviest revealing weight 2–11× uniform); only the Jacobi symbol is heavy, and it reveals `r mod 2` | measured |
 | **R26** | a complete toy number field sieve (two-sided sieve, characters, algebraic square root by Newton lifting): factors 40–80-bit `N`, slower than the QS at these sizes, for a measured reason | implemented, measured |
+| **R27** | thirteen methods on the same semiprimes, 40–100 bits: size stops first, then collision; ECM and the sieves go on | measured |
+| **R28** | evolution over straight-line programs, from random, rediscovers Pollard's `p − 1` and matches an optimised `p − 1`; given `C(x,2)` it still picks `p − 1` | measured |
+| **R29** | one elliptic point count `#E(ℤ/N)` factors `N` (40/40); point counting mod `N` is equivalent to factoring (Kunihiro–Koyama) | implemented, cited |
 
 Every row is machine-checked in [`aksfactor/theorems.py`](aksfactor/theorems.py)
-and exercised by `run_tests.py` (181 tests, all passing).
+and exercised by `run_tests.py` (186 tests, all passing).
 
 ## The honest verdict
 
@@ -1177,14 +1184,16 @@ aksfactor/
   divseq.py     round 23: triangles over divisibility sequences; the elliptic Pascal triangle
   shor.py       round 24: Shor's algorithm simulated classically (state vector + FFT)
   nfs.py        round 26: a toy number field sieve (degree 3, pure Python)
+  evolve.py     round 28: evolving straight-line factoring programs
+  figures.py    PNG gaskets of triangles mod N (standard library only)
   central.py    the central column: Legendre symbols from Pascal's triangle
   grouporder.py counts reachable group orders: ring unit orders vs #E(F_p)
   fast.py       O~(n^(1/4)) search: product tree, Newton division, remainder
                 tree, multipoint evaluation, BGS factorial, threshold search
   cli.py        python -m aksfactor {factor,row,entry,verify,fold}
 docs/           THEORY.md (proofs), FINDINGS.md (what it buys), LAB.md (idea ledger)
-experiments/    thirty-four reproducible scripts; results/ holds their generated reports
-tests/          181 tests; run_tests.py needs no pytest
+experiments/    thirty-six reproducible scripts; results/ holds their generated reports
+tests/          186 tests; run_tests.py needs no pytest
 ```
 
 Regenerate every measurement (and the figure above) with `./run_experiments.sh`

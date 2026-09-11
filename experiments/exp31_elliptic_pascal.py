@@ -17,6 +17,7 @@ from aksfactor.arith import factorize, is_prime, sieve
 from aksfactor.divseq import (
     curve_eds,
     elliptic_triangle_factor,
+    factor_with_point_count,
     fibonacci,
     gasket,
     mixed_radix_carries,
@@ -243,4 +244,41 @@ report.p("That is stage 1 of Lenstra's elliptic curve method, read as the origin
          "is any multiple of the cell width, and the cell width can be redrawn until "
          "it is smooth. The gasket the project started from was the right picture; "
          "it needed a different sequence under it.")
+report.p()
+
+report.p("## 6. The cell widths, counted: equivalent to factoring")
+report.p()
+report.p("The elliptic cells `r_p`, `r_q` divide `#E(F_p)` and `#E(F_q)`, and "
+         "`#E(Z/N) = #E(F_p) #E(F_q)`. An oracle for that one number factors `N`: "
+         "`[#E(Z/N)] P = O` modulo both primes, and removing a small prime `l` that "
+         "divides only one of the two orders leaves a multiple that vanishes modulo "
+         "one prime and not the other.")
+report.p()
+ok = total = 0
+used = []
+for _ in range(40):
+    while True:
+        pp = rng.randrange(2000, 8000) | 1
+        qq = rng.randrange(2000, 8000) | 1
+        if pp != qq and is_prime(pp) and is_prime(qq):
+            break
+    nn = pp * qq
+    while True:
+        a, x, y = rng.randrange(nn), rng.randrange(nn), rng.randrange(nn)
+        b = (y * y - x ** 3 - a * x) % nn
+        if gcd((4 * a ** 3 + 27 * b * b) % nn, nn) == 1:
+            break
+    count = curve_order(a % pp, b % pp, pp) * curve_order(a % qq, b % qq, qq)   # the oracle
+    g, ell = factor_with_point_count(nn, a, (x, y), count)
+    total += 1
+    ok += g in (pp, qq)
+    if ell:
+        used.append(ell)
+report.p(f"With the count supplied by brute force as the oracle, one count per "
+         f"number factored **{ok} of {total}** semiprimes; the prime removed was "
+         f"at most {max(used)}. The reverse direction -- factoring gives the count -- "
+         f"is Schoof's algorithm modulo each prime, so counting points on `E(Z/N)` is "
+         f"equivalent to factoring `N` (Kunihiro and Koyama, 1998). It joins "
+         f"`phi(N)`, `tau(N)` and `r_4(N)` on the list of quantities that carry the "
+         f"factorisation openly and are polynomial-time equivalent to it.")
 report.write()

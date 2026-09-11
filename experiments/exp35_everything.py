@@ -7,8 +7,8 @@ every method that finishes inside its budget -- with each method tagged by the
 mechanism of round 14 it uses.
 """
 
-import math
 import random
+import signal
 import statistics
 import time
 
@@ -35,8 +35,20 @@ report = Report(
 )
 
 rng = random.Random(35)
-CAP = 15.0
+CAP = 15.0            # stop a method once its next size is projected past this
+HARD = 60.0           # and never let a single call run longer than this
 SIZES = (40, 50, 60, 70, 80, 90, 100)
+
+
+class Timeout(Exception):
+    pass
+
+
+def _alarm(signum, frame):
+    raise Timeout()
+
+
+signal.signal(signal.SIGALRM, _alarm)
 
 
 def first(x):
@@ -100,13 +112,18 @@ for bits in SIZES:
         if name in skipped:
             results[name, bits] = "--"
             continue
-        times, fails = [], 0
+        times, fails, timed_out = [], 0, False
         for n, p, q in numbers[bits]:
             t0 = time.perf_counter()
+            signal.setitimer(signal.ITIMER_REAL, HARD)
             try:
                 g = fn(n, bits)
+            except Timeout:
+                g, timed_out = None, True
             except Exception:
                 g = None
+            finally:
+                signal.setitimer(signal.ITIMER_REAL, 0)
             dt = time.perf_counter() - t0
             times.append(dt)
             if g not in (p, q):
@@ -115,7 +132,10 @@ for bits in SIZES:
                 break
         med = statistics.median(times)
         ok = len(times) - fails
-        results[name, bits] = f"{med:.2f} s" + ("" if fails == 0 else f" ({ok}/{len(times)})")
+        if timed_out:
+            results[name, bits] = f"> {HARD:.0f} s"
+        else:
+            results[name, bits] = f"{med:.2f} s" + ("" if ok == 3 else f" ({ok}/{len(times)})")
         growth = med / last[name] if last.get(name) else 4.0
         last[name] = med
         if med * max(growth, 2.0) > CAP or max(times) > CAP:
@@ -123,7 +143,9 @@ for bits in SIZES:
 
 rows = [[name, mech] + [results.get((name, b), "--") for b in SIZES] for name, mech, _ in METHODS]
 report.p(f"Three balanced semiprimes per size (`p, q` of `bits/2` bits each). Median "
-         f"time per number; `(k/3)` where fewer than three were factored; `--` once a "
+         f"time per number attempted; `(k/m)` where only `k` of the `m` attempted were "
+         f"factored (a method stops attempting once one number takes over {CAP:.0f} s); "
+         f"`> {HARD:.0f} s` where a single call hit the hard limit; `--` once a "
          f"method's next size is projected past {CAP:.0f} s.")
 report.p()
 report.table(["method", "mechanism"] + [f"{b} bits" for b in SIZES], rows)
@@ -145,12 +167,38 @@ for b in SIZES:
 report.p("Fastest method that factored all three numbers, by size: " +
          "; ".join(f"{b} bits -- {w}" for b, w in winners) + ".")
 report.p()
-report.p("Reading the table by mechanism: the size methods fall away first (trial "
-         "division's `p`, Strassen's `N^(1/4)` with a large constant, Lehman-type "
-         "geometry at `N^(1/3)`), then collision (`N^(1/4)`), while the redrawn-order "
-         "methods and the sieves -- both powered by smooth numbers -- keep going. "
-         "The rigid order methods succeed only on the numbers whose `p +- 1` "
-         "happens to be smooth, which is why their cells show fractions. Nothing "
-         "Pascal-native survives past the `N^(1/4)` methods; the one that "
-         "becomes ECM, the elliptic triangle, needed its sequence changed first.")
+
+
+def reach(name):
+    ok_sizes = [b for b in SIZES if seconds(results.get((name, b), "--")) is not None]
+    return max(ok_sizes) if ok_sizes else None
+
+
+lines = []
+for name, mech, _ in METHODS:
+    r = reach(name)
+    lines.append(f"{name} ({mech}): " + (f"all three numbers up to {r} bits" if r else
+                                          "never all three"))
+report.p("Where each method stops -- the largest size at which it factored all "
+         "three numbers within the budget:")
+report.p()
+for line in lines:
+    report.p(f"- {line}")
+report.p()
+report.p("The size methods stop first, then collision; the methods that keep going "
+         "are the ones powered by smooth numbers -- ECM, which redraws its groups, "
+         "and the sieves. The rigid order methods succeed only on numbers whose "
+         "`p +- 1` happens to be smooth -- common for small `p`, rare for large -- "
+         "which is why their cells turn into fractions as `N` grows. Among the Pascal-native constructions, the one that goes "
+         "furthest is Pascal rho, which is Pollard's rho, and the elliptic triangle, "
+         "which is ECM once its sequence is changed.")
+harvey = [results.get(("Harvey N^(1/5)", b), "--") for b in SIZES]
+strassen = [results.get(("factorial threshold (Strassen)", b), "--") for b in SIZES]
+report.p()
+report.p(f"Harvey's `N^(1/5)` is the best *deterministic* exponent known; here it runs "
+         f"{', '.join(f'{c} at {b} bits' for b, c in zip(SIZES, harvey) if c != '--')}, "
+         f"against Strassen's "
+         f"{', '.join(f'{c} at {b} bits' for b, c in zip(SIZES, strassen) if c != '--')}. "
+         f"The jump is this implementation's parameter choice and pure-Python "
+         f"constants, not the exponent.")
 report.write()

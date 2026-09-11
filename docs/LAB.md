@@ -45,6 +45,9 @@ from round 14 (as corrected in round 15):
 | 33 | Shor's algorithm, simulated classically | order, **read directly** | factors to `N = 1517` on a 22-qubit register; simulation cost `N^2`, the amplitudes a quantum computer holds for free | `exp32` |
 | 34 | dequantising Shor by heavy Fourier coefficients | order | every computable function of `a^x mod N` tested is flat (weight `2-11/r`); Jacobi is heavy but reveals only `r mod 2` | `exp33` |
 | 35 | a toy number field sieve (reference) | **sign, two rings** | factors 40-80-bit `N`; at degree 3 its numbers are 9-15 bits larger than the QS's, so the QS wins here | `exp34` |
+| 36 | every method on the same numbers | all four | size stops first, then collision; ECM and the sieves go on | `exp35` |
+| 37 | evolving straight-line programs from random | order | selection rediscovers Pollard `p - 1` (smooth exponents), matching an optimised `p - 1`; nothing else | `exp36` |
+| 38 | counting points on `E(Z/N)` | order | one count factors `N` (40 of 40); equivalent to factoring (Kunihiro-Koyama) | `exp31` |
 
 ## Round 15: the central column
 
@@ -328,3 +331,53 @@ exponent reached 16, and then silently failed on every dependency of one
 now tracks the exponent exactly and recovers 2000-bit square roots. Two
 poorly chosen polynomials also starved the sieve of relations, which is why
 polynomial selection now ranks candidates by their roots modulo small primes.
+
+## Round 28: evolution rediscovers `p - 1`
+
+Round 14 showed that *random* straight-line programs over `Z/N` are worth
+exactly the chance of hitting a zero divisor. This round let selection loose on
+them: populations of short programs (multiplications, additions, subtractions,
+powers by small primes, under a fixed multiplication budget) scored on how often
+their output shares a factor with `N`, trained on 500 semiprimes and tested on
+500 others, starting from random programs with nothing seeded.
+
+Every run converged on the same idea -- the base raised to a product of small
+primes, compared with 1 -- sometimes directly as `a^E`, once as a difference of
+two powers `a^e (a^D - 1)`. That is Pollard's `p - 1`, rediscovered by selection
+alone. The best evolved program scores 0.190 on the test set against 0.192 for
+`p - 1` with its exponent optimised on the same training data: a match, 70
+times better than random programs, and nothing outside the order mechanism.
+
+One comparison had to be corrected first. Against a hand-written `p - 1` that
+spent its budget on a poor exponent, one evolved program seemed to win (0.190
+against 0.160). Decoded symbolically, it *was* `p - 1`, with a better exponent;
+the experiment now optimises the baseline's exponent before comparing.
+
+## Round 27: every method, the same numbers
+
+Thirteen methods, three balanced semiprimes per size from 40 to 100 bits, each
+method stopped once it projects past fifteen seconds (`exp35`). The size methods
+stop first -- the Pascal row scan and Harvey by 50 bits here, Strassen by 60,
+the hyperbola walk by 70 -- then collision, with rho reaching 90. The rigid
+order methods (`p - 1`, `p + 1`) turn into fractions as soon as `p` is too large
+for `p +- 1` to be smooth by luck. What keeps going is what is powered by
+smooth numbers: ECM, which redraws its groups, and the quadratic sieve; the toy
+number field sieve reaches 70 bits. Among the Pascal-native constructions the
+two that go furthest are Pascal rho, which is Pollard's rho, and the elliptic
+triangle, which is ECM with its sequence changed.
+
+The first run of the benchmark had no hard timeout, and one call of Harvey's
+method at 60 bits ran for almost five minutes; every call now has a sixty-second
+alarm.
+
+## Round 29: the cells, counted
+
+The cell widths of the elliptic triangles divide the group orders `#E(F_p)` and
+`#E(F_q)`, and `#E(Z/N)` is their product. An oracle for that single number
+factors `N`: `[#E(Z/N)] P = O` modulo both primes, and dividing out a small prime
+that divides only one of the two orders leaves a multiple that kills `P` modulo
+one prime but not the other. One count each factored 40 of 40 semiprimes. With
+Schoof's algorithm for the other direction, point counting over `Z/N` is
+equivalent to factoring (Kunihiro and Koyama, 1998) -- another entry on the list
+that began with `phi(N)`: quantities that carry the factorisation in plain
+sight and cost as much as the factorisation to compute.

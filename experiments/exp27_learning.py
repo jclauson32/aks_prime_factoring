@@ -116,7 +116,7 @@ report.p(f"The strongest correlation is {ratio4:.2f} times the typical noise max
          f"{'within' if gain4 < 2 * se4 else 'beyond'} two standard errors "
          f"(+-{2 * se4:.4f}) of the test accuracy. Characters that cross the "
          f"selection threshold by chance do not generalise: where they are used, "
-         f"test accuracy does not rise above the majority guess.")
+         f"test accuracy moves by no more than sampling error.")
 report.p()
 report.p("What this rules out is narrow and worth stating exactly: structure of "
          "degree at most four in the bits of `N` that predicts the low or middle "

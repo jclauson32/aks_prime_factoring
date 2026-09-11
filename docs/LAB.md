@@ -41,6 +41,7 @@ from round 14 (as corrected in round 15):
 | 29 | Schnorr's prime-number lattice (2021) | sign (relations) | residues avoid the primes the vector used; as smooth as same-size integers with the same local law, no more; yield collapses by 44 bits | `exp28` |
 | 30 | quadratic sieve (reference) | **sign + smoothness** | pure Python, 110-bit `N` in seconds; overtakes rho at 80 bits; `L[1/2]` | `exp29` |
 | 31 | Lenstra's ECM (reference) | **order, redrawn** | first curve 60% on `p` where `p - 1` fails 100%; 64-bit `p` of a 160-bit `N` in seconds; `L_p[1/2]` | `exp30` |
+| 32 | Pascal's triangle over divisibility sequences (P24) | order | gasket cell = rank of apparition; elliptic cell = point order, redrawable; row `lcm(1..B)` is ECM | `exp31` |
 
 ## Round 15: the central column
 
@@ -237,3 +238,27 @@ the repository, run on the same numbers: ECM (order), Harvey (size), rho
 (collision) and the quadratic sieve (sign). Pascal's triangle reaches each
 mechanism, but never these methods, because what makes them fast (redrawn
 groups, Lehman's geometry, smooth numbers) is not in the triangle.
+
+## Round 23: the triangle that is ECM
+
+Pascal's triangle is the case `a_n = n` of a general construction: for any
+strong divisibility sequence, `a_n .. a_(n-k+1) / (a_1 .. a_k)` is an integer.
+With `a_n = (q^n - 1)/(q - 1)` it is the Gaussian triangle of round 12; with
+Fibonacci numbers, the Fibonomials; with an elliptic divisibility sequence --
+the division polynomials of a point on a curve -- an elliptic triangle.
+
+Modulo a prime `p` every one of them is a Sierpinski gasket, and the Kummer-type
+carry rule in the mixed radix `(r, p, p, ...)` predicts every zero we tested.
+Only the width `r` of the first cell changes. In Pascal's triangle it is `p`,
+which is why round 1 found the first non-zero entry at `spf(n)`: the cell is the
+answer. In the Gaussian and Fibonomial triangles it divides `p - 1` or `p + 1`.
+In the elliptic triangle it is the order of the point mod `p` -- 268 different
+widths from 300 random curves at `p = 10007`, where every Gaussian cell is stuck
+with the factor 5003 of `p - 1`.
+
+Jumping to row `lcm(1..B)` of an elliptic triangle mod `N`, with the sequence's
+own double-and-add, and taking a gcd is exactly ECM stage 1; it factors 32-bit
+`p` out of 96-bit `N` in tens of curves. The opening observation of this
+project -- look along a row of the triangle mod `N` for entries sharing a
+factor with `N` -- was a real mechanism. It needed a triangle whose cell width
+could be redrawn.

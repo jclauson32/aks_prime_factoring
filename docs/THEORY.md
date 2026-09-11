@@ -832,6 +832,35 @@ from `sum_k (k^2 mod p) = 2 sum_(QR r) r` and Dirichlet's
 hyperbola needs short arcs rather than full periods, so this does not prove (i)
 false; it places it next to a problem with no known polynomial-time algorithm.
 
+## Proposition 24 — Pascal's triangle over divisibility sequences
+
+Let `a_1, a_2, ...` be a strong divisibility sequence (`gcd(a_m, a_n) =
+a_gcd(m,n)`) and `[n, k]_a = a_n .. a_(n-k+1) / (a_1 .. a_k)`. Then:
+
+1. every `[n, k]_a` is an integer (classical for strong divisibility
+   sequences; checked here for `n`, `(2^n - 1)`, `F_n` and four elliptic
+   divisibility sequences);
+2. for a prime `p` with rank of apparition `r = min{n : p | a_n}` and regular
+   `p`-adic growth, `p | [n, k]_a` exactly when adding `k` and `n - k` carries in
+   the mixed radix `(r, p, p, ...)` (Kummer, as generalised by Knuth and Wilf);
+   so the triangle mod `p` is a Sierpinski gasket with first-level cell `r`;
+3. for the elliptic divisibility sequence `W_n = psi_n(P)` of a point `P` on
+   `E : y^2 = x^3 + ax + b`, `r(p)` is the order of `P` in `E(F_p)`.
+
+Item 2 holds on every entry tested for the four families (rows 0-44, primes
+5-47), and item 3 on 74 of 74 primes (`exp31`).
+
+**Reading.** For Pascal's triangle `r(p) = p`: the gasket's cell *is* the
+factor. For the Gaussian and Fibonomial triangles `r(p)` divides `p - 1` or
+`p +- 1` -- orders fixed by `p`, Proposition 14's single ticket. For the elliptic
+triangle `r(p)` is the order of a point, anywhere in the Hasse interval, and a
+different curve gives a different triangle. Row `M` of the elliptic triangle
+mod `N` has `p | W_M` exactly when `r(p) | M`; taking `M = lcm(1..B)` and reaching
+it with the sequence's own double-and-add (Shipsey) is stage 1 of Lenstra's
+elliptic curve method. The project's opening observation -- look along a row of
+the triangle mod `N` for entries that share a factor with `N` -- is ECM, once the
+triangle is built on the right sequence.
+
 ## Relationship to AKS
 
 AKS verifies `(x+a)^n == x^n + a (mod n, x^r - 1)` for `r` of size `polylog(n)`

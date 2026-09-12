@@ -11,7 +11,7 @@ See ``docs/THEORY.md`` for proofs and ``docs/FINDINGS.md`` for what this does
 and does not buy you computationally.
 """
 
-from .arith import factorize, is_prime
+from .arith import factorize, is_prime, multiplicative_order
 from .central import central_split, central_sum, jacobi
 from .classgroup import schnorr_lenstra_split
 from .cyclo import (
@@ -40,7 +40,9 @@ from .fast import (
 from .cfrac import cfrac
 from .divseq import elliptic_triangle_factor
 from .ecm import ecm
-from .hyperbola import hyperbola_factor
+from .batch import batch_gcd, batch_smooth
+from .hyperbola import binary_search_factor, hyperbola_factor
+from .implicit import implicit_factor
 from .leakage import feature_accuracy, r4, tau_sum_candidates, tau_table
 from .nfs import number_field_sieve
 from .qs import quadratic_sieve
@@ -69,67 +71,72 @@ from .theorems import check_all
 __version__ = "0.1.0"
 
 __all__ = [
+    "__version__",
     "aks_pow",
+    "alignment_gain",
+    "batch_gcd",
+    "batch_smooth",
+    "binary_search_factor",
     "central_split",
     "central_sum",
-    "cfrac",
     "certificate",
+    "cfrac",
     "check_all",
+    "coppersmith_small_root",
+    "ecm",
+    "elliptic_triangle_factor",
     "factor",
-    "factorize",
+    "factor_with_hint",
     "factorial_mod",
+    "factorize",
+    "fast_spf",
     "fast_split",
     "feature_accuracy",
-    "fast_spf",
     "first_nonzero",
     "first_zero_row",
-    "fractal_dimension",
-    "harvey_factor",
-    "harvey_search",
-    "lehman_recover",
-    "lll",
-    "generic_rate",
-    "zero_divisor_density",
-    "alignment_gain",
-    "coppersmith_small_root",
-    "factor_with_hint",
     "fold_attack",
     "fold_coefficients",
     "fold_identity",
     "fold_norm",
     "fold_norm_expected",
+    "fractal_dimension",
+    "generic_rate",
+    "harvey_factor",
+    "harvey_search",
+    "hyperbola_factor",
+    "implicit_factor",
     "is_prime",
     "jacobi",
+    "lehman_recover",
+    "lll",
     "lucas_v",
-    "norm_one_search",
+    "multiplicative_order",
     "multipoint_eval",
-    "pascal_split",
+    "norm_one_search",
+    "number_field_sieve",
     "pascal_spf",
+    "pascal_split",
     "pollard_pminus1",
     "q_first_hit",
     "q_pascal_row",
     "q_period",
-    "williams_pplus1",
+    "quadratic_sieve",
+    "r4",
+    "render",
     "residue_shape",
     "row_entry",
     "row_exact",
     "row_prefix",
     "row_series",
-    "render",
     "row_support",
-    "r4",
+    "schnorr_lenstra_split",
+    "shift_split",
+    "shor",
+    "squfof",
     "support_count",
     "tau_sum_candidates",
     "tau_table",
     "threshold_spf",
-    "schnorr_lenstra_split",
-    "shift_split",
-    "ecm",
-    "elliptic_triangle_factor",
-    "hyperbola_factor",
-    "number_field_sieve",
-    "quadratic_sieve",
-    "shor",
-    "squfof",
-    "__version__",
+    "williams_pplus1",
+    "zero_divisor_density",
 ]

@@ -267,3 +267,48 @@ def class_number(d: int) -> int:
                 h += 1
         a += 1
     return h
+
+
+def binary_search_factor(n: int, stats: dict | None = None):
+    """Smallest divisor of ``n`` above 1, found by *binary search* on its size.
+
+    The question "is there a divisor at most `x`?" is answered by
+    ``divisors_up_to``, which counts lattice points under two hyperbolas in
+    ``O~(n^(1/3))``.  With a comparison in hand the search is the obvious one:
+    ``O(log n)`` of them locate ``spf(n)`` exactly.
+
+    This is the binary search the bitwise approaches never get (Proposition 26):
+    the comparison exists and eliminates half the range, and it costs
+    ``O~(n^(1/3))`` -- so the search costs ``O~(n^(1/3))`` too, a log factor
+    worse than walking the hull once (``hyperbola_factor``).  Returns ``None``
+    when ``n`` has no divisor in ``[2, sqrt n]``, i.e. ``n`` is prime.
+    """
+    calls = {"comparisons": 0, "steps": 0}
+    top = isqrt(n - 1) if n > 1 else 0
+
+    def has_divisor_at_most(x):
+        calls["comparisons"] += 1
+        left: dict = {}
+        right: dict = {}
+        got = row_sum(n, x, left)[0] - row_sum(n - 1, x, right)[0]
+        calls["steps"] += left.get("steps", 0) + right.get("steps", 0)
+        return got > 1                      # the divisor 1 is always there
+
+    answer = None
+    if top >= 2 and has_divisor_at_most(top):
+        lo, hi = 2, top
+        while lo < hi:
+            mid = (lo + hi) // 2
+            if has_divisor_at_most(mid):
+                hi = mid
+            else:
+                lo = mid + 1
+        answer = lo
+    else:
+        # `spf(m^2) = m` is the one divisor the range [2, isqrt(n-1)] can miss.
+        root = isqrt(n)
+        if root > 1 and root * root == n:
+            answer = root
+    if stats is not None:
+        stats.update(calls)
+    return answer

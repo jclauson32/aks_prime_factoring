@@ -49,11 +49,20 @@ from round 14 (as corrected in round 15):
 | 37 | evolving straight-line programs from random | order | selection rediscovers Pollard `p - 1` (smooth exponents), matching an optimised `p - 1`; nothing else | `exp36` |
 | 38 | counting points on `E(Z/N)` | order | one count factors `N` (40 of 40); equivalent to factoring (Kunihiro-Koyama) | `exp31` |
 | 39 | success vs budget, all mechanisms | all four | `p - 1` leads to 10^4 multiplications, ECM and rho overtake at 10^5 | `exp37` |
-| 40 | smoothness measured against Dickman's rho | order | shifted primes and curve orders are ~1.5x smoother than random; the draws differ, the wall does not | `exp38` |
+| 40 | smoothness measured against Dickman's rho | order | random integers track `rho(u)`; `p - 1` is 1.55x smoother and a uniform curve order 1.38x (+5.4 sigma, on the rerun with error bars); the draws differ, the wall does not | `exp38` |
 | 41 | Shanks' SQUFOF (reference) | **sign, no smoothness** | congruence of squares by walking the form cycle; `N^(1/4)`, the central column's exponent | `exp35` |
-| 42 | CFRAC, and the sign mechanism five ways | sign | smallest residues of any method (`< 2 sqrt N`) and still slower than the sieve: sieving wins by throughput | `exp39` |
+| 42 | CFRAC, and the sign mechanism five ways | sign | smallest residues of any method (`< 2 sqrt N`), and faster than this repository's sieve at every size measured; the sieve's advantage is the asymptotic constant (`L[1/2, 1]` against `L[1/2, sqrt 2]`), not throughput at 90 bits | `exp39` |
 | 43 | the size mechanism by coverage per operation | size | batching beats one-at-a-time; the hull walk covers `N^(1/6)` rows per vertex | `exp40` |
 | 44 | the order mechanism priced per draw | order | rigid families get one ticket; elliptic draws cost more and can be repeated | `exp41` |
+| 45 | parallel rho, `m` machines, two ways of detecting the collision | collision | independent walks give about `m^(-1/2)` per machine; distinguished points keyed on `x mod p` give about `m^(-1)`; the unnameable collision is the whole difference | `exp42` |
+| 46 | implicit factoring: `t` low bits of `p` shared across `k` moduli | lattice, between instances | works above `t > alpha k/(k-1)`, measured within 4 bits of it; unrelated and balanced moduli never fall | `exp43` |
+| 47 | the 2-adic tree walked to depth `log2(N)/4`, finished by Coppersmith | size | a working algorithm at `N^(1/4)` leaves; the congruence prunes nothing and the product bound is inactive until depth `log2(N)/2` | `exp44` |
+| 48 | batch smoothness by product trees | amortisation | per-number cost falls to a minimum and rises again; cheaper per number in a batch, never cheaper for one `N` | `exp45` |
+| 49 | binary search on the size of `p`, comparison by counting divisors | size | correct on every `N` below 3000; the comparison is `O~(N^(1/3))`, so the search is too -- the cheap predicate carries nothing, the informative one costs the search | `exp46` |
+| 50 | extrapolating to real key sizes | -- | own fits do not survive extrapolation; calibrated on RSA-768 and RSA-250 (which agree to 4.5x), 1024 bits is ~10^6 core-years and 2048 is nine orders past it | `exp47` |
+| 51 | every factoring algorithm we can name, assigned and re-run | all four | 26 algorithms; the 21 with implementations here each verified live to return a nontrivial divisor; no row needs a fifth mechanism | `exp48` |
+| 52 | the Coppersmith window against the lattice's dimension | size | more lattice buys more window with diminishing returns, converging on the theorem's `1/4` rather than through it | `exp49` |
+| 53 | four ways a modulus can be weak, each priced | -- | close primes, smooth `p - 1`, ROCA-style structure, a shared prime in a corpus: all cheap, all failures of the generator, each with a control that finds nothing on random primes | `exp50` |
 
 ## Round 15: the central column
 
@@ -512,3 +521,201 @@ a higher price per draw, and that is the whole of the difference between
 Shor's algorithm sits in the order family in a row that has no classical
 entry: one group, one draw, no smoothness, because it reads the order instead
 of guessing a multiple of it.
+
+## Round 36: the fourth family, and the price of a hidden group
+
+Sign, size and order each got a round; collision is the last. Its own round
+splits into three questions, and only the third turns out to be interesting.
+
+What the *map* contributes is the fibre statistic `kappa` of round 17, and it
+holds up: averaged over twelve primes per column it lands within a percent of
+the predicted integer, 1 for `k = 2` and odd `k`, 2 for even `k >= 4`.
+The rho length follows `sqrt(pi p / 2 kappa)` in shape and about 10% below it
+in constant. What the *cycle finder* contributes is a constant: Brent against
+Floyd, counted in evaluations rather than seconds, is a few percent either way
+once both are given the same retries.
+
+What `m` *machines* contribute depends on something that is not about the walk
+at all. Run `m` independent walks and take the first to close on itself, which
+is all Pollard's rho can detect from `Z/N`, and the steps per machine fall as about
+`m^(-1/2)`. Run the same `m` walks on one map with a shared table of
+distinguished points -- van Oorschot and Wiener's method, which needs to test
+whether `x mod p` is distinguished -- and they fall as about `m^(-1)`. Same walks,
+same collisions; the difference is whether the collision can be *named*.
+
+That is the sharpest form the project's recurring sentence has taken. A
+distinguished-point table is a hash table on the collision value, and without
+`p` there is no value to hash: two iterates can only be compared by
+`gcd(x - y, N)`, one pair at a time, so `K` stored points cost `K^2/2` gcds
+where hashing costs `K`. A single walk escapes only because its self-collision
+is found by cycle structure rather than by comparison -- and that escape is
+available once per walk, not once per pair of walks.
+
+## Round 37: an alignment between instances
+
+Rounds 12 and 13 priced information about one modulus. May and Ritzenhofen's
+lattice prices information nobody has: bits that several `p_i` *share*, whose
+value is unknown. If `q_1 N_i - q_i N_1 = q_1 q_i (p_i - p_1)` vanishes mod
+`2^t`, the vector of cofactors lives in a lattice of determinant `2^(t(k-1))`,
+and LLL returns it once `t > alpha k/(k-1)`.
+
+Measured, the transition is sharp -- 0% to 100% within four bits -- and lands
+within four bits of the prediction at every `k` tested. Both controls behave:
+unrelated moduli are never factored, and eight balanced moduli sharing 48 of
+their 60 bits are never factored either, because with `q` as long as `p` the
+threshold exceeds the length of `p` itself. That last row is why this is not an
+attack on RSA, and it is also the general statement: the shared part must be
+longer than the secret it is used to find.
+
+## Rounds 38 and 40: the binary search, twice
+
+The idea that keeps coming back is that `p`'s bits could be searched one at a
+time. Round 38 builds that search: lift `xy == N (mod 2^k)`, and the tree
+doubles at every level because two of each node's four children survive. It
+never prunes -- the distinct `x` values at depth `k` are *all* the odd residues,
+so the congruence says nothing about `p` alone -- and the only other test
+available from `N`, the product bound `xy <= N`, is inactive until depth
+`log2(N)/2`, long past where the search would have to stop.
+
+It does terminate, though, and round 38 finishes it: a node at depth
+`log2(N)/4` is a claim about `p mod 2^t` that Coppersmith can complete, so the
+tree plus the lattice is a working factoring algorithm at `N^(1/4)` leaves. The
+size mechanism's price, arrived at from the 2-adic side.
+
+Round 40 asks the question the other way. A binary search needs a comparison,
+not bits -- and there is one: "does `N` have a divisor at most `x`?" is a
+difference of two hyperbola counts, which round 18 already computes by walking
+a convex hull. So the binary search exists, is implemented, and is correct on
+every `N` below 3000 including the primes and the prime squares. Each
+comparison costs `O~(N^(1/3))`, so the search costs that too.
+
+Put together the two rounds say something exact. The cheap predicate --
+`p == r (mod 2^k)` -- eliminates nothing, because every residue is consistent
+with `N`. The predicate that eliminates half the range costs as much as the
+search it was meant to replace. What makes a search fast is not that the space
+can be enumerated in order; it is that the order tells you which half to drop.
+
+## Round 39: the one exponent that moves
+
+Bernstein's product-tree smoothness test is the only measurement in this
+project where the per-instance cost falls. Batch the numbers, multiply the
+primes once, reduce that product down a tree, and the per-number cost drops
+several-fold against trial division -- to a minimum, after which it rises
+again, because the tree's own root is the product of the whole batch and
+multiplying numbers that large is superlinear. The right batch size is a
+measurement, not a limit, and real implementations block accordingly.
+
+This is what a sieve has always done -- one pass over an interval tests every
+candidate for one prime -- and it is why the sieving methods are the ones that
+reach `L[1/2]` and `L[1/3]`. It is also, like round 37, a saving that exists
+only across instances. Amortisation makes a batch cheaper per number and makes
+a single `N` no cheaper at all, which is the number factoring is asked about.
+
+## Round 41: how far the wall is
+
+The last round puts a number on forty rounds of "sub-exponential, not
+polynomial", and the first thing it finds is that this repository cannot supply
+that number. Fitting `t = A exp(c (ln N)^alpha (ln ln N)^(1-alpha))` to the
+sieves here gives `c = 0.68` for the quadratic sieve and `0.91` for the toy
+number field sieve, against textbook values of 1 and 1.923. A constant fitted
+across thirty bits of range does not survive seven hundred bits of
+extrapolation: taken literally, the toy fit finishes RSA-768 in two core-years.
+
+So the fits are discarded and the published records are used instead. Holding
+`c` at 1.923 and solving for `A` on RSA-768 and RSA-250 gives two constants
+that differ by 4.5x -- across 61 bits and eleven years of hardware, which is
+the evidence that the `L[1/3]` shape is the right thing to extrapolate along.
+
+That curve puts 1024-bit `N` at about `10^6` core-years and 2048-bit at about
+`10^15`. Nine orders of magnitude for one doubling of the key is the whole
+security argument for RSA: not that factoring is hard, but that it gets hard
+faster than keys get long. It also marks where constants still decide things.
+At 1024 bits a millionfold improvement in constants would finish the job, which
+is why that size is deprecated rather than merely discouraged. The same
+millionfold leaves 2048 bits at a billion core-years.
+
+Near the edge, constants decide. Past it, only the exponent does -- and nothing
+in forty-one rounds moved the exponent.
+
+## Round 42: the taxonomy, checked against the literature
+
+The claim this project leans on hardest is not about Pascal's triangle. It is
+round 14's coverage claim: that every factoring method manufactures its zero
+divisor through order, size, collision or sign. A claim of coverage is worth
+exactly what its counterexamples are worth, so this round writes down every
+integer factoring algorithm it can name -- twenty-six, from trial division to
+Regev's quantum variant -- assigns each one, and then *runs* the ones this
+repository implements, on instances each should manage, checking that what
+comes back divides the number.
+
+The five rows without an implementation are instructive rather than missing.
+Dixon's random squares is the quadratic sieve with the sieve removed. MPQS and
+SIQS are better constants on the same `L[1/2, 1]`. Fermat is Lehman's `k = 1`,
+and Lehman's certificates are what the hull walk of round 18 emits. Schnorr's
+prime-number lattice *is* implemented -- it just never produced a usable
+relation, which was round 20's result. Regev's variant is quantum.
+
+Nothing on the list needs a fifth mechanism, and the two constructions this
+project contributed are the useful negative: the hyperbola hull walk landed in
+size and the elliptic triangle in order. New objects, familiar mechanisms.
+
+The one row that does not fit is not a mechanism at all but a change of
+question -- implicit factoring takes `k` correlated moduli rather than one
+integer, which is why round 37 is filed as a different currency. Its input is
+the giveaway: there is no correlation *inside* one instance to buy.
+
+## Round 43: the ceiling, from the inside
+
+Round 34 ended on a sentence -- "the exponent `beta^2` in Coppersmith's bound
+is what would have to move" -- and this round measures what moving it would
+take, using the only knob a caller has. Coppersmith's construction takes a
+parameter `m`; the lattice is `2m`-dimensional for a linear polynomial, and the
+theorem says the reachable window is `N^(1/4 - eps(m))` with `eps` falling to
+zero. So: does more lattice buy more window, and how fast does the buying stop?
+Round 11 had three rows of this on a 40-bit modulus, as a fraction of the
+limit; this asks it as an exponent, over eight dimensions at 64 bits.
+
+It buys, and it stops quickly. Each doubling of the dimension adds less to the
+exponent than the last, and the curve flattens below `1/4` exactly as the
+theorem requires. The cost goes the other way: exact LLL in `2m` dimensions
+with entries of `N^m` is not cheap, and the last row of the table costs
+hundreds of times the first.
+
+The measurement paid for itself twice. It says where a size-mechanism
+breakthrough would have to happen -- at `1/4 + delta`, round 38's tree becomes
+`N^(1/4 - delta)` leaves and the deterministic record falls at `delta = 1/12`.
+And it predicted, in advance, the lattice size round 44's attack on structured
+primes would need: `m = 3` reaches `N^0.203` and fails on most instances there,
+`m = 5` reaches `N^0.234` and does not.
+
+While measuring it, the reason the round was slow turned out to be worth
+fixing: `coppersmith_small_root` was reducing its lattice with the rational
+Gram-Schmidt LLL rather than Cohen's exact integer version from round 20. They
+agree -- LLL-reduced is not unique, but both are reduced and both find the same
+roots, which is now a test -- and the integer one is about thirty times faster
+at these dimensions. Every lattice round in this repository was re-run on it.
+
+## Round 44: the ways a modulus can be weak
+
+Every other round attacks a modulus whose primes were drawn at random. This one
+attacks the other kind, and the contrast is the point: four published failures
+of prime *generation*, each implemented, each measured, each with a control on
+properly generated primes that finds nothing.
+
+Primes too close fall to Fermat in about `(q-p)^2 / (8 sqrt N)` steps, and the
+measured step counts match that formula to the digit. A smooth `p - 1` falls to
+one exponentiation -- with the caveat round 35 established, that what Pollard
+needs is *power*smoothness and not smoothness. Structured primes of the shape
+`p = kM + 65537^a mod M` -- Infineon's RSALib, CVE-2017-15361 -- fall to one
+lattice call per candidate `a`, and the whole keyspace of that generator is the
+order of 65537 mod `M`, which is 24 for the primorial used here. And one prime
+shared between two moduli in a corpus falls to a batch gcd over the product
+tree of round 39: `O~(k)` for the whole corpus rather than the `k^2/2` pairwise
+gcds, which is how Heninger, Durumeric, Wustrow and Halderman factored tens of
+thousands of live keys in 2012.
+
+Every one of these reads something the generator was supposed to keep random,
+and none of them is an attack on factoring. That is the last statement of the
+same sentence this project has reached from every direction: the hardness is
+not in the multiplication, it is in having nothing to say about `p` except that
+it divides `N`.

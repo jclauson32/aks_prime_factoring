@@ -66,8 +66,10 @@ for bits in sizes:
             numbers[bits].append((p * q, p, q))
 
 rows = []
+medians: dict[str, dict[int, float]] = {}
 for name, fn, top in methods:
     row = [name]
+    medians[name] = {}
     for bits in sizes:
         if bits > top:
             row.append("--")
@@ -77,6 +79,7 @@ for name, fn, top in methods:
             g, dt = timed(fn, n)
             times.append(dt)
             ok += g in (p, q)
+        medians[name][bits] = statistics.median(times)
         row.append(f"{statistics.median(times):.2f} s" + ("" if ok == 3 else f" ({ok}/3)"))
     rows.append(row)
 report.table(["method"] + [f"{b} bits" for b in sizes], rows)
@@ -100,13 +103,25 @@ for bits in (60, 80):
                  f"{len(factor_base(n, b))}"])
 report.table(["bits of N", "sqrt N", "CFRAC residue (median)",
               "QS residue over its sieve interval (median)", "factor base"], rows)
-report.p("CFRAC's residues are the smallest of any method here -- below `2 sqrt N` "
-         "by construction -- and smaller than the sieve's, which grow with the "
-         "distance along the sieve interval. Smaller numbers are smooth more "
-         "often, so CFRAC needs fewer candidates. It is still the slower method "
-         "asymptotically, because the sieve finds its smooth values in bulk: one "
-         "pass over an interval marks every candidate divisible by each factor "
-         "base prime, while CFRAC must trial-divide every residue it generates.")
+cf_med, qs_med = medians["continued fractions (CFRAC)"], medians["quadratic sieve"]
+common = sorted(set(cf_med) & set(qs_med))
+cf_faster = [b for b in common if cf_med[b] < qs_med[b]]
+top_size = common[-1]
+report.p(f"CFRAC's residues are the smallest of any method here -- below "
+         f"`2 sqrt N` by construction -- and smaller than the sieve's, which grow "
+         f"with the distance along the sieve interval. Smaller numbers are smooth "
+         f"more often, so CFRAC needs fewer candidates, and in this implementation "
+         f"it was the faster of the two at {len(cf_faster)} of the {len(common)} "
+         f"sizes measured ({cf_med[top_size]:.2f} s against "
+         f"{qs_med[top_size]:.2f} s at {top_size} bits).")
+report.p()
+report.p("That ordering is an implementation fact and not an asymptotic one. Both "
+         "are `L[1/2]`; the sieve's constant is smaller (`L[1/2, 1]` against "
+         "CFRAC's `L[1/2, sqrt 2]`), and what buys it is bulk -- one pass over an "
+         "interval marks every candidate divisible by each factor base prime, "
+         "while CFRAC must trial-divide every residue it generates. At these "
+         "sizes the bulk has not paid for the larger residues it has to sieve, "
+         "and the crossover is above the range measured here.")
 report.p()
 
 report.p("## What each change buys")

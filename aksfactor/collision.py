@@ -75,13 +75,31 @@ def rho_length(f, x0: int) -> int:
     return len(seen)
 
 
-def pascal_rho(n: int, k: int = 2, x0: int = 3, max_steps: int = 1 << 26):
+def degenerate_start(k: int, x0: int) -> bool:
+    """Whether ``x0`` is one of the starts the map cannot walk away from.
+
+    Over the integers ``x -> C(x, k)`` has two fixed points, ``0`` and
+    ``k + 1`` (``C(k+1, k) = k+1``), and every ``x0 <= k`` lands on ``0`` or
+    ``1`` within two steps and then stays at ``0``.  A walk from such a start
+    stops moving, so ``x - y`` is ``0``, every gcd is ``n``, and the search
+    reports failure after a handful of evaluations.  For ``k = 1`` the map is
+    the identity and no start walks at all.
+    """
+    return k <= 1 or x0 <= k + 1
+
+
+def pascal_rho(n: int, k: int = 2, x0: int | None = None, max_steps: int = 1 << 26):
     """Brent's cycle-finding on ``x -> C(x, k) mod n``, batching gcds.
 
     Returns ``(factor, steps)`` where ``steps`` counts every evaluation of the
     map, including Brent's advance loop; ``factor`` is ``None`` if the walk
     closed up mod ``n`` (retry with another ``x0``) or ran out of steps.
+
+    ``x0`` defaults to ``k + 2``, the smallest start that is not degenerate for
+    the given ``k`` (see ``degenerate_start``).
     """
+    if x0 is None:
+        x0 = k + 2
     if n % 2 == 0:
         return 2, 0
     g = gcd(factorial(k), n)

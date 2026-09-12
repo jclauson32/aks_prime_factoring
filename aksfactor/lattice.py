@@ -31,6 +31,8 @@ from __future__ import annotations
 from fractions import Fraction
 from math import gcd, isqrt
 
+from .schnorr import lll_integral
+
 __all__ = ["lll", "coppersmith_small_root", "factor_with_hint", "hint_bits_needed",
            "cost_exponents", "factor_with_congruence", "congruence_modulus_needed",
            "residue_candidates", "crt_assembly_cost"]
@@ -210,7 +212,11 @@ def coppersmith_small_root(n: int, poly, bound: int, beta: float = 0.5,
         row = r + [0] * (width - len(r))
         basis.append([row[k] * bound**k for k in range(width)])
 
-    reduced = lll(basis)
+    # `lll` below is the readable reference; `lll_integral` is Cohen's exact
+    # integer version from round 20 and is the one worth waiting for -- the
+    # rational Gram-Schmidt in `lll` grows its denominators badly at the
+    # dimensions round 43 needs.
+    reduced = lll_integral(basis)
     found = []
     for vec in reduced:
         if all(c == 0 for c in vec):
@@ -291,7 +297,7 @@ def congruence_modulus_needed(n: int) -> int:
 
 
 def factor_with_congruence(n: int, r: int, m_mod: int, m: int = 3,
-                           beta: float = 0.5):
+                           beta: float = 0.5, bound: int | None = None):
     """Factor ``n`` given ``p ≡ r (mod m_mod)`` for a known modulus.
 
     The *same* `N**(1/4)` budget in a different shape.  Instead of the high bits
@@ -311,7 +317,11 @@ def factor_with_congruence(n: int, r: int, m_mod: int, m: int = 3,
     if 1 < g < n:
         return (g, n // g) if g <= n // g else (n // g, g)
     monic_const = (r % n) * pow(m_mod, -1, n) % n
-    bound = isqrt(n) // m_mod + 1
+    # The default assumes the divisor is at most `sqrt n`; a caller who knows
+    # the prime's size (an attacker usually knows the key size) can say so, and
+    # must, when the divisor sought is the larger of the two.
+    if bound is None:
+        bound = isqrt(n) // m_mod + 1
     for root in coppersmith_small_root(n, [monic_const, 1], bound, beta=beta, m=m):
         cand = r + m_mod * root
         if cand > 1:

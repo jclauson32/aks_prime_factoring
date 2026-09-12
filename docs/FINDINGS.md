@@ -1252,3 +1252,27 @@ that is asymmetric in the prime factors.** Round 3 answered it — the norm-one
 construction is exactly such a statistic — and replaced it with a harder one:
 **find a family of such objects whose group order varies at fixed `p`.** That is
 the property separating everything in this repository from ECM.
+
+---
+
+## What happened to that question (rounds 15–41)
+
+This document stops at round 14; the later rounds are in
+[LAB.md](LAB.md) and the results table in the README.
+
+The open problem above — *find a family of such objects whose group order
+varies at fixed `p`* — was answered, and the answer is not new: it is the
+elliptic curve. Round 23 built Pascal's triangle over an elliptic divisibility
+sequence, at which point the rank of apparition of `p` becomes the order of a
+point, a different number for every curve; taking row `lcm(1..B)` of that
+triangle *is* stage 1 of ECM, which round 22 implements directly. The opening
+observation of this whole project — look along a row mod `N` for an entry
+sharing a factor with `N` — becomes Lenstra's method once the triangle is built
+on the right sequence.
+
+What that bought is a change of family, not a change of exponent. Rounds 33–36
+priced all four mechanisms — order, size, collision, sign — and each lands at
+`N^(1/4)` without smooth numbers and at `L[1/2]` or `L[1/3]` with them. Rounds
+37–40 priced three kinds of extra information (bits shared between moduli,
+batches of instances, a predicate that splits the range) and found each of them
+real, measurable, and still on the wrong side of the wall.

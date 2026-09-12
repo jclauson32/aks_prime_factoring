@@ -77,6 +77,51 @@ def curve_order(a: int, b: int, p: int) -> int:
     return total
 
 
+def qr_table(p: int) -> bytearray:
+    """``t[v] = 1`` exactly for the nonzero squares mod ``p``."""
+    t = bytearray(p)
+    for x in range(1, (p >> 1) + 1):
+        t[x * x % p] = 1
+    return t
+
+
+def weierstrass_order(a: int, b: int, p: int, table: bytearray | None = None) -> int:
+    """``curve_order`` again, but reading a table of squares instead of
+    exponentiating: ``O(p)`` cheap steps rather than ``O(p)`` modular powers."""
+    t = qr_table(p) if table is None else table
+    total = 1
+    for x in range(p):
+        r = (x * x % p * x + a * x + b) % p
+        total += 1 if r == 0 else (2 if t[r] else 0)
+    return total
+
+
+def suyama_order(sigma: int, p: int, table: bytearray | None = None) -> int | None:
+    """``#E(F_p)`` for the curve ECM actually runs: Suyama's parameter ``sigma``.
+
+    The Montgomery form ``B y^2 = x^3 + A x^2 + x`` is counted with ``B = 1``,
+    which gives either ``#E`` or its twist ``2p + 2 - #E``; the starting point
+    decides between them, since the ladder sends it to infinity only for the
+    order of the group it lives in.  ``None`` when the point's order divides
+    both (it cannot distinguish) or ``sigma`` is degenerate.
+    """
+    from .ecm import FoundFactor, ladder, suyama_curve
+
+    try:
+        a24, x, z = suyama_curve(sigma, p)
+    except (FoundFactor, ValueError):
+        return None
+    a = (4 * a24 - 2) % p                     # A, from a24 = (A + 2) / 4
+    t = qr_table(p) if table is None else table
+    total = 1
+    for u in range(p):
+        r = (u * u % p * (u + a) + u) % p
+        total += 1 if r == 0 else (2 if t[r] else 0)
+    o1, o2 = total, 2 * p + 2 - total
+    kills = [o for o in (o1, o2) if ladder(o, x, z, a24, p)[1] % p == 0]
+    return kills[0] if len(kills) == 1 else None
+
+
 def theory(size: int, bound: int) -> float:
     """``rho(log size / log bound)``."""
     return dickman_rho(log(size) / log(bound))

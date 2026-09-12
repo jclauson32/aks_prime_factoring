@@ -184,3 +184,18 @@ def factorize(n: int) -> dict[int, int]:
         stack.append(d)
         stack.append(m // d)
     return out
+
+
+def multiplicative_order(a: int, p: int) -> int:
+    """Order of ``a`` in ``(Z/p)*`` for prime ``p``, by peeling ``p - 1``.
+
+    What Pollard's ``p - 1`` actually needs is *this* to be smooth, not
+    ``p - 1``: a divisor can be smoother than the number it divides.
+    """
+    if p < 2 or a % p == 0:
+        raise ValueError("needs a unit modulo a prime")
+    order = p - 1
+    for ell in factorize(p - 1):
+        while order % ell == 0 and pow(a, order // ell, p) == 1:
+            order //= ell
+    return order

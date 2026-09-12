@@ -78,3 +78,45 @@ def test_divisor_is_a_vertex_and_its_edges_bracket_p_over_q():
         assert len(slopes) == 2 and slopes[0] < Fraction(p, q) < slopes[1]
         for dx, dy, k, gap in got[2]:
             assert (dy * q + dx * p) ** 2 - 4 * k * p * q == gap * gap
+
+
+def test_binary_search_finds_the_smallest_factor():
+    from aksfactor.arith import factorize, is_prime
+    from aksfactor.hyperbola import binary_search_factor
+
+    for n in range(2, 600):
+        want = None if is_prime(n) else min(factorize(n))
+        assert binary_search_factor(n) == want, n
+
+
+def test_binary_search_handles_prime_squares_and_primes():
+    from aksfactor.hyperbola import binary_search_factor
+
+    assert binary_search_factor(104729 ** 2) == 104729      # spf sits at sqrt(n)
+    assert binary_search_factor(1000003) is None            # prime
+    assert binary_search_factor(2 ** 10) == 2
+    stats = {}
+    assert binary_search_factor(104729 * 104723, stats) == 104723
+    assert stats["comparisons"] > 1 and stats["steps"] > 0
+
+
+def test_binary_search_counts_every_hull_step():
+    """Both hyperbola sums must be counted, not just the second.
+
+    On a prime the search makes exactly one comparison, so its step count has
+    to be the sum of the two walks that comparison performs -- the bug this
+    guards against reported only the second.
+    """
+    from math import isqrt
+
+    from aksfactor.hyperbola import binary_search_factor, row_sum
+
+    n = 1000003
+    stats = {}
+    assert binary_search_factor(n, stats) is None
+    assert stats["comparisons"] == 1
+    left, right = {}, {}
+    top = isqrt(n - 1)
+    row_sum(n, top, left)
+    row_sum(n - 1, top, right)
+    assert stats["steps"] == left["steps"] + right["steps"]

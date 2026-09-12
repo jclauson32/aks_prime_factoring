@@ -105,7 +105,7 @@ remainder **is** the prime factor `q`, with `y = 1`.
 
 ## Where it ended up
 
-Twenty-nine rounds later, the search for a polynomial-time classical algorithm
+Forty-one rounds later, the search for a polynomial-time classical algorithm
 has not found one, and the repository says precisely why:
 
 - Every factoring method manufactures a zero divisor mod `N` through one of four
@@ -132,6 +132,30 @@ has not found one, and the repository says precisely why:
   place: evolving straight-line programs from random ones rediscovers Pollard's
   `p − 1`, and nothing else, even when Pascal's collision map is on offer
   (round 28).
+- All four mechanisms were then priced side by side (rounds 33–36). Stripped of
+  smooth numbers each one costs `N^(1/4)`; smoothness is the only thing that has
+  ever bought sub-exponential time, and combining mechanisms buys Harvey's
+  `N^(1/5)` and nothing more. The collision family gives the sharpest version of
+  the obstacle: `m` machines buy `√m` because a collision mod `p` cannot be
+  *named* without `p`, where the same walks in a known group buy `m`.
+- Three kinds of extra information were priced too, and all three are real,
+  measurable, and on the wrong side of the wall: bits that several moduli
+  *share* (round 37, works above `t > α·k/(k−1)`, never below `α`), batches of
+  instances (round 39, cheaper per number and no cheaper for one), and a
+  predicate that actually splits the search range (round 40, `O~(N^(1/3))` per
+  question). The cheap predicate carries no information; the informative one
+  costs the whole search.
+- The coverage claim itself was then audited (round 42): twenty-six named
+  algorithms, each assigned to a mechanism, and every one of the twenty-one
+  implemented here re-run and verified to return a true divisor. Nothing needs a
+  fifth mechanism — including this project's own two constructions, which landed
+  in *size* and *order*.
+- What is left is the price of the primes, not of the product. Round 44 factors
+  moduli whose *generator* went wrong — close primes, a smooth `p − 1`,
+  ROCA-style structure, a prime shared across a corpus — in milliseconds, with a
+  control on properly generated primes finding nothing every time. The hardness
+  was never in the multiplication; it is in having nothing to say about `p`
+  except that it divides `N`.
 
 <p align="center">
   <img src="docs/figures/pascal_mod_77.png" width="45%" alt="Pascal's triangle mod 77">
@@ -189,11 +213,20 @@ The per-round ledger is [`docs/LAB.md`](docs/LAB.md); proofs are in
 | **R28** | evolution over straight-line programs, from random, rediscovers Pollard's `p − 1` and matches an optimised `p − 1`; given `C(x,2)` it still picks `p − 1` | measured |
 | **R29** | one elliptic point count `#E(ℤ/N)` factors `N` (40/40); point counting mod `N` is equivalent to factoring (Kunihiro–Koyama) | implemented, cited |
 | **R30** | success against a fixed budget of multiplications: `p − 1` leads to 10⁴, ECM and rho overtake at 10⁵ — the curve selection climbed in round 28 | measured |
-| **R31** | Dickman's `ρ` measured against the draws the order mechanism makes: `p ± 1` and curve orders are ~1.5× smoother than random; the wall is the number of draws, `1/ρ(u)` | measured |
+| **R31** | Dickman's `ρ` measured against the draws the order mechanism makes: random integers track `ρ(u)`, `p − 1` is 1.55× smoother and a uniform curve order 1.38× (+5.4σ); the wall is the number of draws, `1/ρ(u)` | measured |
 | **R32** | Shanks' SQUFOF: a congruence of squares with no smoothness, at `N^(1/4)` — the central column's exponent, and evidence that smoothness (not squares) is what buys sub-exponential time | implemented, measured |
-| **R33** | CFRAC added: the sign mechanism five ways — without smoothness it costs `N^(1/4)` (the central column's exponent), and CFRAC's smaller residues still lose to sieving throughput | implemented, measured |
+| **R33** | CFRAC added: the sign mechanism five ways — without smoothness it costs `N^(1/4)` (the central column's exponent); CFRAC's residues are the smallest of any method here and it beats this repository's sieve at every size measured, the sieve's edge being asymptotic | implemented, measured |
 | **R34** | the size mechanism by coverage per operation: batching, then geometry, then a hint — every route pays the same `N^(1/4)`–`N^(1/3)` bill | measured |
 | **R35** | the order mechanism priced per draw: rigid families get one ticket per prime, elliptic families one per curve | measured |
+| **R36** | the collision mechanism, and the price of a hidden group: `m` independent walks give about `m^(−1/2)` per machine, the same walks with distinguished points keyed on `x mod p` give about `m^(−1)` (the run's fitted exponents are in the result file) — parallel rho for factoring is not work-efficient and parallel rho for a discrete log is | measured |
+| **R37** | implicit factoring (May–Ritzenhofen): `t` shared low bits of the `p_i` across `k` moduli factor all of them once `t > α·k/(k−1)`, measured within 4 bits of the prediction; balanced moduli are out of reach at every `k` | implemented, measured |
+| **R38** | the 2-adic search tree, run to the end: it never prunes (all `2^(k−1)` branches survive, the product bound is inactive below depth `log2(N)/2`), and finishing it with Coppersmith is a working factoring algorithm at `N^(1/4)` leaves | implemented, measured |
+| **R39** | amortisation, the one exponent that moves: batch smoothness by product trees is several-fold cheaper per number than trial division, with an optimal block size — and no cheaper for a single `N` | implemented, measured |
+| **R40** | the binary search, found: "does `N` have a divisor ≤ x" is a difference of two hyperbola counts, so the search exists and is correct on every `N` below 3000 — at `O~(N^(1/3))` per comparison. The cheap predicate carries nothing; the informative one costs the whole search | implemented, measured |
+| **R41** | how far the wall actually is: fits of this repository's own sieves are worthless outside their range (the toy NFS's fitted `c` is 0.91 against a textbook 1.923), so the published records are used instead — RSA-768 and RSA-250 agree on the `L[1/3]` constant to within 4.5×, and that curve puts 1024-bit at ~10⁶ core-years and 2048-bit nine orders of magnitude past it | measured, extrapolated |
+| **R42** | the taxonomy checked against the literature: 26 named algorithms assigned to the four mechanisms, and each of the 21 implemented here re-run and verified to return a true divisor — no row needs a fifth mechanism, and this project's two new constructions landed in *size* and *order* rather than anywhere new | measured |
+| **R43** | the Coppersmith ceiling, from the inside: the reachable window as a function of the lattice's dimension rises with diminishing returns towards `beta² = 1/4` — the exponent every size method pays, measured against the only knob a caller has | measured |
+| **R44** | four ways a modulus can be weak, each priced with a control: close primes (Fermat), smooth `p − 1` (Pollard), ROCA-style structured primes (a primorial `M ≥ N^(1/4)` plus Coppersmith), and a shared prime in a corpus (batch gcd, `O~(k)` instead of `k²/2`). Every one is a failure of the generator; every control finds nothing | implemented, measured |
 
 Every row is machine-checked in [`aksfactor/theorems.py`](aksfactor/theorems.py)
 and exercised by `run_tests.py` (187 tests, all passing).
@@ -1201,6 +1234,8 @@ aksfactor/
   smooth.py     round 31: Dickman's rho and the smoothness of the order mechanism's draws
   squfof.py     round 32: Shanks' square forms factorisation
   cfrac.py      round 33: continued fraction factorisation (relations without a sieve)
+  implicit.py   round 37: May-Ritzenhofen -- moduli whose primes share low bits
+  batch.py      round 39: product trees for batch smoothness and batch gcd
   figures.py    PNG gaskets of triangles mod N (standard library only)
   central.py    the central column: Legendre symbols from Pascal's triangle
   grouporder.py counts reachable group orders: ring unit orders vs #E(F_p)
@@ -1208,14 +1243,17 @@ aksfactor/
                 tree, multipoint evaluation, BGS factorial, threshold search
   cli.py        python -m aksfactor {auto,factor,row,entry,verify,fold,...}
 docs/           THEORY.md (proofs), FINDINGS.md (what it buys), LAB.md (idea ledger)
-experiments/    forty-one reproducible scripts; results/ holds their generated reports
-tests/          187 tests; run_tests.py needs no pytest
+tools/          check_docs.py: catches results, references and counts going stale
+experiments/    fifty reproducible scripts; results/ holds their generated reports
+tests/          220 tests; run_tests.py needs no pytest
 ```
 
 Regenerate every measurement (and the figure above) with `./run_experiments.sh`
-(about 20 minutes; `exp09` dominates, because measuring the second-digit rate
-needs Lucas at random base-`p` digits, which costs `O(p)` per call — the
-barrier charges you even to observe it).
+(about 45 minutes). `exp09` dominated the original suite, because measuring the
+second-digit rate needs Lucas at random base-`p` digits, which costs `O(p)` per
+call — the barrier charges you even to observe it. It now shares that honour
+with the rounds that run whole sieves (`exp39`, `exp47`) and whole lattices
+(`exp43`, `exp49`).
 
 ## License
 

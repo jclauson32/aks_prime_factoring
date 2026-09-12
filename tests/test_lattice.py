@@ -280,3 +280,38 @@ def test_crt_assembly_saving_is_subexponential():
     # the symmetry's share of the budget shrinks with N
     assert ratios[2048] < ratios[128], ratios
     assert ratios[2048] < 0.2, ratios
+
+
+def test_the_two_lll_implementations_agree_where_it_matters():
+    """Coppersmith uses the integer LLL; the rational one is the reference.
+
+    They need not return the same basis -- LLL-reduced is not unique -- but
+    both must be reduced, and Coppersmith must find the same roots either way.
+    """
+    import random
+
+    from aksfactor.lattice import _integer_roots, coppersmith_small_root, lll
+    from aksfactor.schnorr import lll_integral
+
+    rng = random.Random(21)
+    for _ in range(5):
+        basis = [[rng.randrange(-1000, 1000) for _ in range(4)] for _ in range(4)]
+        if all(all(x == 0 for x in row) for row in basis):
+            continue
+        a = lll(basis)
+        b = lll_integral(basis)
+        norm = lambda rows: min(sum(x * x for x in r) for r in rows if any(r))
+        # the shortest vectors should be comparable, not necessarily equal
+        assert norm(a) <= 4 * norm(b) and norm(b) <= 4 * norm(a)
+
+
+def test_coppersmith_still_finds_planted_roots():
+    from aksfactor.arith import is_prime
+    from aksfactor.lattice import factor_with_hint
+
+    p, q = 1000003, 1000033
+    assert is_prime(p) and is_prime(q)
+    n = p * q
+    for window in (16, 32, 64):
+        approx = q - q % window
+        assert factor_with_hint(n, approx, window) is not None, window

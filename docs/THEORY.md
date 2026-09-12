@@ -885,6 +885,103 @@ elliptic curve method. The project's opening observation -- look along a row of
 the triangle mod `N` for entries that share a factor with `N` -- is ECM, once the
 triangle is built on the right sequence.
 
+## Proposition 25 — what bits two moduli share is worth (May–Ritzenhofen)
+
+Let `N_i = p_i q_i` for `i = 1..k`, with all `p_i` congruent mod `M = 2^t` and
+all `q_i` about `alpha` bits. From `N_i = p_i q_i` and `p_i ≡ p_1 (mod M)`,
+
+    q_1 N_i - q_i N_1  =  q_1 q_i (p_i - p_1)  ≡  0   (mod M),
+
+so `(q_1, ..., q_k)` lies in `L = { x : x_1 N_i ≡ x_i N_1 (mod M) }`, a lattice
+of determinant `M^(k-1)`. The wanted vector has norm about `2^alpha sqrt k`; the
+Gaussian heuristic puts a generic shortest vector at `det^(1/k) =
+2^(t(k-1)/k)`. So the vector is the shortest one, and LLL returns it, once
+
+    t  >  alpha * k / (k - 1).
+
+**Measured** (`exp43`, 20 instances per cell, `p` of 200 bits, `alpha = 40`):
+the transition is sharp and sits within four bits of the prediction — `k = 2`
+at `t = 80` (predicted 80), `k = 3` at 64 (60), `k = 5` at 52 (50), `k = 8` at
+48 (46), the offsets being LLL's approximation factor and the `sqrt k`.
+
+**Two consequences.** The threshold falls towards `alpha` as `k` grows and never
+below it: the shared part must be longer than the cofactor it is used to find.
+And balanced moduli are out of reach at every `k`, since `alpha` is then the
+length of `p` itself and `alpha k/(k-1) > alpha` exceeds what can be shared —
+checked in `exp43` with eight 60-bit `p` sharing 48 of their 60 bits, which the
+lattice does not factor.
+
+This is the third currency the project has priced, after Coppersmith's known
+bits (Proposition 12) and the small-prime residue budget (round 13). It is the
+cheapest of the three to exploit and the most expensive to acquire, and all
+three are bounded below by the same accounting: what has to be supplied is at
+least the size of what is hidden.
+
+## Proposition 26 — the 2-adic search tree has no branch to cut
+
+Let `N` be odd. The nodes at depth `k` are the pairs `(x, y)` of odd residues
+mod `2^k` with `xy ≡ N`. Then:
+
+1. every node has exactly two of its four children (`x + a 2^k, y + b 2^k` needs
+   `a + b` fixed mod 2, since `x` and `y` are odd), so the tree doubles;
+2. the `x`-coordinates at depth `k` are *all* `2^(k-1)` odd residues — for every
+   odd `r` there is a `y` with `r y ≡ N (mod 2^k)`, because `r` is invertible;
+3. hence the congruence constrains `p` not at all, and the product bound
+   `xy <= N` — the only other test available from `N` — is inactive until depth
+   `log2(N)/2`, by which point the tree is larger than trial division.
+
+**Measured**: round 24 (`exp24`) established (2) — every odd residue of `p` has
+a partner `q = N/p mod 2^k`, so all `2^(k-1)` branches survive. `exp44` adds the
+enumeration of (1), branching exactly 2.00 per node, and of (3), the product
+bound removing 0% of nodes below depth `log2(N)/2`.
+
+**Corollary (the tree is an `N^(1/4)` algorithm, not a shortcut).** A node at
+depth `t` is a claim about `p mod 2^t`, which Proposition 12's lattice finishes
+once `2^t >= N^(1/4)`. Walking to that depth and handing every leaf to the
+lattice factors `N` — it is implemented and run in `exp44` — in `N^(1/4)`
+lattice calls. That is the size mechanism's price again (Theorem 20), reached
+from the 2-adic side.
+
+**Reading.** A bitwise search is a binary search only if some test eliminates
+half the remaining space. Here the test is satisfiable for every candidate, so
+nothing is eliminated. The tree *is* prunable the moment a second equation
+exists — that is what Heninger and Shacham exploit for keys that carry `d`,
+`d_p` and `d_q` alongside `p` and `q` — and `N` alone provides no second
+equation.
+
+## Proposition 27 — the four mechanisms, and what would falsify the list
+
+Every factoring method in the literature produces its nontrivial `gcd(x, N)` by
+one of four routes:
+
+* **size** — `x` is a candidate divisor, or a batch of them multiplied
+  together (trial division, Pollard–Strassen, Lehman, the hull walk, Harvey,
+  Coppersmith given a window);
+* **collision** — `x = a − b` for two iterates of a map that agree mod `p`
+  (Pollard rho, Pascal rho);
+* **order** — `x = a^e − 1` for an exponent `e` killed by the order of a group
+  attached to `p` (`p ± 1`, class groups, ECM, the elliptic triangle, Shor);
+* **sign** — `x = a ± b` from a congruence of squares (CFRAC, SQUFOF, the
+  central column, the quadratic sieve, the number field sieve, Schnorr's
+  lattice).
+
+This is a claim about coverage, so it is worth what its counterexamples are
+worth. `exp48` lists twenty-six named algorithms, assigns each, and runs the
+twenty-one this repository implements — all twenty-one return a nontrivial
+divisor of the instance they are given.
+
+**What would falsify it.** A method whose `x` is none of the four: not a
+candidate divisor or product of them, not a difference of two things congruent
+mod `p`, not a group element killed by an exponent. Nothing on the list is such
+a method, and the two constructions this project contributed are the useful
+negative — the hyperbola hull walk (Proposition 23) is *size* and the elliptic
+triangle (Proposition 24) is *order*. New objects, old mechanisms.
+
+**Two things that sit outside the list without contradicting it**, because they
+change the input rather than the mechanism: implicit factoring (Proposition 25)
+takes `k` correlated moduli, and batch smoothness takes a corpus. Both are
+measured, and neither touches a single properly generated `N`.
+
 ## Relationship to AKS
 
 AKS verifies `(x+a)^n == x^n + a (mod n, x^r - 1)` for `r` of size `polylog(n)`

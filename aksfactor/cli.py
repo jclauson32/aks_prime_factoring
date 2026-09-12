@@ -70,7 +70,7 @@ def _auto_factor(n: int, verbose=print):
             add(r, "perfect square")
             return
         def rho_try():
-            for x0 in range(3, 40):
+            for x0 in range(4, 40):          # 3 is a fixed point of C(x, 2)
                 g, _ = pascal_rho(m, 2, x0)
                 if g:
                     return g

@@ -6,9 +6,9 @@ Round 11. The algorithm exists. The information it needs is the whole problem.
 
 | bits of N | p | unknown low bits of p | factored | seconds |
 |---|---|---|---|---|
-| 26 | 7,019 | 4 | yes | 0.14 |
+| 26 | 7,019 | 4 | yes | 0.15 |
 | 30 | 31,973 | 5 | yes | 0.17 |
-| 33 | 80,473 | 6 | yes | 0.14 |
+| 33 | 80,473 | 6 | yes | 0.13 |
 | 38 | 505,811 | 7 | yes | 0.16 |
 
 Given the high bits of `p`, the factorisation falls out with no search at all.

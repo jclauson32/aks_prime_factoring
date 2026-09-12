@@ -6,27 +6,28 @@ Three balanced semiprimes per size (`p, q` of `bits/2` bits each). Median time p
 
 | method | mechanism | 40 bits | 50 bits | 60 bits | 70 bits | 80 bits | 90 bits | 100 bits |
 |---|---|---|---|---|---|---|---|---|
-| Pascal row, residue scan | size | 0.13 s | 2.75 s | -- | -- | -- | -- | -- |
-| factorial threshold (Strassen) | size | 0.12 s | 1.09 s | 10.65 s | -- | -- | -- | -- |
-| Harvey N^(1/5) | size | 0.04 s | 0.25 s | > 60 s | -- | -- | -- | -- |
-| hyperbola hull walk | size | 0.00 s | 0.01 s | 0.14 s | 2.74 s | -- | -- | -- |
-| central column | sign | 1.85 s | 17.15 s (1/1) | -- | -- | -- | -- | -- |
-| Pascal rho = Pollard rho | collision | 0.00 s | 0.00 s | 0.01 s | 0.09 s | 0.33 s | 1.59 s | 48.05 s (1/1) |
-| Pollard p - 1, B = 10^5 | order, rigid | 0.01 s | 0.01 s | 0.04 s (0/3) | 0.05 s (0/3) | 0.04 s (1/3) | 0.05 s (0/3) | 0.06 s (0/3) |
-| Williams p + 1, B = 10^5 | order, rigid | 0.01 s | 0.00 s | 0.08 s (1/3) | 0.09 s (0/3) | 0.09 s (1/3) | 0.09 s (0/3) | 0.11 s (0/3) |
-| class groups (Schnorr-Lenstra) | order, redrawn | 2.90 s | 15.44 s (0/1) | -- | -- | -- | -- | -- |
-| elliptic triangle, row lcm(1..B) | order, redrawn | 0.06 s | 0.06 s | 0.57 s | 0.60 s | 0.79 s | 8.72 s (2/2) | -- |
-| ECM | order, redrawn | 0.02 s | 0.02 s | 0.02 s | 0.02 s | 0.02 s | 0.12 s | 0.14 s |
-| quadratic sieve | sign | 0.01 s | 0.11 s | 0.06 s | 0.16 s | 0.35 s | 1.26 s | 3.85 s |
-| number field sieve | sign | 0.12 s | 0.49 s | 1.68 s | 2.93 s | > 60 s | -- | -- |
+| Pascal row, residue scan | size | 0.11 s | 3.86 s | -- | -- | -- | -- | -- |
+| factorial threshold (Strassen) | size | 0.11 s | 1.51 s | -- | -- | -- | -- | -- |
+| Harvey N^(1/5) | size | 0.05 s | 9.61 s (2/2) | -- | -- | -- | -- | -- |
+| hyperbola hull walk | size | 0.00 s | 0.01 s | 0.20 s | 3.83 s | -- | -- | -- |
+| central column | sign | 2.55 s | 23.77 s (1/1) | -- | -- | -- | -- | -- |
+| Pascal rho = Pollard rho | collision | 0.00 s | 0.00 s | 0.01 s | 0.12 s | 0.46 s | 2.17 s | > 60 s |
+| Pollard p - 1, B = 10^5 | order, rigid | 0.01 s | 0.01 s | 0.06 s (0/3) | 0.06 s (0/3) | 0.06 s (1/3) | 0.06 s (0/3) | 0.08 s (0/3) |
+| Williams p + 1, B = 10^5 | order, rigid | 0.01 s | 0.00 s | 0.11 s (1/3) | 0.13 s (0/3) | 0.12 s (1/3) | 0.13 s (0/3) | 0.15 s (0/3) |
+| class groups (Schnorr-Lenstra) | order, redrawn | 4.09 s | -- | -- | -- | -- | -- | -- |
+| elliptic triangle, row lcm(1..B) | order, redrawn | 0.09 s | 0.09 s | 0.79 s | 0.83 s | 1.10 s | 12.23 s (2/2) | -- |
+| ECM | order, redrawn | 0.02 s | 0.03 s | 0.02 s | 0.02 s | 0.02 s | 0.16 s | 0.20 s |
+| SQUFOF (square forms) | sign, no smoothness | 0.00 s | 0.00 s | 0.00 s | 0.15 s | 1.37 s | 1.72 s | 44.30 s (1/1) |
+| quadratic sieve | sign + smoothness | 0.01 s | 0.15 s | 0.09 s | 0.23 s | 0.52 s | 1.85 s | 5.64 s |
+| number field sieve | sign | 0.18 s | 0.71 s | 2.32 s | 4.09 s | > 60 s | -- | -- |
 
-Fastest method that factored all three numbers, by size: 40 bits -- Pascal rho = Pollard rho; 50 bits -- Pascal rho = Pollard rho; 60 bits -- Pascal rho = Pollard rho; 70 bits -- ECM; 80 bits -- ECM; 90 bits -- ECM; 100 bits -- ECM.
+Fastest method that factored all three numbers, by size: 40 bits -- Pascal rho = Pollard rho; 50 bits -- Pascal rho = Pollard rho; 60 bits -- SQUFOF (square forms); 70 bits -- ECM; 80 bits -- ECM; 90 bits -- ECM; 100 bits -- ECM.
 
 Where each method stops -- the largest size at which it factored all three numbers within the budget:
 
 - Pascal row, residue scan (size): all three numbers up to 50 bits
-- factorial threshold (Strassen) (size): all three numbers up to 60 bits
-- Harvey N^(1/5) (size): all three numbers up to 50 bits
+- factorial threshold (Strassen) (size): all three numbers up to 50 bits
+- Harvey N^(1/5) (size): all three numbers up to 40 bits
 - hyperbola hull walk (size): all three numbers up to 70 bits
 - central column (sign): all three numbers up to 40 bits
 - Pascal rho = Pollard rho (collision): all three numbers up to 90 bits
@@ -35,10 +36,13 @@ Where each method stops -- the largest size at which it factored all three numbe
 - class groups (Schnorr-Lenstra) (order, redrawn): all three numbers up to 40 bits
 - elliptic triangle, row lcm(1..B) (order, redrawn): all three numbers up to 80 bits
 - ECM (order, redrawn): all three numbers up to 100 bits
-- quadratic sieve (sign): all three numbers up to 100 bits
+- SQUFOF (square forms) (sign, no smoothness): all three numbers up to 90 bits
+- quadratic sieve (sign + smoothness): all three numbers up to 100 bits
 - number field sieve (sign): all three numbers up to 70 bits
 
 The size methods stop first, then collision; the methods that keep going are the ones powered by smooth numbers -- ECM, which redraws its groups, and the sieves. The rigid order methods succeed only on numbers whose `p +- 1` happens to be smooth -- common for small `p`, rare for large -- which is why their cells turn into fractions as `N` grows. Among the Pascal-native constructions, the one that goes furthest is Pascal rho, which is Pollard's rho, and the elliptic triangle, which is ECM once its sequence is changed.
 
-Harvey's `N^(1/5)` is the best *deterministic* exponent known; here it runs 0.04 s at 40 bits, 0.25 s at 50 bits, > 60 s at 60 bits, against Strassen's 0.12 s at 40 bits, 1.09 s at 50 bits, 10.65 s at 60 bits. The jump is this implementation's parameter choice and pure-Python constants, not the exponent.
-_Generated by `experiments/exp35_everything.py` in 358.6s._
+SQUFOF is worth its own line. It manufactures the same object as the sieves -- a congruence of squares -- but finds it by walking the cycle of forms of discriminant `4N` instead of collecting smooth relations, and it costs `N^(1/4)`. That is exactly where round 15's central column sits. The sign mechanism without smooth numbers is an `N^(1/4)` method; what buys the sieves their sub-exponential time is the smoothness, not the squares.
+
+Harvey's `N^(1/5)` is the best *deterministic* exponent known; here it runs 0.05 s at 40 bits, 9.61 s (2/2) at 50 bits, against Strassen's 0.11 s at 40 bits, 1.51 s at 50 bits. The jump is this implementation's parameter choice and pure-Python constants, not the exponent.
+_Generated by `experiments/exp35_everything.py` in 377.0s._

@@ -37,3 +37,14 @@ def test_auto_factor_command():
             product *= p ** e
             assert is_prime(p)
         assert product == n
+
+
+def test_package_exports_resolve():
+    import aksfactor
+
+    missing = [name for name in aksfactor.__all__ if not hasattr(aksfactor, name)]
+    assert not missing, missing
+    n = 1000003 * 999983
+    assert aksfactor.squfof(n) in (1000003, 999983)
+    assert aksfactor.cfrac(n) in (1000003, 999983)
+    assert aksfactor.quadratic_sieve(n) in (1000003, 999983)

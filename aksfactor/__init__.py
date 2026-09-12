@@ -37,7 +37,15 @@ from .fast import (
     multipoint_eval,
     threshold_spf,
 )
+from .cfrac import cfrac
+from .divseq import elliptic_triangle_factor
+from .ecm import ecm
+from .hyperbola import hyperbola_factor
 from .leakage import feature_accuracy, r4, tau_sum_candidates, tau_table
+from .nfs import number_field_sieve
+from .qs import quadratic_sieve
+from .shor import shor
+from .squfof import squfof
 from .pascal import (
     first_nonzero,
     residue_shape,
@@ -64,6 +72,7 @@ __all__ = [
     "aks_pow",
     "central_split",
     "central_sum",
+    "cfrac",
     "certificate",
     "check_all",
     "factor",
@@ -115,5 +124,12 @@ __all__ = [
     "threshold_spf",
     "schnorr_lenstra_split",
     "shift_split",
+    "ecm",
+    "elliptic_triangle_factor",
+    "hyperbola_factor",
+    "number_field_sieve",
+    "quadratic_sieve",
+    "shor",
+    "squfof",
     "__version__",
 ]

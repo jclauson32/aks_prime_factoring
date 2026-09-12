@@ -50,6 +50,10 @@ from round 14 (as corrected in round 15):
 | 38 | counting points on `E(Z/N)` | order | one count factors `N` (40 of 40); equivalent to factoring (Kunihiro-Koyama) | `exp31` |
 | 39 | success vs budget, all mechanisms | all four | `p - 1` leads to 10^4 multiplications, ECM and rho overtake at 10^5 | `exp37` |
 | 40 | smoothness measured against Dickman's rho | order | shifted primes and curve orders are ~1.5x smoother than random; the draws differ, the wall does not | `exp38` |
+| 41 | Shanks' SQUFOF (reference) | **sign, no smoothness** | congruence of squares by walking the form cycle; `N^(1/4)`, the central column's exponent | `exp35` |
+| 42 | CFRAC, and the sign mechanism five ways | sign | smallest residues of any method (`< 2 sqrt N`) and still slower than the sieve: sieving wins by throughput | `exp39` |
+| 43 | the size mechanism by coverage per operation | size | batching beats one-at-a-time; the hull walk covers `N^(1/6)` rows per vertex | `exp40` |
+| 44 | the order mechanism priced per draw | order | rigid families get one ticket; elliptic draws cost more and can be repeated | `exp41` |
 
 ## Round 15: the central column
 
@@ -447,3 +451,64 @@ draws is what makes ECM sub-exponential, and what caps it: the number of draws
 needed is `1/rho(u)`, and `rho(u)` falls like `u^(-u)`. At the polylogarithmic
 bounds a polynomial-time method would need -- `2^16`, `2^24` -- the table of
 `1/rho` is already astronomical for a 128-bit prime.
+
+## Round 32: the sign mechanism without smoothness
+
+Shanks' square forms factorisation completes the classical zoo, and it settles a
+question round 15 left open. SQUFOF manufactures the same object as the
+sieves -- a congruence of squares -- but it finds one by walking the cycle of
+forms of discriminant `4N` until a square form appears, with no smooth numbers
+anywhere. Its cost is `N^(1/4)`.
+
+That is exactly where the central column landed. The sign mechanism, run
+without smoothness, is an `N^(1/4)` method; the sieves' sub-exponential time
+comes from the smooth relations, not from the squares. In practice SQUFOF is
+the fastest thing in this repository at its range -- 96-bit semiprimes in about
+half a second -- because its `N^(1/4)` steps are small-integer operations rather
+than modular multiplications of big ones.
+
+## Round 33: the sign mechanism, five ways
+
+With CFRAC added, the repository has five ways to manufacture the same object,
+a congruence of squares mod `N`:
+
+| method | how the congruence is found | smooth numbers? | cost |
+|---|---|---|---|
+| central column (round 15) | a Legendre symbol from a truncated hypergeometric sum | no | `N^(1/4)` |
+| SQUFOF | walk the cycle of forms of discriminant `4N` | no | `N^(1/4)` |
+| CFRAC | convergents of `sqrt N`, trial-divided | yes, residues `< 2 sqrt N` | `L[1/2]` |
+| quadratic sieve | sieve `(x+m)^2 - N` over an interval | yes | `L[1/2]`, better constant |
+| number field sieve | two rings at once | yes, two numbers | `L[1/3]` |
+
+Two things fall out. Without smooth numbers the mechanism costs `N^(1/4)` --
+which is exactly where Pascal's central column landed, so that exponent was the
+mechanism's price, not a weakness of the triangle. And CFRAC has the smallest
+residues of anything here, below `2 sqrt N` by construction, yet loses to the
+sieve: sieving finds smooth values in bulk while CFRAC trial-divides them one
+at a time. Smaller numbers are worth less than a faster way of finding the
+smooth ones.
+
+## Rounds 34 and 35: the other two mechanisms, priced
+
+Round 33 laid out the sign mechanism five ways. The same treatment for the
+other two says the same thing in different units.
+
+**Size** is about coverage: how many candidate factors one operation rules out.
+Trial division rules out one. Pollard and Strassen's product tree rules out a
+batch, which is the whole of its `N^(1/4)`. The hull walk of round 18 rules out
+a stretch of rows near a rational slope, about `N^(1/6)` of them per vertex,
+which is its `N^(1/3)`. Harvey's `N^(1/5)` comes from combining the geometry
+with a congruence rather than covering more per operation, and Coppersmith
+covers everything at once -- once someone hands over a quarter of `p`'s bits,
+which costs `N^(1/4)` to guess.
+
+**Order** is about draws: how many groups a method can try and what each costs.
+The Pascal row, the AKS fold, the q-deformation and Pollard's `p - 1` all get
+exactly one group per prime, so a non-smooth order ends the method whatever the
+budget. Williams gets two. ECM and the elliptic triangle get one per curve, at
+a higher price per draw, and that is the whole of the difference between
+`L_p[1/2]` and failure.
+
+Shor's algorithm sits in the order family in a row that has no classical
+entry: one group, one draw, no smoothness, because it reads the order instead
+of guessing a multiple of it.

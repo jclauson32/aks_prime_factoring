@@ -27,6 +27,7 @@ from aksfactor.harvey import harvey_factor
 from aksfactor.hyperbola import hyperbola_factor
 from aksfactor.nfs import number_field_sieve
 from aksfactor.qs import quadratic_sieve
+from aksfactor.squfof import squfof
 
 report = Report(
     "exp35_everything",
@@ -83,7 +84,8 @@ METHODS = [
     ("elliptic triangle, row lcm(1..B)", "order, redrawn",
      lambda n, b: elliptic_triangle_factor(n, 3000, 3000, random.Random(b))),
     ("ECM", "order, redrawn", lambda n, b: ecm(n, b1=3000, b2=150000, curves=3000)),
-    ("quadratic sieve", "sign", lambda n, b: quadratic_sieve(n)),
+    ("SQUFOF (square forms)", "sign, no smoothness", lambda n, b: squfof(n)),
+    ("quadratic sieve", "sign + smoothness", lambda n, b: quadratic_sieve(n)),
     ("number field sieve", "sign", lambda n, b: number_field_sieve(n, 3, *(NFS[b][0], NFS[b][0]),
                                                                    24, NFS[b][1], 3000)),
 ]
@@ -192,6 +194,14 @@ report.p("The size methods stop first, then collision; the methods that keep goi
          "which is why their cells turn into fractions as `N` grows. Among the Pascal-native constructions, the one that goes "
          "furthest is Pascal rho, which is Pollard's rho, and the elliptic triangle, "
          "which is ECM once its sequence is changed.")
+report.p()
+report.p("SQUFOF is worth its own line. It manufactures the same object as the "
+         "sieves -- a congruence of squares -- but finds it by walking the cycle "
+         "of forms of discriminant `4N` instead of collecting smooth relations, "
+         "and it costs `N^(1/4)`. That is exactly where round 15's central column "
+         "sits. The sign mechanism without smooth numbers is an `N^(1/4)` method; "
+         "what buys the sieves their sub-exponential time is the smoothness, not "
+         "the squares.")
 harvey = [results.get(("Harvey N^(1/5)", b), "--") for b in SIZES]
 strassen = [results.get(("factorial threshold (Strassen)", b), "--") for b in SIZES]
 report.p()

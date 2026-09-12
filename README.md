@@ -190,6 +190,10 @@ The per-round ledger is [`docs/LAB.md`](docs/LAB.md); proofs are in
 | **R29** | one elliptic point count `#E(ℤ/N)` factors `N` (40/40); point counting mod `N` is equivalent to factoring (Kunihiro–Koyama) | implemented, cited |
 | **R30** | success against a fixed budget of multiplications: `p − 1` leads to 10⁴, ECM and rho overtake at 10⁵ — the curve selection climbed in round 28 | measured |
 | **R31** | Dickman's `ρ` measured against the draws the order mechanism makes: `p ± 1` and curve orders are ~1.5× smoother than random; the wall is the number of draws, `1/ρ(u)` | measured |
+| **R32** | Shanks' SQUFOF: a congruence of squares with no smoothness, at `N^(1/4)` — the central column's exponent, and evidence that smoothness (not squares) is what buys sub-exponential time | implemented, measured |
+| **R33** | CFRAC added: the sign mechanism five ways — without smoothness it costs `N^(1/4)` (the central column's exponent), and CFRAC's smaller residues still lose to sieving throughput | implemented, measured |
+| **R34** | the size mechanism by coverage per operation: batching, then geometry, then a hint — every route pays the same `N^(1/4)`–`N^(1/3)` bill | measured |
+| **R35** | the order mechanism priced per draw: rigid families get one ticket per prime, elliptic families one per curve | measured |
 
 Every row is machine-checked in [`aksfactor/theorems.py`](aksfactor/theorems.py)
 and exercised by `run_tests.py` (187 tests, all passing).
@@ -1195,6 +1199,8 @@ aksfactor/
   nfs.py        round 26: a toy number field sieve (degree 3, pure Python)
   evolve.py     round 28: evolving straight-line factoring programs
   smooth.py     round 31: Dickman's rho and the smoothness of the order mechanism's draws
+  squfof.py     round 32: Shanks' square forms factorisation
+  cfrac.py      round 33: continued fraction factorisation (relations without a sieve)
   figures.py    PNG gaskets of triangles mod N (standard library only)
   central.py    the central column: Legendre symbols from Pascal's triangle
   grouporder.py counts reachable group orders: ring unit orders vs #E(F_p)
@@ -1202,7 +1208,7 @@ aksfactor/
                 tree, multipoint evaluation, BGS factorial, threshold search
   cli.py        python -m aksfactor {auto,factor,row,entry,verify,fold,...}
 docs/           THEORY.md (proofs), FINDINGS.md (what it buys), LAB.md (idea ledger)
-experiments/    thirty-eight reproducible scripts; results/ holds their generated reports
+experiments/    forty-one reproducible scripts; results/ holds their generated reports
 tests/          187 tests; run_tests.py needs no pytest
 ```
 

@@ -63,6 +63,7 @@ from round 14 (as corrected in round 15):
 | 51 | every factoring algorithm we can name, assigned and re-run | all four | 26 algorithms; the 21 with implementations here each verified live to return a nontrivial divisor; no row needs a fifth mechanism | `exp48` |
 | 52 | the Coppersmith window against the lattice's dimension | size | more lattice buys more window with diminishing returns, converging on the theorem's `1/4` rather than through it | `exp49` |
 | 53 | four ways a modulus can be weak, each priced | -- | close primes, smooth `p - 1`, ROCA-style structure, a shared prime in a corpus: all cheap, all failures of the generator, each with a control that finds nothing on random primes | `exp50` |
+| 54 | what the quantum side costs | order, read | simulating Shor is `N^2` amplitudes and 5x per bit (measured); running it is ~20M physical qubits for RSA-2048 (quoted). The gap between simulating and running is the algorithm's whole advantage | `exp51` |
 
 ## Round 15: the central column
 
@@ -719,3 +720,32 @@ and none of them is an attack on factoring. That is the last statement of the
 same sentence this project has reached from every direction: the hardness is
 not in the multiplication, it is in having nothing to say about `p` except that
 it divides `N`.
+
+## Round 45: the other side of the wall
+
+Round 41 priced the classical wall and stopped there, which leaves the obvious
+question unanswered: the one algorithm that is not behind that wall has existed
+since 1994, so what is in the way?
+
+Not mathematics. The measured half of this round is what it costs *this*
+machine to simulate Shor -- the state vector holds an amplitude per value of a
+`2 log2 N`-qubit register, so about `N^2` of them, and the measured cost grows
+by a factor of five per bit of `N`, the extra over four being the transform's
+own logarithm. A 30-bit modulus would want `2^60` amplitudes. That is why round
+24's simulation stops at 21 and why it always would have.
+
+The quoted half is the published resource estimate for running it rather than
+faking it: a few thousand logical qubits, of order `10^10` Toffoli gates, about
+twenty million physical qubits under a surface code, and about eight hours
+(Gidney and Ekerå, 2021). Set beside round 41's `10^15` classical core-years
+for the same modulus, the two numbers are not a comparison between algorithms.
+They are a comparison between a machine that exists and one that does not.
+
+The distinction matters for what this project was trying to do. The classical
+wall is not there because nobody has found the algorithm -- the algorithm is
+known, and round 24 runs it. It is there because the step that makes it work,
+reading an order out of an interference pattern, has no classical counterpart,
+and round 25 failed to find one in every classically cheap function of
+`a^x mod N` it could construct. That failure is a fact about this project, not
+a theorem. It is also the same shape as round 36's: the mechanism is available,
+the residue is not.

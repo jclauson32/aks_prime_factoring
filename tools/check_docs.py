@@ -45,9 +45,14 @@ def main() -> int:
                 problems.append(f"{doc.name} cites {ref}, which does not exist")
 
     readme = (ROOT / "README.md").read_text()
-    words = {"forty-one": 41, "forty-two": 42, "forty-three": 43, "forty-four": 44,
-             "forty-five": 45, "forty-six": 46, "forty-seven": 47,
-             "forty-eight": 48, "forty-nine": 49, "fifty": 50}
+    tens = {"twenty": 20, "thirty": 30, "forty": 40, "fifty": 50, "sixty": 60,
+            "seventy": 70, "eighty": 80, "ninety": 90}
+    units = {"one": 1, "two": 2, "three": 3, "four": 4, "five": 5, "six": 6,
+             "seven": 7, "eight": 8, "nine": 9}
+    words = dict(tens)
+    for tname, tval in tens.items():
+        for uname, uval in units.items():
+            words[f"{tname}-{uname}"] = tval + uval
     claimed = re.search(r"experiments/\s+([a-z-]+) reproducible scripts", readme)
     if claimed:
         want = words.get(claimed.group(1))

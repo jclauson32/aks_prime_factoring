@@ -105,7 +105,7 @@ remainder **is** the prime factor `q`, with `y = 1`.
 
 ## Where it ended up
 
-Forty-one rounds later, the search for a polynomial-time classical algorithm
+Forty-five rounds later, the search for a polynomial-time classical algorithm
 has not found one, and the repository says precisely why:
 
 - Every factoring method manufactures a zero divisor mod `N` through one of four
@@ -227,6 +227,7 @@ The per-round ledger is [`docs/LAB.md`](docs/LAB.md); proofs are in
 | **R42** | the taxonomy checked against the literature: 26 named algorithms assigned to the four mechanisms, and each of the 21 implemented here re-run and verified to return a true divisor — no row needs a fifth mechanism, and this project's two new constructions landed in *size* and *order* rather than anywhere new | measured |
 | **R43** | the Coppersmith ceiling, from the inside: the reachable window as a function of the lattice's dimension rises with diminishing returns towards `beta² = 1/4` — the exponent every size method pays, measured against the only knob a caller has | measured |
 | **R44** | four ways a modulus can be weak, each priced with a control: close primes (Fermat), smooth `p − 1` (Pollard), ROCA-style structured primes (a primorial `M ≥ N^(1/4)` plus Coppersmith), and a shared prime in a corpus (batch gcd, `O~(k)` instead of `k²/2`). Every one is a failure of the generator; every control finds nothing | implemented, measured |
+| **R45** | the other side of the wall: simulating Shor costs `N²` amplitudes and 5× more per bit of `N` (measured, which is why round 24 stops at 21), while the published estimates for *running* it put 2048-bit RSA at ~20 million physical qubits and ~8 hours. Against round 41's `10^15` core-years, the comparison is between a machine that exists and one that does not | measured, and quoted |
 
 Every row is machine-checked in [`aksfactor/theorems.py`](aksfactor/theorems.py)
 and exercised by `run_tests.py` (187 tests, all passing).
@@ -1244,7 +1245,7 @@ aksfactor/
   cli.py        python -m aksfactor {auto,factor,row,entry,verify,fold,...}
 docs/           THEORY.md (proofs), FINDINGS.md (what it buys), LAB.md (idea ledger)
 tools/          check_docs.py: catches results, references and counts going stale
-experiments/    fifty reproducible scripts; results/ holds their generated reports
+experiments/    fifty-one reproducible scripts; results/ holds their generated reports
 tests/          220 tests; run_tests.py needs no pytest
 ```
 

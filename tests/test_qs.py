@@ -25,3 +25,15 @@ def test_quadratic_sieve_factors():
                 if is_prime(q) and q != p:
                     break
             assert quadratic_sieve(p * q) in (p, q)
+
+
+def test_auto_factor_command():
+    from aksfactor.cli import _auto_factor
+
+    for n in (1234567, 2 ** 20 + 1, 1000003 * 999983, 101 ** 3 * 103, 6):
+        facs = _auto_factor(n, verbose=lambda *a: None)
+        product = 1
+        for p, e in facs.items():
+            product *= p ** e
+            assert is_prime(p)
+        assert product == n

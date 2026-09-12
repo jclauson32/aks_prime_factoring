@@ -48,6 +48,8 @@ from round 14 (as corrected in round 15):
 | 36 | every method on the same numbers | all four | size stops first, then collision; ECM and the sieves go on | `exp35` |
 | 37 | evolving straight-line programs from random | order | selection rediscovers Pollard `p - 1` (smooth exponents), matching an optimised `p - 1`; nothing else | `exp36` |
 | 38 | counting points on `E(Z/N)` | order | one count factors `N` (40 of 40); equivalent to factoring (Kunihiro-Koyama) | `exp31` |
+| 39 | success vs budget, all mechanisms | all four | `p - 1` leads to 10^4 multiplications, ECM and rho overtake at 10^5 | `exp37` |
+| 40 | smoothness measured against Dickman's rho | order | shifted primes and curve orders are ~1.5x smoother than random; the draws differ, the wall does not | `exp38` |
 
 ## Round 15: the central column
 
@@ -403,3 +405,45 @@ Schoof's algorithm for the other direction, point counting over `Z/N` is
 equivalent to factoring (Kunihiro and Koyama, 1998) -- another entry on the list
 that began with `phi(N)`: quantities that carry the factorisation in plain
 sight and cost as much as the factorisation to compute.
+
+## Round 30: which mechanism pays first
+
+Round 27 measured time to factor; this measures the other axis. Given a fixed
+budget of modular multiplications on 64-bit semiprimes with a 24-bit `p`, how
+often does each mechanism split `N` at all?
+
+| budget | `p - 1` | `p + 1` | ECM | rho | trial division |
+|---|---|---|---|---|---|
+| 100 | 0.02 | 0.02 | 0.00 | 0.00 | 0.00 |
+| 1,000 | 0.15 | 0.15 | 0.00 | 0.00 | 0.00 |
+| 10,000 | 0.35 | 0.28 | 0.17 | 0.23 | 0.00 |
+| 100,000 | 0.53 | 0.65 | 1.00 | 0.92 | 0.00 |
+
+The shape of each curve is the mechanism. `p - 1` pays from the first
+multiplication, because the small primes it multiplies into the exponent are
+exactly the ones most likely to divide `p - 1`, and then it flattens against the
+fraction of primes whose `p - 1` is smooth at all. Rho pays nothing until its
+walk nears `sqrt p` and then pays everything. ECM climbs steadily, each curve a
+fresh draw, and passes everything by `10^5`. Trial division is linear and needs
+`p` multiplications.
+
+This is the curve selection climbed in round 28. At forty multiplications the
+only mechanism with any gradient is the fixed-group order mechanism, so that is
+what evolution found; the table shows the others do not start paying until
+thousands of multiplications later.
+
+## Round 31: the smoothness wall, measured
+
+Every sub-exponential method here is priced by one quantity, and this round
+measures it. Dickman's `rho` is computed numerically (within 1% of its known
+values) and compared with the three draws the order mechanism actually makes:
+random integers track `rho(u)`, while `p - 1`, `p + 1` and elliptic group orders
+are all about 1.5 times smoother than a random number of their size -- they are
+even, and carry small factors more often.
+
+That bias is a constant. What separates the methods is the number of draws:
+`p - 1` gets one per prime, ECM gets one per curve. Converting budget into
+draws is what makes ECM sub-exponential, and what caps it: the number of draws
+needed is `1/rho(u)`, and `rho(u)` falls like `u^(-u)`. At the polylogarithmic
+bounds a polynomial-time method would need -- `2^16`, `2^24` -- the table of
+`1/rho` is already astronomical for a 128-bit prime.

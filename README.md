@@ -49,10 +49,23 @@ No dependencies — Python 3.10+, standard library only.
 git clone https://github.com/jclauson32/aks_prime_factoring
 cd aks_prime_factoring
 
-python3 -m aksfactor factor 1234567
+python3 -m aksfactor factor 1234567        # the Pascal-row method of round 1
+python3 -m aksfactor auto 1000003000000000000000021   # whichever method suits the size
 python3 -m aksfactor row 35 --kmax 12
 python3 -m aksfactor verify --upto 400
 python3 run_tests.py
+```
+
+```
+$ python3 -m aksfactor auto 1000003000000000000000021
+factoring 1000003000000000000000021 (80 bits)
+  293  (trial division)
+  3541  (trial division)
+  trying rho on 60-bit 963846236143547117 ...
+  split by rho: 963846236143547117 = 579011 * 1664642357647
+  579011  (prime)
+  1664642357647  (prime)
+1000003000000000000000021 = 293 * 3541 * 579011 * 1664642357647
 ```
 
 ```
@@ -175,6 +188,8 @@ The per-round ledger is [`docs/LAB.md`](docs/LAB.md); proofs are in
 | **R27** | thirteen methods on the same semiprimes, 40–100 bits: size stops first, then collision; ECM and the sieves go on | measured |
 | **R28** | evolution over straight-line programs, from random, rediscovers Pollard's `p − 1` and matches an optimised `p − 1`; given `C(x,2)` it still picks `p − 1` | measured |
 | **R29** | one elliptic point count `#E(ℤ/N)` factors `N` (40/40); point counting mod `N` is equivalent to factoring (Kunihiro–Koyama) | implemented, cited |
+| **R30** | success against a fixed budget of multiplications: `p − 1` leads to 10⁴, ECM and rho overtake at 10⁵ — the curve selection climbed in round 28 | measured |
+| **R31** | Dickman's `ρ` measured against the draws the order mechanism makes: `p ± 1` and curve orders are ~1.5× smoother than random; the wall is the number of draws, `1/ρ(u)` | measured |
 
 Every row is machine-checked in [`aksfactor/theorems.py`](aksfactor/theorems.py)
 and exercised by `run_tests.py` (187 tests, all passing).
@@ -1179,14 +1194,15 @@ aksfactor/
   shor.py       round 24: Shor's algorithm simulated classically (state vector + FFT)
   nfs.py        round 26: a toy number field sieve (degree 3, pure Python)
   evolve.py     round 28: evolving straight-line factoring programs
+  smooth.py     round 31: Dickman's rho and the smoothness of the order mechanism's draws
   figures.py    PNG gaskets of triangles mod N (standard library only)
   central.py    the central column: Legendre symbols from Pascal's triangle
   grouporder.py counts reachable group orders: ring unit orders vs #E(F_p)
   fast.py       O~(n^(1/4)) search: product tree, Newton division, remainder
                 tree, multipoint evaluation, BGS factorial, threshold search
-  cli.py        python -m aksfactor {factor,row,entry,verify,fold}
+  cli.py        python -m aksfactor {auto,factor,row,entry,verify,fold,...}
 docs/           THEORY.md (proofs), FINDINGS.md (what it buys), LAB.md (idea ledger)
-experiments/    thirty-six reproducible scripts; results/ holds their generated reports
+experiments/    thirty-eight reproducible scripts; results/ holds their generated reports
 tests/          187 tests; run_tests.py needs no pytest
 ```
 

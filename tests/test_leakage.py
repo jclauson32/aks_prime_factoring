@@ -132,3 +132,24 @@ def test_walsh_scan_null_stays_under_its_bound():
     got = walsh_scan(data[:4000], data[4000:], lambda n, p, q: labels[n], 28)
     assert got["max_corr"] < 1.3 * got["null_max"]
     assert abs(got["accuracy"] - 0.5) < 0.05
+
+
+def test_dickman_rho_matches_known_values():
+    from aksfactor.smooth import dickman_rho
+
+    for u, want in ((1.0, 1.0), (2.0, 0.30685282), (3.0, 0.04860839),
+                    (4.0, 0.00491093), (5.0, 0.00035473)):
+        assert abs(dickman_rho(u) - want) <= 0.01 * want
+
+
+def test_shifted_primes_are_smoother_than_random():
+    from aksfactor.smooth import smooth_rate
+
+    rng = random.Random(2)
+    primes = []
+    while len(primes) < 300:
+        v = rng.randrange(1 << 15, 1 << 16) | 1
+        if is_prime(v):
+            primes.append(v)
+    randoms = [rng.randrange(1 << 15, 1 << 16) for _ in range(300)]
+    assert smooth_rate([p - 1 for p in primes], 100) > smooth_rate(randoms, 100)

@@ -6,7 +6,7 @@ import argparse
 import sys
 from math import gcd
 
-from .arith import is_prime
+from .arith import is_prime, sieve
 from .factor import certificate, factor, pascal_split
 from .pascal import row_entry, row_prefix, row_support
 from .classgroup import schnorr_lenstra_split
@@ -37,6 +37,78 @@ def _cmd_factor(args) -> int:
         print(f"  certificate: {cert['identity']}")
         print(f"  first non-zero residue of row {n} is at k = {cert['position']}")
         print(f"  smallest prime factor {cert['p']}, cofactor {cert['cofactor']}")
+    return 0
+
+
+def _auto_factor(n: int, verbose=print):
+    """Factor ``n`` with whichever method suits its size: trial division for
+    small factors, rho, then ECM for a small factor of a large ``n``, then the
+    quadratic sieve for a balanced split."""
+    from .collision import pascal_rho
+    from .ecm import ecm
+    from .qs import quadratic_sieve
+
+    factors = {}
+
+    def add(m, how):
+        if m == 1:
+            return
+        if is_prime(m):
+            factors[m] = factors.get(m, 0) + 1
+            verbose(f"  {m}  ({'prime' if how is None else how})")
+            return
+        for p_ in sieve(100000):
+            if p_ * p_ > m:
+                break
+            if m % p_ == 0:
+                add(p_, "trial division")
+                add(m // p_, None)
+                return
+        r = round(m ** 0.5)
+        if r * r == m:
+            add(r, "perfect square")
+            add(r, "perfect square")
+            return
+        def rho_try():
+            for x0 in range(3, 40):
+                g, _ = pascal_rho(m, 2, x0)
+                if g:
+                    return g
+            return None
+
+        for name, fn in (("rho", rho_try),
+                         ("ECM", lambda: ecm(m, b1=2000, b2=100000, curves=400)),
+                         ("quadratic sieve", lambda: quadratic_sieve(m))):
+            verbose(f"  trying {name} on {m.bit_length()}-bit {m} ...")
+            g = fn()
+            if g and 1 < g < m:
+                verbose(f"  split by {name}: {m} = {g} * {m // g}")
+                add(g, None)
+                add(m // g, None)
+                return
+        verbose(f"  could not split {m}")
+        factors[m] = factors.get(m, 0) + 1
+
+    add(n, None)
+    return factors
+
+
+def _first(x):
+    return x[0] if isinstance(x, tuple) else x
+
+
+def _cmd_auto(args) -> int:
+    n = args.n
+    if n < 2:
+        print("n must be >= 2")
+        return 1
+    print(f"factoring {n} ({n.bit_length()} bits)")
+    facs = _auto_factor(n)
+    pretty = " * ".join(f"{p}^{e}" if e > 1 else f"{p}" for p, e in sorted(facs.items()))
+    product = 1
+    for p_, e in facs.items():
+        product *= p_ ** e
+    print(f"{n} = {pretty}" + ("" if product == n else "   (INCOMPLETE)"))
     return 0
 
 
@@ -171,6 +243,10 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--bound", type=int, default=None)
     p.add_argument("--mode", choices=("certified", "scan", "fast"), default="certified")
     p.set_defaults(func=_cmd_factor)
+
+    p = sub.add_parser("auto", help="factor n with whichever method suits its size")
+    p.add_argument("n", type=int)
+    p.set_defaults(func=_cmd_auto)
 
     p = sub.add_parser("row", help="print a prefix of row n mod n")
     p.add_argument("n", type=int)
